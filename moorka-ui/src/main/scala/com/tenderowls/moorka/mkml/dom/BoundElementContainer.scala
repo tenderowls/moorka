@@ -2,6 +2,7 @@ package com.tenderowls.moorka.mkml.dom
 
 import com.tenderowls.moorka.core._
 import com.tenderowls.moorka.mkml.dom.CreationPolicy._
+import com.tenderowls.moorka.mkml.engine._
 import org.scalajs.dom
 
 /**
@@ -18,9 +19,11 @@ class BoundElementContainer(reactiveElement: Bindable[CreationPolicy])
 
     previous match {
       case CreationPolicy.Static(x) =>
-        RenderContext.appendOperation(DomOperation.RemoveChild(nativeElement, x.nativeElement))
+        x.parent = this
+        RenderContext.appendOperation(RemoveChild(nativeElement, x.nativeElement))
       case CreationPolicy.Dynamic(x) =>
-        RenderContext.appendOperation(DomOperation.RemoveChild(nativeElement, x.nativeElement))
+        x.parent = null
+        RenderContext.appendOperation(RemoveChild(nativeElement, x.nativeElement))
         x.kill()
       case _ =>
     }
@@ -29,14 +32,17 @@ class BoundElementContainer(reactiveElement: Bindable[CreationPolicy])
     previous = reactiveElement()
     e match {
       case CreationPolicy.Static(x) =>
-        RenderContext.appendOperation(DomOperation.AppendChild(nativeElement, x.nativeElement))
+        x.parent = this
+        RenderContext.appendOperation(AppendChild(nativeElement, x.nativeElement))
       case CreationPolicy.Dynamic(x) =>
-        RenderContext.appendOperation(DomOperation.RemoveChild(nativeElement, x.nativeElement))
+        x.parent = null
+        RenderContext.appendOperation(RemoveChild(nativeElement, x.nativeElement))
       case _ =>
     }
   }
 
   override def kill(): Unit = {
+    super.kill()
     observer.kill()
     reactiveElement() match {
       case CreationPolicy.Static(x) => x.kill()
@@ -44,6 +50,8 @@ class BoundElementContainer(reactiveElement: Bindable[CreationPolicy])
       case _ =>
     }
   }
+
+  SyntheticEventProcessor.registerElement(this)
 }
 
 object CreationPolicy {

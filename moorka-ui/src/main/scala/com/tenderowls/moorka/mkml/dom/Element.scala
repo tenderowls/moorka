@@ -1,6 +1,7 @@
 package com.tenderowls.moorka.mkml.dom
 
 import com.tenderowls.moorka.core._
+import com.tenderowls.moorka.mkml.engine._
 import org.scalajs.dom
 
 /**
@@ -13,15 +14,22 @@ class Element(tagName:String, children:Seq[Node]) extends ElementBase {
   var observers:List[Mortal] = Nil
 
   children.foreach {
-    case component: ElementBase =>
-      observers ::= component  
+    case e: ElementBase =>
+      observers ::= e
+      e.parent = this
       RenderContext.appendOperation(
-        DomOperation.AppendChild(nativeElement, component.nativeElement)
+        AppendChild(nativeElement, e.nativeElement)
       )
     case sequence: ElementSequence =>
-      sequence.value.foreach(observers ::= _)
+      sequence.value.foreach { x =>
+        x.parent = this
+        observers ::= x
+      }
       RenderContext.appendOperation(
-        DomOperation.AppendChildren(nativeElement, sequence.value.map(_.nativeElement))
+        AppendChildren(
+          nativeElement,
+          sequence.value.map(_.nativeElement)
+        )
       )
     case processor: ElementExtension =>
       observers ::= processor
@@ -29,7 +37,10 @@ class Element(tagName:String, children:Seq[Node]) extends ElementBase {
   }
 
   override def kill(): Unit = {
+    super.kill()
     observers.foreach(_.kill())
     observers = Nil
   }
+
+  SyntheticEventProcessor.registerElement(this)
 }

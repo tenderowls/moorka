@@ -2,6 +2,8 @@ package com.tenderowls.moorka.mkml.dom
 
 import com.tenderowls.moorka.core._
 import com.tenderowls.moorka.mkml.dom.CreationPolicy.CreationPolicy
+import com.tenderowls.moorka.mkml.engine.{DoubleClickEventProcessor, SubmitEventProcessor, ClickEventProcessor, SyntheticEvent}
+import org.scalajs.dom
 
 /**
  * Definition of HTML tags, attributes and properties
@@ -99,10 +101,10 @@ trait MKML {
   //
   //---------------------------------------------------------------------------
 
-  val `on-double-click` = ElementEventName("dblclick")
-  val `on-submit` = ElementEventName("submit")
-  val `on-change` = ElementEventName("change")
-  val `on-click` = ElementEventName("click")
+  //val `change` = ElementEventName("change")
+  val `double-click` = ElementEventName(DoubleClickEventProcessor)
+  val `click` = ElementEventName(ClickEventProcessor)
+  val `submit` = ElementEventName(SubmitEventProcessor)
 
   //---------------------------------------------------------------------------
   //
@@ -110,16 +112,15 @@ trait MKML {
   //
   //---------------------------------------------------------------------------
 
-  def mkClass(clsName: String, not:Boolean = false) = ExtensionFactory(
-    (x:Boolean) => UseClassExtension(clsName, if (not) !x else x),
-    (x:Bindable[Boolean]) => UseClassBoundExtension(
+  def mkClass(clsName: String, not:Boolean = false) = new BoundExtensionFactory[Boolean](
+    x => UseClassExtension(clsName, if (not) !x else x),
+    x => UseClassBoundExtension(
       clsName,
-      if (not) Bind {
-        println(!x())
-        !x()
-      } else x
+      if (not) Bind { !x() } else x
     )
   )
-  
+
   val mkShow = mkClass("hidden", not = true)
+
+  val mkHide = mkClass("hidden", not = false)
 }

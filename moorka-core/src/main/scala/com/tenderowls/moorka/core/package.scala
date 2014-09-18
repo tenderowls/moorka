@@ -8,6 +8,7 @@ package object core {
   val Emitter = events.Emitter
   type Emitter[A] = events.Emitter[A]
   type Event[A] = events.Event[A]
+  type Slot[A] = events.Event[A]
 
   val Bind = binding.BindingMacro
   val Var = binding.Var

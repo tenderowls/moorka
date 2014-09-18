@@ -60,13 +60,13 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
       `autofocus` := true
     )
 
-    val todosView = Repeat[Task](dataProvider = Var(todos.view), itemRenderer = { todo: Task =>
+    val todosView = Repeat[Task](dataProvider = todos.view, itemRenderer = { todo: Task =>
       val inputRef = input(`class` := "edit", `value` := todo.txt())
       li(
         mkClass("completed") := Bind { todo.status() == Completed },
         mkClass("editing") := Bind { todo.status() == Editing },
         div(`class` := "view",
-          `on-double-click` := { (event: dom.Event) =>
+          `double-click` listen { _ =>
             if (todo.status() == Active && !nowEditing()) {
               todo.status() = Editing
               nowEditing() = true
@@ -76,7 +76,7 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
             `class` := "toggle",
             `type` := "checkbox",
             `style` := "cursor: pointer",
-            `on-click` := { (event: dom.Event) =>
+            `click` listen { event =>
               todo.status() = todo.status() match {
                 case Active => Completed
                 case Completed => Active
@@ -85,26 +85,23 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
               refreshCounters()
             },
             `checked` := todo.status.map {
-              x: Status => x == Completed
+              (x: Status) => x == Completed
             }
           ),
           label(todo.txt),
           button(
             `class` := "destroy",
             `style` := "cursor: pointer",
-            `on-click` := { (event: dom.Event) =>
-              todos -= todo
-            }
+            `click` listen { event => todos -= todo }
           )
         ),
         form(
-          `on-submit` := { (event: dom.Event) =>
+          `submit` listen { event =>
             event.preventDefault()
             val x = `value` extractFrom inputRef
             nowEditing() = false
             todo.status() = Active
             todo.txt() = x
-            false
           },
           inputRef
         )
@@ -122,7 +119,7 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
           h1("todos"),
           form(
             inputBox,
-            `on-submit` := { (event: dom.Event) =>
+            `submit` listen { event =>
               event.preventDefault()
               val s = `value` extractFrom inputBox trim()
               if (s != "") {
@@ -138,9 +135,10 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
             `id` := "toggle-all",
             `type` := "checkbox",
             `style` := "cursor: pointer",
-            `checked` := Bind { numCompleted() == todos.length },
-            `on-click` := { (event:dom.Event) =>
-              val newStatus = event.target.asInstanceOf[js.Dynamic].checked.asInstanceOf[Boolean] match {
+            // todo length bust be var
+            `checked` := Bind { todos.length > 0 && numCompleted() == todos.length },
+            `click` listen { event =>
+              val newStatus = `checked` extractFrom event.target match {
                 case true => Completed
                 case false => Active
               }
@@ -152,7 +150,7 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
           ul(`id` := "todo-list", todosView),
           footer( `id` := "footer",
             span( `id` := "todo-count",
-              strong( Bind { numActive().toString }),
+              strong( Bind { numActive().toString } ),
               span(" item left")
             ),
             ul(`id` := "filters",
@@ -160,7 +158,7 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
                 li(
                   a(`href`:="#",
                     mkClass("selected") := Bind { filter() == x },
-                    `on-click` := { (event:dom.Event) =>
+                    `click` listen { event =>
                       filter() = x
                     },
                     x match {
@@ -174,11 +172,8 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
             ),
             button(
               `id` := "clear-completed",
-              mkShow := Bind {
-                println(numCompleted() > 0)
-                numCompleted() > 0
-              },
-              `on-click` := { (event: dom.Event) =>
+              mkShow := Bind { numCompleted() > 0 },
+              `click` listen { event =>
                 todos.remove(_.status() != Completed)
               },
               Bind {

@@ -1,6 +1,7 @@
 package com.tenderowls.moorka.mkml.dom
 
 import com.tenderowls.moorka.core.Mortal
+import com.tenderowls.moorka.mkml.engine._
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -10,6 +11,8 @@ import scala.scalajs.js
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 abstract class ElementBase extends Node with Mortal {
+
+  private[mkml] var parent:ElementBase = null
 
   val nativeElement: dom.Element
 
@@ -30,11 +33,13 @@ abstract class ElementBase extends Node with Mortal {
    */
   def setProperty[A](name: ElementPropertyName[A], value: A) = {
     RenderContext.appendOperation(
-      DomOperation.UpdateProperty(nativeElement, name.name, value)
+      UpdateProperty(nativeElement, name.name, value)
     )
   }
 
-  def kill():Unit
+  def kill():Unit = {
+    SyntheticEventProcessor.deregisterElement(this)
+  }
 }
 
 class ElementSequence(val value: Seq[ElementBase]) extends Node
