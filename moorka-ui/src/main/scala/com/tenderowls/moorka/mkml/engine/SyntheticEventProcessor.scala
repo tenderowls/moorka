@@ -2,7 +2,7 @@ package com.tenderowls.moorka.mkml.engine
 
 import com.tenderowls.moorka.core._
 import com.tenderowls.moorka.core.events.Emitter
-import com.tenderowls.moorka.mkml.dom.{ElementBase, MKML}
+import com.tenderowls.moorka.mkml.dom.ElementBase
 import org.scalajs.dom
 
 import scala.annotation.tailrec
@@ -11,7 +11,7 @@ import scala.collection.mutable
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-object SyntheticEventProcessor extends MKML {
+object SyntheticEventProcessor {
 
   private var lastId = 0
 
@@ -170,6 +170,13 @@ object DoubleClickEventProcessor extends MouseEventProcessor {
 
 object SubmitEventProcessor extends FormEventProcessor {
   val eventType: String = "submit"
+  dom.document.addEventListener(eventType, { (e: dom.Event) =>
+    topLevelListener(e)
+  })
+}
+
+object ChangeEventProcessor extends FormEventProcessor {
+  val eventType: String = "change"
   dom.document.addEventListener(eventType, { (e: dom.Event) =>
     topLevelListener(e)
   })

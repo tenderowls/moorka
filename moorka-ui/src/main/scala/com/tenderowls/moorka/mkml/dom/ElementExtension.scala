@@ -67,6 +67,8 @@ case class ElementPropertyName[A](name: String) {
 
   def :=(x: Bindable[A]) = ElementBoundPropertyExtension(name, x)
 
+  def =:= (x: Var[A]) = VarPropertyExtension(this, x)
+
   def extractFrom(x: ElementBase): A = x.extractProperty(this)
 }
 
@@ -179,6 +181,29 @@ case class ElementBoundPropertyExtension[A](name: String, value: Bindable[A])
         UpdateProperty(element.nativeElement, name, value())
       )
     }
+  }
+}
+
+case class VarPropertyExtension[A](name: ElementPropertyName[A], value: Var[A])
+  extends ElementExtension {
+
+  var subscriptions: List[Slot[_]] = Nil
+
+  override def assignElement(element: ElementBase): Unit = {
+    super.assignElement(element)
+    subscriptions ::= value observe { _ =>
+      RenderContext.appendOperation(
+        UpdateProperty(element.nativeElement, name.name, value())
+      )
+    }
+    subscriptions ::= ChangeEventProcessor.addListener(element,
+      _ => value() = element.extractProperty(name)
+    )
+  }
+
+  override def kill(): Unit = {
+    super.kill()
+    subscriptions.foreach(_.kill())
   }
 }
 

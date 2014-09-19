@@ -2,8 +2,7 @@ package com.tenderowls.moorka.mkml.dom
 
 import com.tenderowls.moorka.core._
 import com.tenderowls.moorka.mkml.dom.CreationPolicy.CreationPolicy
-import com.tenderowls.moorka.mkml.engine.{DoubleClickEventProcessor, SubmitEventProcessor, ClickEventProcessor, SyntheticEvent}
-import org.scalajs.dom
+import com.tenderowls.moorka.mkml.engine._
 
 /**
  * Definition of HTML tags, attributes and properties
@@ -101,7 +100,7 @@ trait MKML {
   //
   //---------------------------------------------------------------------------
 
-  //val `change` = ElementEventName("change")
+  val `change` = ElementEventName(ChangeEventProcessor)
   val `double-click` = ElementEventName(DoubleClickEventProcessor)
   val `click` = ElementEventName(ClickEventProcessor)
   val `submit` = ElementEventName(SubmitEventProcessor)

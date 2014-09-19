@@ -61,7 +61,6 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
     )
 
     val todosView = Repeat[Task](dataProvider = todos.view, itemRenderer = { todo: Task =>
-      val inputRef = input(`class` := "edit", `value` := todo.txt())
       li(
         mkClass("completed") := Bind { todo.status() == Completed },
         mkClass("editing") := Bind { todo.status() == Editing },
@@ -76,7 +75,7 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
             `class` := "toggle",
             `type` := "checkbox",
             `style` := "cursor: pointer",
-            `click` listen { event =>
+            `click` listen { _ =>
               todo.status() = todo.status() match {
                 case Active => Completed
                 case Completed => Active
@@ -98,12 +97,10 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
         form(
           `submit` listen { event =>
             event.preventDefault()
-            val x = `value` extractFrom inputRef
             nowEditing() = false
             todo.status() = Active
-            todo.txt() = x
           },
-          inputRef
+          input(`class` := "edit", `value` =:= todo.txt)
         )
       )
     })
