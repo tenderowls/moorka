@@ -45,8 +45,12 @@
                     href="https://github.com/tenderowls/moorka/issues">let us know</a>.</em></footer>
     </aside>
     </body>
-    <script type="text/javascript" src="../moorka-todomvc-fastopt.js"></script>
+    <script type="text/javascript" src="js/moorka-support.js"></script>
     <script>
-        Moorka().workerApplication("MoorkaTodoMVC")
+        var moorka = new Moorka();
+        moorka.workerApplication(
+                "MoorkaTodoMVC",
+                "http://localhost:9090/target/scala-2.11/moorka-todomvc-fastopt.js"
+        )
     </script>
 </html>

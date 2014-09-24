@@ -18,4 +18,5 @@ abstract class Application extends js.JSApp {
       start().ref.id
     )
   }
+
 }

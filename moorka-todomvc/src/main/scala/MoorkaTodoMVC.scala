@@ -121,7 +121,6 @@ object MoorkaTodoMVC extends Application with MKML  {
                 val s = x.trim()
                 if (s != "") {
                   todos += Task(Var(s), Var(Active))
-                  // todo export to element
                   inputBox.ref.set(`value`.name, "")
                 }
               }

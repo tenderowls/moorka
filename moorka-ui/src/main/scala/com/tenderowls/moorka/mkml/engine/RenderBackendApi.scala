@@ -11,7 +11,7 @@ import scala.scalajs.js.annotation.JSExport
  * Render backend interface
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-@JSExport("renderBackend")
+@JSExport("renderBackendApi")
 object RenderBackendApi {
 
   type Message = js.Array[Any]
@@ -24,26 +24,29 @@ object RenderBackendApi {
 
   private var postMessage:WorkerCallback = null
 
-  private var _onMessage: Event[Message] = null
+  private var _onMessage = Emitter[Message]
   
   /**
    * Initialize renderBackend for worker mode
    */
   @JSExport def workerMode() = {
     postMessage = js.Dynamic.global.postMessage.asInstanceOf[WorkerCallback]
-    val emitter = Emitter[Message]
-    _onMessage = emitter
     js.Dynamic.global.updateDynamic("onmessage")( { x: Any =>
-      emitter.emit(x.asInstanceOf[js.Dynamic].data.asInstanceOf[Message])
+      _onMessage.emit(x.asInstanceOf[js.Dynamic].data.asInstanceOf[Message])
     }: WorkerCallback)
   }
 
   /**
    * Initialize default render backend
    */
-  def defaultMode(incoming:WorkerCallback, outgoing: Event[Message]) = {
+  @JSExport def defaultMode(incoming:WorkerCallback): js.Function1[Message, _] = {
     postMessage = incoming
-    _onMessage = outgoing
+    val f = { (message: Message) =>
+      dom.setTimeout( { () =>
+        _onMessage.emit(message)
+      }, 1)
+    }
+    f
   }
 
   def !(msg: Message) = {
@@ -58,5 +61,5 @@ object RenderBackendApi {
     }
   }
 
-  def onMessage: Event[Message] = _onMessage 
+  val onMessage: Event[Message] = _onMessage
 }
