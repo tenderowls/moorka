@@ -1,6 +1,5 @@
 package com.tenderowls.moorka.core.binding
 
-import com.tenderowls.moorka.core.events.Event
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -10,14 +9,12 @@ import scala.scalajs.js
  */
 class ExpressionBinding[A](dependencies: Seq[Bindable[_]])(expr: => A) extends BindingBase[A] {
 
-  private var subscriptions: List[Event[_]] = Nil
+  private var value = expr
 
-  private var value: A = expr
+  private var _valid = true
 
-  private var _valid: Boolean = true
-
-  dependencies.foreach {
-    subscriptions ::= _ subscribe { _ =>
+  private val subscriptions = dependencies.map {
+    _ subscribe { _ =>
       if (_valid) {
         _valid = false
         // Deferred event emit cause more

@@ -13,7 +13,22 @@ class Emitter[A] extends Event[A] { self =>
 
   private val slots = new js.Array[Emitter[A]]
 
-  override def subscribe(f: A => Unit): Event[A] = {
+  def until(f: A => Boolean): Event[A] = {
+    val slot = new Emitter[A] {
+      override def kill(): Unit = {
+        self.slots.splice(self.slots.indexOf(this), 1)
+        super.kill()
+      }
+      override def emit(x: A): Unit = {
+        super.emit(x)
+        if (!f(x)) kill()
+      }
+    }
+    slots.push(slot)
+    slot
+  }
+  
+  def subscribe(f: A => Unit): Event[A] = {
     val slot = new Emitter[A] {
       override def kill(): Unit = {
         self.slots.splice(self.slots.indexOf(this), 1)

@@ -38,35 +38,65 @@ trait MKML {
   //
   //---------------------------------------------------------------------------
 
-  def a(xs: Node*) = new Element("a", xs)
+  def a(id: String)(xs: Node*) = new Element("a", Some(id),  xs)
 
-  def p(xs: Node*) = new Element("p", xs)
+  def p(id: String)(xs: Node*) = new Element("p", Some(id),  xs)
 
-  def h1(xs: Node*) = new Element("h1", xs)
+  def h1(id: String)(xs: Node*) = new Element("h1", Some(id),  xs)
 
-  def ul(xs: Node*) = new Element("ul", xs)
+  def ul(id: String)(xs: Node*) = new Element("ul", Some(id),  xs)
 
-  def li(xs: Node*) = new Element("li", xs)
+  def li(id: String)(xs: Node*) = new Element("li", Some(id),  xs)
 
-  def div(xs: Node*) = new Element("div", xs)
+  def div(id: String)(xs: Node*) = new Element("div", Some(id),  xs)
 
-  def span(xs: Node*) = new Element("span", xs)
+  def span(id: String)(xs: Node*) = new Element("span", Some(id),  xs)
 
-  def button(xs: Node*) = new Element("button", xs)
+  def button(id: String)(xs: Node*) = new Element("button", Some(id),  xs)
 
-  def section(xs: Node*) = new Element("section", xs)
+  def section(id: String)(xs: Node*) = new Element("section", Some(id),  xs)
 
-  def strong(xs: Node*) = new Element("strong", xs)
+  def strong(id: String)(xs: Node*) = new Element("strong", Some(id),  xs)
 
-  def header(xs: Node*) = new Element("header", xs)
+  def header(id: String)(xs: Node*) = new Element("header", Some(id),  xs)
 
-  def footer(xs: Node*) = new Element("footer", xs)
+  def footer(id: String)(xs: Node*) = new Element("footer", Some(id),  xs)
 
-  def input(xs: Node*) = new Element("input", xs)
+  def input(id: String)(xs: Node*) = new Element("input", Some(id),  xs)
 
-  def label(xs: Node*) = new Element("label", xs)
+  def label(id: String)(xs: Node*) = new Element("label", Some(id),  xs)
 
-  def form(xs: Node*) = new Element("form", xs)
+  def form(id: String)(xs: Node*) = new Element("form", Some(id),  xs)
+
+  def a(xs: Node*) = new Element("a", None, xs)
+
+  def p(xs: Node*) = new Element("p", None, xs)
+
+  def h1(xs: Node*) = new Element("h1", None, xs)
+
+  def ul(xs: Node*) = new Element("ul", None, xs)
+
+  def li(xs: Node*) = new Element("li", None, xs)
+
+  def div(xs: Node*) = new Element("div", None, xs)
+
+  def span(xs: Node*) = new Element("span", None, xs)
+
+  def button(xs: Node*) = new Element("button", None, xs)
+
+  def section(xs: Node*) = new Element("section", None, xs)
+
+  def strong(xs: Node*) = new Element("strong", None, xs)
+
+  def header(xs: Node*) = new Element("header", None, xs)
+
+  def footer(xs: Node*) = new Element("footer", None, xs)
+
+  def input(xs: Node*) = new Element("input", None, xs)
+
+  def label(xs: Node*) = new Element("label", None, xs)
+
+  def form(xs: Node*) = new Element("form", None, xs)
 
   //---------------------------------------------------------------------------
   //
@@ -74,7 +104,6 @@ trait MKML {
   //
   //---------------------------------------------------------------------------
 
-  val `id` = ElementAttributeName("id")
   val `for` = ElementAttributeName("for")
   val `href` = ElementAttributeName("href")
   val `type` = ElementAttributeName("type")

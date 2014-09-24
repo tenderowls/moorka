@@ -4,7 +4,6 @@ import com.tenderowls.moorka.core._
 import com.tenderowls.moorka.mkml.components.Repeat.ItemRenderer
 import com.tenderowls.moorka.mkml.dom._
 import com.tenderowls.moorka.mkml.engine._
-import org.scalajs.dom
 
 import scala.collection.mutable
 
@@ -43,7 +42,7 @@ class Repeat[A](val dataProvider: Bindable[CollectionView[A]],
 
   private var children: CollectionView[Child] = null
 
-  val nativeElement: dom.Element = dom.document.createElement("div")
+  val ref = Ref("div")
 
   dataProvider observe { _ =>
     updateDataProvider()
@@ -52,21 +51,13 @@ class Repeat[A](val dataProvider: Bindable[CollectionView[A]],
   private def updateDisplayStateOfChild(child: Child) = {
     if (_viewFilter(child.data)) {
       if (!displayState(child)) {
-        RenderContext.appendOperation(
-          CustomOperation(
-            () => child.dom.nativeElement.classList.remove("hidden")
-          )
-        )
+        child.dom.ref.classRemove("hidden")
         displayState(child) = true
       }
     }
     else {
       if (displayState(child)) {
-        RenderContext.appendOperation(
-          CustomOperation(
-            () => child.dom.nativeElement.classList.add("hidden")
-          )
-        )
+        child.dom.ref.classAdd("hidden")
         displayState(child) = false
       }
     }
@@ -99,46 +90,29 @@ class Repeat[A](val dataProvider: Bindable[CollectionView[A]],
       child
     }
 
-    RenderContext.appendOperation(
-      AppendChildren(
-        nativeElement,
-        children.asSeq.map(_.dom.nativeElement)
-      )
-    )
+    ref.appendChildren(children.asSeq.map(_.dom.ref))
 
     children.foreach(_.dom.parent = this)
 
     children.added subscribe { x =>
       x.dom.parent = this
-      RenderContext.appendOperation(
-        AppendChild(nativeElement, x.dom.nativeElement)
-      )
+      ref.appendChild(x.dom.ref)
     }
 
     children.inserted subscribe { x =>
       x.idx + 1 match {
         case idx if idx < children.length =>
           x.e.dom.parent = this
-          RenderContext.appendOperation(
-            InsertChild(
-              to = nativeElement,
-              element = x.e.dom.nativeElement,
-              ref = children(idx).dom.nativeElement
-            )
-          )
+          ref.insertChild(x.e.dom.ref, children(idx).dom.ref)
         case _ =>
           x.e.dom.parent = this
-          RenderContext.appendOperation(
-            AppendChild(nativeElement, x.e.dom.nativeElement)
-          )
+          ref.appendChild(x.e.dom.ref)
       }
     }
 
     children.removed subscribe { x =>
       x.e.dom.parent = null
-      RenderContext.appendOperation(
-        RemoveChild(nativeElement, x.e.dom.nativeElement)
-      )
+      ref.removeChild(x.e.dom.ref)
       killObserver(x.e)
       x.e.dom.kill()
     }
@@ -148,13 +122,7 @@ class Repeat[A](val dataProvider: Bindable[CollectionView[A]],
       oldChild.dom.parent = null
       oldChild.dom.kill()
       x.e.dom.parent = this
-      RenderContext.appendOperation(
-        ReplaceChild(
-          element = nativeElement,
-          newChild = x.e.dom.nativeElement,
-          oldChild = oldChild.dom.nativeElement
-        )
-      )
+      ref.replaceChild(x.e.dom.ref, oldChild.dom.ref)
     }
   }
 

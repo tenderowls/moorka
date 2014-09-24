@@ -1,10 +1,11 @@
 import com.tenderowls.moorka.core._
 import com.tenderowls.moorka.mkml._
-import org.scalajs.dom
+import com.tenderowls.moorka.mkml.dom.MKML
+import com.tenderowls.moorka.mkml.engine.Application
 
-import scala.scalajs.js
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
-object MoorkaTodoMVC extends js.JSApp with HTML {
+object MoorkaTodoMVC extends Application with MKML  {
 
   case class Task(txt: Var[String], status: Var[Status])
 
@@ -36,9 +37,9 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
     }
   }
 
-  val todos = Collection[Task] //.fromSeq((1 to 200).map {
-    //x => Task(new Var("Make something " + x.toString), new Var(Active))
-  //})
+  val todos = Collection.fromSeq((1 to 20).map {
+    x => Task(new Var("Make something " + x.toString), new Var(Active))
+  })
 
   def refreshCounters() = {
     numCompleted() = todos.count(_.status() == Completed)
@@ -52,10 +53,9 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
 
   refreshCounters()
 
-  def main(): Unit = {
+  def start() = {
 
-    val inputBox = input(
-      `id` := "new-todo",
+    val inputBox = input("new-todo")(
       `placeholder` := "What needs to be done?",
       `autofocus` := true
     )
@@ -65,7 +65,7 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
         mkClass("completed") := Bind { todo.status() == Completed },
         mkClass("editing") := Bind { todo.status() == Editing },
         div(`class` := "view",
-          `double-click` listen { _ =>
+          `double-click` listen {
             if (todo.status() == Active && !nowEditing()) {
               todo.status() = Editing
               nowEditing() = true
@@ -75,7 +75,7 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
             `class` := "toggle",
             `type` := "checkbox",
             `style` := "cursor: pointer",
-            `click` listen { _ =>
+            `click` listen {
               todo.status() = todo.status() match {
                 case Active => Completed
                 case Completed => Active
@@ -95,8 +95,7 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
           )
         ),
         form(
-          `submit` listen { event =>
-            event.preventDefault()
+          `submit` listen {
             nowEditing() = false
             todo.status() = Active
           },
@@ -110,47 +109,50 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
       todosView.viewFilter(ff())
     }
 
-    val component = {
-      section(`id` := "todoapp",
-        header(`id` := "header",
-          h1("todos"),
+    div(
+      section("todoapp")(
+        header("header")(
+          h1("todos")(),
           form(
             inputBox,
-            `submit` listen { event =>
-              event.preventDefault()
-              val s = `value` extractFrom inputBox trim()
-              if (s != "") {
-                todos += Task(Var(s), Var(Active))
-                inputBox.setProperty(`value`, "")
+            `submit` listen {
+              print("dfsdf")
+              `value` from inputBox onSuccess { case x =>
+                val s = x.trim()
+                if (s != "") {
+                  todos += Task(Var(s), Var(Active))
+                  // todo export to element
+                  inputBox.ref.set(`value`.name, "")
+                }
               }
-              false
             }
           )
         ),
-        section(`id` := "main",
-          input(
-            `id` := "toggle-all",
+        section("main")(
+          input("toggle-all")(
             `type` := "checkbox",
             `style` := "cursor: pointer",
             // todo length bust be var
             `checked` := Bind { todos.length > 0 && numCompleted() == todos.length },
             `click` listen { event =>
-              val newStatus = `checked` extractFrom event.target match {
-                case true => Completed
-                case false => Active
+              `checked` from event.target onSuccess {
+                case true =>
+                  todos.foreach(_.status() = Completed)
+                  refreshCounters()
+                case false =>
+                  todos.foreach(_.status() = Active)
+                  refreshCounters()
               }
-              todos.foreach(_.status() = newStatus)
-              refreshCounters()
             }
           ),
           label(`for`:= "toggle-all", "Mark all as complete"),
-          ul(`id` := "todo-list", todosView),
-          footer( `id` := "footer",
-            span( `id` := "todo-count",
+          ul("todo-list")( todosView),
+          footer("footer")(
+            span("todo-count")(
               strong( Bind { numActive().toString } ),
               span(" item left")
             ),
-            ul(`id` := "filters",
+            ul("filters")(
               List(All, Active, Completed).map { x =>
                 li(
                   a(`href`:="#",
@@ -167,8 +169,7 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
                 )
               }
             ),
-            button(
-              `id` := "clear-completed",
+            button("clear-completed")(
               mkShow := Bind { numCompleted() > 0 },
               `click` listen { event =>
                 todos.remove(_.status() != Completed)
@@ -180,16 +181,10 @@ object MoorkaTodoMVC extends js.JSApp with HTML {
             )
           )
         )
-      )
-    }
-
-    dom.document.body.appendChild(component.nativeElement)
-    dom.document.body.appendChild(
-      footer(`id` := "info",
+      ),
+      footer("info")(
         p("Double-click to edit a todo")
-      ).nativeElement
+      )
     )
   }
-
-
 }

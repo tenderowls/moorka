@@ -1,7 +1,6 @@
 package com.tenderowls.moorka.mkml.engine
 
 import com.tenderowls.moorka.mkml.dom.ElementBase
-import org.scalajs.dom
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -9,8 +8,6 @@ import org.scalajs.dom
 sealed trait SyntheticEvent {
 
   private[mkml] var _bubbles:Boolean = false
-
-  private[mkml] var _cancelable:Boolean = false
 
   private[mkml] var _currentTarget:ElementBase = null
 
@@ -26,21 +23,13 @@ sealed trait SyntheticEvent {
 
   def bubbles:Boolean = _bubbles
 
-  def cancelable:Boolean = _cancelable
-
   def currentTarget:ElementBase = _currentTarget
 
   def target:ElementBase = _target
 
   def timestamp:Long = _timestamp
 
-  def defaultPrevented:Boolean = _defaultPrevented
-
   def eventPhase: EventPhase = _eventPhase
-
-  def preventDefault() = {
-    _defaultPrevented = true
-  }
 
   def stopPropagation() = {
     _propagationStopped = true
@@ -52,8 +41,6 @@ final class FormEvent extends SyntheticEvent {
 }
 
 sealed class MouseEvent extends SyntheticEvent {
-
-  private[mkml] var _nativeEvent: dom.MouseEvent = null
 
   private[mkml] var _altKey: Boolean = false
 
@@ -78,10 +65,6 @@ sealed class MouseEvent extends SyntheticEvent {
   private[mkml] var _ctrlKey: Boolean = false
 
   def ctrlKey: Boolean = _ctrlKey
-
-  def getModifierState(key: String): Boolean = {
-    _nativeEvent.getModifierState(key)
-  }
 
   private[mkml] var _metaKey: Boolean = false
 

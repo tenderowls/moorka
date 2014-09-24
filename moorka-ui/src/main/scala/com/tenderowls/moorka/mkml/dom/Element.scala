@@ -2,14 +2,16 @@ package com.tenderowls.moorka.mkml.dom
 
 import com.tenderowls.moorka.core._
 import com.tenderowls.moorka.mkml.engine._
-import org.scalajs.dom
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class Element(tagName:String, children:Seq[Node]) extends ElementBase {
+class Element(tagName:String, id: Option[String], children:Seq[Node]) extends ElementBase {
 
-  val nativeElement: dom.Element = dom.document.createElement(tagName)
+  val ref = id match {
+    case Some(x) => Ref(tagName, x)
+    case None => Ref(tagName)
+  }
 
   var observers:List[Mortal] = Nil
 
@@ -17,20 +19,13 @@ class Element(tagName:String, children:Seq[Node]) extends ElementBase {
     case e: ElementBase =>
       observers ::= e
       e.parent = this
-      RenderContext.appendOperation(
-        AppendChild(nativeElement, e.nativeElement)
-      )
+      ref.appendChild(e.ref)
     case sequence: ElementSequence =>
       sequence.value.foreach { x =>
         x.parent = this
         observers ::= x
       }
-      RenderContext.appendOperation(
-        AppendChildren(
-          nativeElement,
-          sequence.value.map(_.nativeElement)
-        )
-      )
+      ref.appendChildren(sequence.value.map(_.ref))
     case processor: ElementExtension =>
       observers ::= processor
       processor.assignElement(this)
