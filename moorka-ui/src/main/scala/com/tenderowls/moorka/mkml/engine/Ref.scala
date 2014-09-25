@@ -1,5 +1,7 @@
 package com.tenderowls.moorka.mkml.engine
 
+import com.tenderowls.moorka.core.Mortal
+
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
 
@@ -21,7 +23,11 @@ object Ref {
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class Ref(val id: String) {
+class Ref(val id: String) extends Mortal {
+
+  def kill(): Unit = {
+    RenderBackendApi ! js.Array("kill_ref", id)
+  }
 
   def appendChild(element: Ref) = {
     RenderBackendApi ! js.Array("append_child", id, element.id)

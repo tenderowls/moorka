@@ -2,7 +2,7 @@ package com.tenderowls.moorka.mkml.engine
 
 import com.tenderowls.moorka.core._
 import com.tenderowls.moorka.core.events.Emitter
-import com.tenderowls.moorka.mkml.dom.ElementBase
+import com.tenderowls.moorka.mkml.dom.ComponentBase
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -14,13 +14,13 @@ import scala.collection.mutable
  */
 object SyntheticEventProcessor {
 
-  private[engine] val nativeElementIndex = new mutable.HashMap[String, ElementBase]()
+  private[engine] val nativeElementIndex = new mutable.HashMap[String, ComponentBase]()
 
-  def registerElement(element: ElementBase) = {
+  def registerElement(element: ComponentBase) = {
     nativeElementIndex.put(element.ref.id, element)
   }
 
-  def deregisterElement(element: ElementBase) = {
+  def deregisterElement(element: ComponentBase) = {
     nativeElementIndex.remove(element.ref.id)
   }
 }
@@ -36,21 +36,21 @@ sealed abstract class SyntheticEventProcessor[A <: SyntheticEvent ] {
 
   val event: A
 
-  val listeners = new mutable.HashMap[ElementBase, Emitter[A]]()
+  val listeners = new mutable.HashMap[ComponentBase, Emitter[A]]()
 
-  val captures = new mutable.HashMap[ElementBase, Emitter[A]]()
+  val captures = new mutable.HashMap[ComponentBase, Emitter[A]]()
 
-  def fillEvent(element: ElementBase, nativeEvent: js.Dynamic) = {
+  def fillEvent(element: ComponentBase, nativeEvent: js.Dynamic) = {
     event._target = element
     event._bubbles = false
   }
 
-  def propagate(element:ElementBase, nativeEvent: js.Dynamic) = {
+  def propagate(element:ComponentBase, nativeEvent: js.Dynamic) = {
 
     // todo: May be it's more effective to use js.Array instead of scala's
     // todo: immutable collection. They are produce a lot of garbage.
     @tailrec
-    def collectParents(e: ElementBase, xs: List[ElementBase]): List[ElementBase] = {
+    def collectParents(e: ComponentBase, xs: List[ComponentBase]): List[ComponentBase] = {
       val ep = e.parent
       if (ep != null) {
         collectParents(ep, ep :: xs)
@@ -103,11 +103,11 @@ sealed abstract class SyntheticEventProcessor[A <: SyntheticEvent ] {
     }
   }
 
-  def addListener(element: ElementBase, listener: (A) => Unit): Slot[A] = {
+  def addListener(element: ComponentBase, listener: (A) => Unit): Slot[A] = {
     listeners.getOrElseUpdate(element, Emitter[A]).subscribe(listener)
   }
 
-  def addCapture(element: ElementBase, capture: (A) => Unit): Slot[A] = {
+  def addCapture(element: ComponentBase, capture: (A) => Unit): Slot[A] = {
     captures.getOrElseUpdate(element, Emitter[A]).subscribe(capture)
   }
 
@@ -125,7 +125,7 @@ sealed trait MouseEventProcessor extends SyntheticEventProcessor[MouseEvent] {
 
   val event: MouseEvent = new MouseEvent()
 
-  override def fillEvent(element: ElementBase, x: js.Dynamic): Unit = {
+  override def fillEvent(element: ComponentBase, x: js.Dynamic): Unit = {
     super.fillEvent(element, x)
     event._altKey = x.altKey.asInstanceOf[Boolean]
     event._ctrlKey = x.ctrlKey.asInstanceOf[Boolean]

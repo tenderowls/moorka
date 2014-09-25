@@ -1,6 +1,6 @@
 package com.tenderowls.moorka.mkml.engine
 
-import com.tenderowls.moorka.mkml.dom.ElementBase
+import com.tenderowls.moorka.mkml.dom.ComponentBase
 
 import scala.scalajs.js
 
@@ -9,7 +9,7 @@ import scala.scalajs.js
  */
 abstract class Application extends js.JSApp {
 
-  def start(): ElementBase
+  def start(): ComponentBase
 
   def main() = {
     RenderBackendApi ! js.Array(

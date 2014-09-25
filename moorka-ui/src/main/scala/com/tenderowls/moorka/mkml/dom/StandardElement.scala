@@ -6,7 +6,7 @@ import com.tenderowls.moorka.mkml.engine._
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class Element(tagName:String, id: Option[String], children:Seq[Node]) extends ElementBase {
+class StandardElement(tagName:String, id: Option[String], children:Seq[SyntheticDomNode]) extends ComponentBase {
 
   val ref = id match {
     case Some(x) => Ref(tagName, x)
@@ -16,7 +16,7 @@ class Element(tagName:String, id: Option[String], children:Seq[Node]) extends El
   var observers:List[Mortal] = Nil
 
   children.foreach {
-    case e: ElementBase =>
+    case e: ComponentBase =>
       observers ::= e
       e.parent = this
       ref.appendChild(e.ref)

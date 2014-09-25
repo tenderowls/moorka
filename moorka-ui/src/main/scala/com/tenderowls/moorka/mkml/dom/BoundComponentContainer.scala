@@ -7,8 +7,8 @@ import com.tenderowls.moorka.mkml.engine._
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class BoundElementContainer(reactiveElement: Bindable[CreationPolicy])
-  extends ElementBase {
+class BoundComponentContainer(reactiveElement: Bindable[CreationPolicy])
+  extends ComponentBase {
 
   var previous:CreationPolicy = CreationPolicy.Empty
 
@@ -55,7 +55,7 @@ class BoundElementContainer(reactiveElement: Bindable[CreationPolicy])
 
 object CreationPolicy {
   sealed trait CreationPolicy
-  case class Static(node: ElementBase) extends CreationPolicy
-  case class Dynamic(node: ElementBase) extends CreationPolicy
+  case class Static(node: ComponentBase) extends CreationPolicy
+  case class Dynamic(node: ComponentBase) extends CreationPolicy
   case object Empty extends CreationPolicy
 }

@@ -42,6 +42,10 @@ function Moorka() {
             el.id = refId;
             entities[refId] = el;
             break;
+          case "kill_ref":
+            console.log(op[0], op[1]);
+            delete entities[op[1]];
+            break;
           case "append_child" :
             // (to, element)
             var elementId = op[1];

@@ -8,11 +8,11 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.concurrent.Future
 import scala.scalajs.js
 
-sealed trait ElementExtension extends Node with Mortal {
+sealed trait ElementExtension extends SyntheticDomNode with Mortal {
 
-  protected var element:ElementBase = null
+  protected var element:ComponentBase = null
 
-  def assignElement(element: ElementBase): Unit = {
+  def assignElement(element: ComponentBase): Unit = {
     this.element = element
   }
 
@@ -63,7 +63,7 @@ case class ElementPropertyName[A](name: String) {
 
   def =:= (x: Var[A]) = VarPropertyExtension(name, x)
 
-  def from(x: ElementBase): Future[A] = x.ref.get(name).map(_.asInstanceOf[A])
+  def from(x: ComponentBase): Future[A] = x.ref.get(name).map(_.asInstanceOf[A])
 }
 
 class BoundExtensionFactory[A](static: (A => ElementExtension), bound: (Bindable[A]) => BoundElementExtension) 
@@ -79,7 +79,7 @@ class StaticExtensionFactory[A](static: (A => ElementExtension)) {
 
 case class ElementAttributeExtension(name: String, value: String) extends ElementExtension {
 
-  override def assignElement(element: ElementBase): Unit = {
+  override def assignElement(element: ComponentBase): Unit = {
     super.assignElement(element)
     element.ref.updateAttribute(name, value)
   }
@@ -92,7 +92,7 @@ case class SyntheticEventExtension[EventType <: SyntheticEvent](processor: Synth
 
   var slot:Option[Slot[EventType]] = None
   
-  override def assignElement(element: ElementBase): Unit = {
+  override def assignElement(element: ComponentBase): Unit = {
     super.assignElement(element)
     slot = useCapture match {
       case false => Some(processor.addListener(element, listener))
@@ -106,14 +106,14 @@ case class SyntheticEventExtension[EventType <: SyntheticEvent](processor: Synth
 }
 
 case class ElementPropertyExtension[A](name: String, value: A) extends ElementExtension {
-  override def assignElement(element: ElementBase): Unit = {
+  override def assignElement(element: ComponentBase): Unit = {
     super.assignElement(element)
     element.ref.set(name, value)
   }
 }
 
 case class UseClassExtension(className: String, trigger:Boolean) extends ElementExtension {
-  override def assignElement(element: ElementBase): Unit = {
+  override def assignElement(element: ComponentBase): Unit = {
     if (trigger) {
       element.ref.classAdd(className)
     }
@@ -136,7 +136,7 @@ sealed trait BoundElementExtension extends ElementExtension {
 case class UseClassBoundExtension(className: String, trigger:Bindable[Boolean]) 
   extends ElementExtension with BoundElementExtension {
   
-  override def assignElement(element: ElementBase): Unit = {
+  override def assignElement(element: ComponentBase): Unit = {
     subscription = trigger observe { _ =>
       trigger() match {
         case true => element.ref.classAdd(className)
@@ -149,7 +149,7 @@ case class UseClassBoundExtension(className: String, trigger:Bindable[Boolean])
 case class ElementBoundPropertyExtension[A](name: String, value: Bindable[A])
   extends ElementExtension with BoundElementExtension {
 
-  override def assignElement(element: ElementBase): Unit = {
+  override def assignElement(element: ComponentBase): Unit = {
     super.assignElement(element)
     subscription = value observe { _ =>
       element.ref.set(name, value())
@@ -162,7 +162,7 @@ case class VarPropertyExtension[A](name: String, value: Var[A])
 
   var subscriptions: List[Slot[_]] = Nil
 
-  override def assignElement(element: ElementBase): Unit = {
+  override def assignElement(element: ComponentBase): Unit = {
     super.assignElement(element)
     subscriptions ::= value observe { _ =>
       element.ref.set(name, value())
@@ -184,7 +184,7 @@ case class ElementBoundAttributeExtension(name: String, value: Bindable[String])
   extends ElementExtension
   with BoundElementExtension {
 
-  override def assignElement(component: ElementBase): Unit = {
+  override def assignElement(component: ComponentBase): Unit = {
     super.assignElement(component)
     subscription = value observe { _ =>
       component.ref.updateAttribute(name, value())

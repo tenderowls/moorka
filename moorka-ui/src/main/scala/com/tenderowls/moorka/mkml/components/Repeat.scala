@@ -12,9 +12,9 @@ import scala.collection.mutable
  */
 object Repeat {
 
-  type ItemRenderer[A] = (A) => ElementBase
+  type ItemRenderer[A] = (A) => ComponentBase
 
-  def apply[A](dataProvider: CollectionView[A], itemRenderer: (A) => ElementBase) = {
+  def apply[A](dataProvider: CollectionView[A], itemRenderer: (A) => ComponentBase) = {
     new Repeat[A](Var(dataProvider), itemRenderer)
   }
 
@@ -26,9 +26,9 @@ object Repeat {
 class Repeat[A](val dataProvider: Bindable[CollectionView[A]],
                 val itemRenderer: ItemRenderer[A])
 
-  extends ElementBase with MKML {
+  extends ComponentBase with MKML {
 
-  case class Child(data:A, dom:ElementBase)
+  case class Child(data:A, dom:ComponentBase)
 
   private val displayState = mutable.HashMap[Child, Boolean]()
 
@@ -43,7 +43,7 @@ class Repeat[A](val dataProvider: Bindable[CollectionView[A]],
   private var children: CollectionView[Child] = null
 
   val ref = Ref("div")
-
+  println("repeat container " + ref.id)
   dataProvider observe { _ =>
     updateDataProvider()
   }
@@ -77,9 +77,14 @@ class Repeat[A](val dataProvider: Bindable[CollectionView[A]],
     }
   }
 
+  private def killContent() = {
+    if (children != null) children.kill()
+    observers.values.foreach(_.kill())
+  }
+
   private def updateDataProvider() = {
 
-    kill()
+    killContent()
     _dataProvider = dataProvider()
 
     children = _dataProvider.map { x =>
@@ -143,8 +148,7 @@ class Repeat[A](val dataProvider: Bindable[CollectionView[A]],
 
   override def kill(): Unit = {
     super.kill()
-    if (children != null) children.kill()
-    observers.values.foreach(_.kill())
+    killContent()
   }
 
   SyntheticEventProcessor.registerElement(this)

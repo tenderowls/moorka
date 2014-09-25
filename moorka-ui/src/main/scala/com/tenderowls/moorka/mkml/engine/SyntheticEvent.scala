@@ -1,6 +1,6 @@
 package com.tenderowls.moorka.mkml.engine
 
-import com.tenderowls.moorka.mkml.dom.ElementBase
+import com.tenderowls.moorka.mkml.dom.ComponentBase
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -9,9 +9,9 @@ sealed trait SyntheticEvent {
 
   private[mkml] var _bubbles:Boolean = false
 
-  private[mkml] var _currentTarget:ElementBase = null
+  private[mkml] var _currentTarget:ComponentBase = null
 
-  private[mkml] var _target:ElementBase = null
+  private[mkml] var _target:ComponentBase = null
 
   private[mkml] var _timestamp:Long = 0l
 
@@ -23,9 +23,9 @@ sealed trait SyntheticEvent {
 
   def bubbles:Boolean = _bubbles
 
-  def currentTarget:ElementBase = _currentTarget
+  def currentTarget:ComponentBase = _currentTarget
 
-  def target:ElementBase = _target
+  def target:ComponentBase = _target
 
   def timestamp:Long = _timestamp
 
@@ -78,9 +78,9 @@ sealed class MouseEvent extends SyntheticEvent {
 
   def pageY: Int = _pageY
 
-  private[mkml] var _relatedTarget: ElementBase = null
+  private[mkml] var _relatedTarget: ComponentBase = null
 
-  def relatedTarget: ElementBase = _relatedTarget
+  def relatedTarget: ComponentBase = _relatedTarget
 
   private[mkml] var _screenX: Int  = 0
 

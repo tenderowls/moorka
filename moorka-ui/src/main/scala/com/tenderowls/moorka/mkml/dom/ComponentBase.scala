@@ -9,15 +9,16 @@ import scala.scalajs.js
  * DOM element representation
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-abstract class ElementBase extends Node with Mortal {
+abstract class ComponentBase extends SyntheticDomNode with Mortal {
 
-  private[mkml] var parent:ElementBase = null
+  private[mkml] var parent:ComponentBase = null
 
   val ref: Ref
 
-  def kill():Unit = {
+  def kill(): Unit = {
     SyntheticEventProcessor.deregisterElement(this)
+    ref.kill()
   }
 }
 
-class ElementSequence(val value: Seq[ElementBase]) extends Node
+class ElementSequence(val value: Seq[ComponentBase]) extends SyntheticDomNode
