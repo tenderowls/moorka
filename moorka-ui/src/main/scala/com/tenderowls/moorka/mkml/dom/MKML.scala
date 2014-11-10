@@ -4,6 +4,8 @@ import com.tenderowls.moorka.core._
 import com.tenderowls.moorka.mkml.dom.CreationPolicy.CreationPolicy
 import com.tenderowls.moorka.mkml.engine._
 
+import scala.language.implicitConversions
+
 /**
  * Definition of HTML tags, attributes and properties
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -16,11 +18,11 @@ trait MKML {
   //
   //---------------------------------------------------------------------------
 
-  implicit def boundTag(tagNode: Bindable[CreationPolicy]) = {
+  implicit def boundTag(tagNode: Bindable[CreationPolicy]): BoundComponentContainer = {
     new BoundComponentContainer(tagNode)
   }
 
-  implicit def componentSequence(seq: Seq[ComponentBase]) = {
+  implicit def componentSequence(seq: Seq[ComponentBase]): ElementSequence = {
     new ElementSequence(seq)
   }
 

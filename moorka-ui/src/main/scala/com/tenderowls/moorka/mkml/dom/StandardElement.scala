@@ -6,7 +6,7 @@ import com.tenderowls.moorka.mkml.engine._
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class StandardElement(tagName:String, id: Option[String], children:Seq[SyntheticDomNode]) extends ComponentBase {
+class StandardElement(tagName:String, id: Option[String], children: Seq[SyntheticDomNode]) extends ComponentBase {
 
   val ref = id match {
     case Some(x) => Ref(tagName, x)

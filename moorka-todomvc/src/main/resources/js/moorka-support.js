@@ -12,19 +12,21 @@ function Moorka() {
 
     function copyEvent(e) {
       var copy = {};
-      // Iterate on properties
-      Object.getOwnPropertyNames(e).forEach(function (x) {
-        var value = e[x];
-        if (value == null)
-          return;
-        var t = typeof value;
-        if (t === "string" || t === "number" || t === "boolean") {
-          copy[x] = value
+      copy.type = e.type
+      copy.target = e.target.id
+      switch (e.constructor) {
+        case MouseEvent: {
+          copy.altKey = e.altKey;
+          copy.ctrlKey = e.ctrlKey;
+          copy.metaKey = e.metaKey;
+          copy.button = e.button;
+          copy.clientX = e.clientX;
+          copy.clientY = e.clientY;
+          copy.screenX = e.screenX;
+          copy.screenY = e.screenY;
+          break;
         }
-        else if (value instanceof Element) {
-          copy[x] = value.id
-        }
-      });
+      }
       return copy;
     }
 

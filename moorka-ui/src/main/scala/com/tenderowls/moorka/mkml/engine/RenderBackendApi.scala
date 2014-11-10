@@ -24,7 +24,7 @@ object RenderBackendApi {
 
   private var postMessage:WorkerCallback = null
 
-  private var _onMessage = Emitter[Message]
+  private val _onMessage = Emitter[Message]
   
   /**
    * Initialize renderBackend for worker mode

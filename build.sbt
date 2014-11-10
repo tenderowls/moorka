@@ -1,7 +1,6 @@
 import sbt._
 import sbt.Keys._
 import scala.scalajs.ir.ScalaJSVersions
-import scala.scalajs.ir.ScalaJSVersions
 import scala.scalajs.sbtplugin.ScalaJSPlugin._
 import bintray.Keys._
 

@@ -91,7 +91,9 @@ object MoorkaTodoMVC extends Application with MKML  {
           button(
             `class` := "destroy",
             `style` := "cursor: pointer",
-            `click` listen { event => todos -= todo }
+            `click` listen { _ =>
+              todos -= todo
+            }
           )
         ),
         form(
@@ -112,11 +114,10 @@ object MoorkaTodoMVC extends Application with MKML  {
     div(
       section("todoapp")(
         header("header")(
-          h1("todos")(),
+          h1("todos"),
           form(
             inputBox,
             `submit` listen {
-              print("dfsdf")
               `value` from inputBox onSuccess { case x =>
                 val s = x.trim()
                 if (s != "") {
@@ -156,7 +157,7 @@ object MoorkaTodoMVC extends Application with MKML  {
                 li(
                   a(`href`:="#",
                     mkClass("selected") := Bind { filter() == x },
-                    `click` listen { event =>
+                    `click` listen {
                       filter() = x
                     },
                     x match {
@@ -170,7 +171,7 @@ object MoorkaTodoMVC extends Application with MKML  {
             ),
             button("clear-completed")(
               mkShow := Bind { numCompleted() > 0 },
-              `click` listen { event =>
+              `click` listen {
                 todos.remove(_.status() != Completed)
               },
               Bind {

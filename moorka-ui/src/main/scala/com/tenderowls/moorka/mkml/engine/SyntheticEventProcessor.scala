@@ -3,7 +3,6 @@ package com.tenderowls.moorka.mkml.engine
 import com.tenderowls.moorka.core._
 import com.tenderowls.moorka.core.events.Emitter
 import com.tenderowls.moorka.mkml.dom.ComponentBase
-import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.annotation.tailrec
@@ -96,10 +95,11 @@ sealed abstract class SyntheticEventProcessor[A <: SyntheticEvent ] {
       nativeEvent.preventDefault()
   }
   
-  def topLevelListener(e: js.Dynamic) = {
-    val targetId = e.target.asInstanceOf[String]
+  def topLevelListener(nativeEvent: js.Dynamic) = {
+    println(nativeEvent)
+    val targetId = nativeEvent.target.asInstanceOf[String]
     SyntheticEventProcessor.nativeElementIndex.get(targetId).foreach { syntheticTarget =>
-      propagate(syntheticTarget, e)
+      propagate(syntheticTarget, nativeEvent)
     }
   }
 
@@ -114,7 +114,7 @@ sealed abstract class SyntheticEventProcessor[A <: SyntheticEvent ] {
   RenderBackendApi.onMessage subscribe { x =>
     if (x(0) == "event") {
       val e = x(1).asInstanceOf[js.Dynamic]
-      if (e.`type` == eventType) {
+      if (e.`type`.asInstanceOf[String] == eventType) {
         topLevelListener(e)
       }
     }
