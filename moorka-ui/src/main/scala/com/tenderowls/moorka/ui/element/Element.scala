@@ -1,22 +1,20 @@
-package com.tenderowls.moorka.mkml.dom
+package com.tenderowls.moorka.ui.element
 
 import com.tenderowls.moorka.core._
-import com.tenderowls.moorka.mkml.engine._
+import com.tenderowls.moorka.ui.Ref
+import com.tenderowls.moorka.ui.event.EventProcessor
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class StandardElement(tagName:String, id: Option[String], children: Seq[SyntheticDomNode]) extends ComponentBase {
+class Element(tagName: String, children: Seq[ElementEntry]) extends ElementBase {
 
-  val ref = id match {
-    case Some(x) => Ref(tagName, x)
-    case None => Ref(tagName)
-  }
+  val ref = Ref(tagName)
 
   var observers:List[Mortal] = Nil
 
   children.foreach {
-    case e: ComponentBase =>
+    case e: ElementBase =>
       observers ::= e
       e.parent = this
       ref.appendChild(e.ref)
@@ -37,5 +35,5 @@ class StandardElement(tagName:String, id: Option[String], children: Seq[Syntheti
     observers = Nil
   }
 
-  SyntheticEventProcessor.registerElement(this)
+  EventProcessor.registerElement(this)
 }

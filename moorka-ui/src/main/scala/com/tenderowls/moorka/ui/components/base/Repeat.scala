@@ -1,9 +1,9 @@
-package com.tenderowls.moorka.mkml.components
+package com.tenderowls.moorka.ui.components.base
 
 import com.tenderowls.moorka.core._
-import com.tenderowls.moorka.mkml.components.Repeat.ItemRenderer
-import com.tenderowls.moorka.mkml.dom._
-import com.tenderowls.moorka.mkml.engine._
+import com.tenderowls.moorka.ui.element._
+import com.tenderowls.moorka.ui.Ref
+import com.tenderowls.moorka.ui.event.EventProcessor
 
 import scala.collection.mutable
 
@@ -12,23 +12,21 @@ import scala.collection.mutable
  */
 object Repeat {
 
-  type ItemRenderer[A] = (A) => ComponentBase
-
-  def apply[A](dataProvider: CollectionView[A], itemRenderer: (A) => ComponentBase) = {
+  def apply[A](dataProvider: CollectionView[A], itemRenderer: (A) => ElementBase) = {
     new Repeat[A](Var(dataProvider), itemRenderer)
   }
 
-  def apply[A](dataProvider: Bindable[CollectionView[A]], itemRenderer: ItemRenderer[A]) = {
+  def apply[A](dataProvider: Bindable[CollectionView[A]], itemRenderer: (A) => ElementBase) = {
     new Repeat[A](dataProvider, itemRenderer)
   }
 }
 
 class Repeat[A](val dataProvider: Bindable[CollectionView[A]],
-                val itemRenderer: ItemRenderer[A])
+                val itemRenderer: (A) => ElementBase)
 
-  extends ComponentBase with MKML {
+  extends ElementBase {
 
-  case class Child(data:A, dom:ComponentBase)
+  case class Child(data:A, dom:ElementBase)
 
   private val displayState = mutable.HashMap[Child, Boolean]()
 
@@ -151,5 +149,5 @@ class Repeat[A](val dataProvider: Bindable[CollectionView[A]],
     killContent()
   }
 
-  SyntheticEventProcessor.registerElement(this)
+  EventProcessor.registerElement(this)
 }

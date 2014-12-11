@@ -8,8 +8,12 @@ val dontPublish = Seq(
   publish := { }
 )
 
+val SCALA_VERSION = "2.11.2"
+
+scalaVersion := SCALA_VERSION
+
 val commonSettings = Seq(
-  scalaVersion := "2.11.2",
+  scalaVersion := SCALA_VERSION,
   version := "0.0.1",
   organization := "com.tenderowls.opensource",
   licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")),
@@ -30,7 +34,7 @@ lazy val `moorka-core` = (project in file("moorka-core"))
     libraryDependencies ++= Seq(
       "org.scala-lang.modules.scalajs" %%% "scalajs-dom" % "0.6",
       "org.scala-lang.modules.scalajs" %% "scalajs-jasmine-test-framework" % ScalaJSVersions.current % "test",
-      "org.scala-lang" % "scala-reflect" % "2.11.1"
+      "org.scala-lang" % "scala-reflect" % SCALA_VERSION
     )
   )
 
@@ -38,6 +42,11 @@ lazy val `moorka-ui` = (project in file("moorka-ui"))
   .settings(publishSettings:_*)
   .settings(commonSettings:_*)
   .settings(scalaJSSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-xml" % "1.0.2"
+    )
+  )
   .dependsOn(`moorka-core`)
 
 lazy val `moorka-todomvc` = (project in file("moorka-todomvc"))
@@ -48,6 +57,9 @@ lazy val `moorka-todomvc` = (project in file("moorka-todomvc"))
 
 lazy val root = (project in file("."))
   .settings(dontPublish:_*)
+  .settings(
+    scalaVersion := SCALA_VERSION
+  )
   .aggregate(
     `moorka-core`,
     `moorka-ui`,

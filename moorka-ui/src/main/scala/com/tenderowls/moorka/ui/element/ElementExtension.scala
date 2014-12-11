@@ -1,18 +1,19 @@
-package com.tenderowls.moorka.mkml.dom
+package com.tenderowls.moorka.ui.element
 
 import com.tenderowls.moorka.core._
 import com.tenderowls.moorka.mkml.engine._
+import com.tenderowls.moorka.ui.event.{EventProcessor, SyntheticEvent, ChangeEventProcessor}
+import com.tenderowls.moorka.ui.RefHolder
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 import scala.concurrent.Future
-import scala.scalajs.js
 
-sealed trait ElementExtension extends SyntheticDomNode with Mortal {
+sealed trait ElementExtension extends ElementEntry with Mortal {
 
-  protected var element:ComponentBase = null
+  protected var element:ElementBase = null
 
-  def assignElement(element: ComponentBase): Unit = {
+  def assignElement(element: ElementBase): Unit = {
     this.element = element
   }
 
@@ -28,7 +29,7 @@ case class ElementAttributeName(name: String) {
   def :=(x: Bindable[String]) = ElementBoundAttributeExtension(name, x)
 }
 
-case class ElementEventName[EventType <: SyntheticEvent](processor: SyntheticEventProcessor[EventType]) {
+case class ElementEventName[EventType <: SyntheticEvent](processor: EventProcessor[EventType]) {
 
   def listen(listener: (EventType) => Unit) = {
     SyntheticEventExtension[EventType](
@@ -63,10 +64,10 @@ case class ElementPropertyName[A](name: String) {
 
   def =:= (x: Var[A]) = VarPropertyExtension(name, x)
 
-  def from(x: ComponentBase): Future[A] = x.ref.get(name).map(_.asInstanceOf[A])
+  def from(x: RefHolder): Future[A] = x.ref.get(name).map(_.asInstanceOf[A])
 }
 
-class BoundExtensionFactory[A](static: (A => ElementExtension), bound: (Bindable[A]) => BoundElementExtension) 
+class BoundExtensionFactory[A](static: (A => ElementExtension), bound: (Bindable[A]) => BoundElementExtension)
   extends StaticExtensionFactory[A](static) {
 
   def :=(x: Bindable[A]) = bound(x)
@@ -79,20 +80,20 @@ class StaticExtensionFactory[A](static: (A => ElementExtension)) {
 
 case class ElementAttributeExtension(name: String, value: String) extends ElementExtension {
 
-  override def assignElement(element: ComponentBase): Unit = {
+  override def assignElement(element: ElementBase): Unit = {
     super.assignElement(element)
     element.ref.updateAttribute(name, value)
   }
 }
 
-case class SyntheticEventExtension[EventType <: SyntheticEvent](processor: SyntheticEventProcessor[EventType],
+case class SyntheticEventExtension[EventType <: SyntheticEvent](processor: EventProcessor[EventType],
                                                                 listener: EventType => Unit,
                                                                 useCapture: Boolean)
   extends ElementExtension {
 
   var slot:Option[Slot[EventType]] = None
-  
-  override def assignElement(element: ComponentBase): Unit = {
+
+  override def assignElement(element: ElementBase): Unit = {
     super.assignElement(element)
     slot = useCapture match {
       case false => Some(processor.addListener(element, listener))
@@ -106,14 +107,14 @@ case class SyntheticEventExtension[EventType <: SyntheticEvent](processor: Synth
 }
 
 case class ElementPropertyExtension[A](name: String, value: A) extends ElementExtension {
-  override def assignElement(element: ComponentBase): Unit = {
+  override def assignElement(element: ElementBase): Unit = {
     super.assignElement(element)
     element.ref.set(name, value)
   }
 }
 
 case class UseClassExtension(className: String, trigger:Boolean) extends ElementExtension {
-  override def assignElement(element: ComponentBase): Unit = {
+  override def assignElement(element: ElementBase): Unit = {
     if (trigger) {
       element.ref.classAdd(className)
     }
@@ -133,10 +134,10 @@ sealed trait BoundElementExtension extends ElementExtension {
   }
 }
 
-case class UseClassBoundExtension(className: String, trigger:Bindable[Boolean]) 
+case class UseClassBoundExtension(className: String, trigger:Bindable[Boolean])
   extends ElementExtension with BoundElementExtension {
-  
-  override def assignElement(element: ComponentBase): Unit = {
+
+  override def assignElement(element: ElementBase): Unit = {
     subscription = trigger observe { _ =>
       trigger() match {
         case true => element.ref.classAdd(className)
@@ -149,7 +150,7 @@ case class UseClassBoundExtension(className: String, trigger:Bindable[Boolean])
 case class ElementBoundPropertyExtension[A](name: String, value: Bindable[A])
   extends ElementExtension with BoundElementExtension {
 
-  override def assignElement(element: ComponentBase): Unit = {
+  override def assignElement(element: ElementBase): Unit = {
     super.assignElement(element)
     subscription = value observe { _ =>
       element.ref.set(name, value())
@@ -162,7 +163,7 @@ case class VarPropertyExtension[A](name: String, value: Var[A])
 
   var subscriptions: List[Slot[_]] = Nil
 
-  override def assignElement(element: ComponentBase): Unit = {
+  override def assignElement(element: ElementBase): Unit = {
     super.assignElement(element)
     subscriptions ::= value observe { _ =>
       element.ref.set(name, value())
@@ -184,7 +185,7 @@ case class ElementBoundAttributeExtension(name: String, value: Bindable[String])
   extends ElementExtension
   with BoundElementExtension {
 
-  override def assignElement(component: ComponentBase): Unit = {
+  override def assignElement(component: ElementBase): Unit = {
     super.assignElement(component)
     subscription = value observe { _ =>
       component.ref.updateAttribute(name, value())

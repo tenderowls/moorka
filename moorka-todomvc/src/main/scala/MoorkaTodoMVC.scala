@@ -1,11 +1,11 @@
-import com.tenderowls.moorka.core._
-import com.tenderowls.moorka.mkml._
-import com.tenderowls.moorka.mkml.dom.MKML
-import com.tenderowls.moorka.mkml.engine.Application
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
-object MoorkaTodoMVC extends Application with MKML  {
+import com.tenderowls.moorka.core._
+import com.tenderowls.moorka.ui.components.html._
+import com.tenderowls.moorka.ui.components.base._
+
+object MoorkaTodoMVC extends Application {
 
   case class Task(txt: Var[String], status: Var[Status])
 
@@ -55,7 +55,8 @@ object MoorkaTodoMVC extends Application with MKML  {
 
   def start() = {
 
-    val inputBox = input("new-todo")(
+    val inputBox = input(
+      `className` := "new-todo",
       `placeholder` := "What needs to be done?",
       `autofocus` := true
     )
@@ -112,8 +113,8 @@ object MoorkaTodoMVC extends Application with MKML  {
     }
 
     div(
-      section("todoapp")(
-        header("header")(
+      section(`className` := "todoapp",
+        header(`className` := "header",
           h1("todos"),
           form(
             inputBox,
@@ -128,11 +129,11 @@ object MoorkaTodoMVC extends Application with MKML  {
             }
           )
         ),
-        section("main")(
-          input("toggle-all")(
+        section(`className` := "main",
+          input(
+            `className` := "toggle-all",
             `type` := "checkbox",
             `style` := "cursor: pointer",
-            // todo length bust be var
             `checked` := Bind { todos.length > 0 && numCompleted() == todos.length },
             `click` listen { event =>
               `checked` from event.target onSuccess {
@@ -146,13 +147,13 @@ object MoorkaTodoMVC extends Application with MKML  {
             }
           ),
           label(`for`:= "toggle-all", "Mark all as complete"),
-          ul("todo-list")( todosView),
-          footer("footer")(
-            span("todo-count")(
+          ul(`className` := "todo-list", todosView),
+          footer(`className` := "footer",
+            span(`className` := "todo-count",
               strong( Bind { numActive().toString } ),
               span(" item left")
             ),
-            ul("filters")(
+            ul(`className` := "filters",
               List(All, Active, Completed).map { x =>
                 li(
                   a(`href`:="#",
@@ -169,7 +170,8 @@ object MoorkaTodoMVC extends Application with MKML  {
                 )
               }
             ),
-            button("clear-completed")(
+            button(
+              `className` := "clear-completed",
               mkShow := Bind { numCompleted() > 0 },
               `click` listen {
                 todos.remove(_.status() != Completed)
@@ -182,7 +184,7 @@ object MoorkaTodoMVC extends Application with MKML  {
           )
         )
       ),
-      footer("info")(
+      footer(`className` := "info",
         p("Double-click to edit a todo")
       )
     )

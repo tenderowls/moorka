@@ -4,7 +4,6 @@ package com.tenderowls.moorka.core.binding
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 object Var {
-
   def apply[A](x: A) = new Var[A](x)
 }
 

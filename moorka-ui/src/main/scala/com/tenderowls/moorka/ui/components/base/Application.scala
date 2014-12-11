@@ -1,6 +1,7 @@
-package com.tenderowls.moorka.mkml.engine
+package com.tenderowls.moorka.ui.components.base
 
-import com.tenderowls.moorka.mkml.dom.ComponentBase
+import com.tenderowls.moorka.ui.element.ElementBase
+import com.tenderowls.moorka.ui.RenderAPI
 
 import scala.scalajs.js
 
@@ -9,10 +10,10 @@ import scala.scalajs.js
  */
 abstract class Application extends js.JSApp {
 
-  def start(): ComponentBase
+  def start(): ElementBase
 
   def main() = {
-    RenderBackendApi ! js.Array(
+    RenderAPI ! js.Array(
       "append_child",
       "root",
       start().ref.id

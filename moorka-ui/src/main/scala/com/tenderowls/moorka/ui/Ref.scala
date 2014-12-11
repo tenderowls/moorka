@@ -1,4 +1,4 @@
-package com.tenderowls.moorka.mkml.engine
+package com.tenderowls.moorka.ui
 
 import com.tenderowls.moorka.core.Mortal
 
@@ -15,7 +15,7 @@ object Ref {
   }
 
   def apply(factoryId: String, id: String): Ref = {
-    RenderBackendApi ! js.Array("create_ref", factoryId, id)
+    RenderAPI ! js.Array("create_ref", factoryId, id)
     new Ref(id)
   }
 }
@@ -26,58 +26,58 @@ object Ref {
 class Ref(val id: String) extends Mortal {
 
   def kill(): Unit = {
-    RenderBackendApi ! js.Array("kill_ref", id)
+    RenderAPI ! js.Array("kill_ref", id)
   }
 
   def appendChild(element: Ref) = {
-    RenderBackendApi ! js.Array("append_child", id, element.id)
+    RenderAPI ! js.Array("append_child", id, element.id)
   }
   
   def insertChild(element: Ref, ref: Ref) = {
-    RenderBackendApi ! js.Array("insert_child", id, element.id, ref.id)
+    RenderAPI ! js.Array("insert_child", id, element.id, ref.id)
   }
   
   def removeChild(element: Ref) = {
-    RenderBackendApi ! js.Array("remove_child", id, element.id)
+    RenderAPI ! js.Array("remove_child", id, element.id)
   }
 
   def replaceChild(newChild: Ref, oldChild: Ref) = {
-    RenderBackendApi ! js.Array("replace_child", id, newChild.id, oldChild.id)
+    RenderAPI ! js.Array("replace_child", id, newChild.id, oldChild.id)
   }
 
   def removeChildren(elements: Seq[Ref]) = {
     val xs = new js.Array[String]
     elements.foreach(x => xs.push(x.id))
-    RenderBackendApi ! js.Array("remove_children", id, xs)
+    RenderAPI ! js.Array("remove_children", id, xs)
   }
   
   def appendChildren(elements: Seq[Ref]) = {
     val xs = new js.Array[String]
     elements.foreach(x => xs.push(x.id))
-    RenderBackendApi ! js.Array("append_children", id, xs)
+    RenderAPI ! js.Array("append_children", id, xs)
   }
   
   def updateAttribute(name: String, value: Any) = {
-    RenderBackendApi ! js.Array("update_attribute", id, name, value)
+    RenderAPI ! js.Array("update_attribute", id, name, value)
   }
 
-  def classAdd(name: String) = {
-    RenderBackendApi ! js.Array("class_add", id, name)
+  def classAdd(name: String): Unit = {
+    RenderAPI ! js.Array("class_add", id, name)
   }
 
   def classRemove(name: String) = {
-    RenderBackendApi ! js.Array("class_remove", id, name)
+    RenderAPI ! js.Array("class_remove", id, name)
   }
 
   def set(name: String, value: Any) = {
-    RenderBackendApi ! js.Array("set", id, name, value)
+    RenderAPI ! js.Array("set", id, name, value)
   }
   
   def get(name: String): Future[Any] = {
     val requestId = Math.random()
     val promise = Promise[Any]()
     // todo this operation produce a lot of garbage 
-    RenderBackendApi.onMessage until { x =>
+    RenderAPI.onMessage until { x =>
       if (x(0) == "get_response" && x(1) == requestId) {
         x(2) match {
           case "error" => promise.failure(new Exception("Can't get " + name + " from " + id))
@@ -87,7 +87,7 @@ class Ref(val id: String) extends Mortal {
       }
       else true
     }
-    RenderBackendApi ! js.Array("get", id, name, requestId)
+    RenderAPI ! js.Array("get", id, name, requestId)
     promise.future
   }
 
@@ -95,7 +95,7 @@ class Ref(val id: String) extends Mortal {
     val requestId = Math.random()
     val promise = Promise[Any]()
     // todo this operation produce a lot of garbage 
-    RenderBackendApi.onMessage until { x =>
+    RenderAPI.onMessage until { x =>
       if (x(0) == "call_response" && x(1) == requestId) {
         x(2) match {
           case "error" => promise.failure(new Exception("Can't get " + name + " from " + element.id))
@@ -110,7 +110,7 @@ class Ref(val id: String) extends Mortal {
       case x: Ref => xs.push("$$:" + x.id)
       case any => xs.push(any)
     }
-    RenderBackendApi ! js.Array("call", element.id, name, requestId).concat(xs)
+    RenderAPI ! js.Array("call", element.id, name, requestId).concat(xs)
     promise.future
   }
 }

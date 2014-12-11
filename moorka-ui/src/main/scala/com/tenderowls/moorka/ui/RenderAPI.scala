@@ -1,4 +1,4 @@
-package com.tenderowls.moorka.mkml.engine
+package com.tenderowls.moorka.ui
 
 import com.tenderowls.moorka.core.Event
 import com.tenderowls.moorka.core.events.Emitter
@@ -8,11 +8,11 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
 
 /**
- * Render backend interface
+ * Render bac kend interface
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 @JSExport("renderBackendApi")
-object RenderBackendApi {
+object RenderAPI {
 
   type Message = js.Array[Any]
 

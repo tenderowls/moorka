@@ -8,6 +8,24 @@ import scala.reflect.macros.whitebox.Context
  */
 object BindingMacro {
 
+  trait Enrichable[This, That <: Enrichable[This, Any]] {
+
+    val enrichment: Option[That] = None
+
+    def make(e: That): This
+
+    def +(e: That): This = {
+      enrichment match {
+        case Some(x) => x + e
+        case None => make(e)
+      }
+    }
+  }
+
+  def $() = {
+
+  }
+
   def apply[A](f: => A): Bindable[A] = macro macroBindingImpl[A]
 
   def macroBindingImpl[A](c: Context)(f: c.Tree) = {

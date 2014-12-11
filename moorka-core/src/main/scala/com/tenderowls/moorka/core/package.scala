@@ -12,6 +12,7 @@ package object core {
 
   val Bind = binding.BindingMacro
   val Var = binding.Var
+
   type Var[A] = binding.Var[A]
   type Bindable[A] = binding.Bindable[A]
 
