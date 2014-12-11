@@ -1,7 +1,6 @@
 package com.tenderowls.moorka.ui.element
 
 import com.tenderowls.moorka.core._
-import com.tenderowls.moorka.mkml.engine._
 import com.tenderowls.moorka.ui.event.{EventProcessor, SyntheticEvent, ChangeEventProcessor}
 import com.tenderowls.moorka.ui.RefHolder
 

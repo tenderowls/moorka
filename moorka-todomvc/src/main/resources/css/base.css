@@ -383,16 +383,16 @@ label[for='toggle-all'] {
 */
 
 @media screen and (-webkit-min-device-pixel-ratio:0) {
-	#toggle-all,
-	#todo-list li .toggle {
+	.toggle-all,
+	.todo-list li .toggle {
 		background: none;
 	}
 
-	#todo-list li .toggle {
+	.todo-list li .toggle {
 		height: 40px;
 	}
 
-	#toggle-all {
+	.toggle-all {
 		top: -56px;
 		left: -15px;
 		width: 65px;
@@ -548,7 +548,7 @@ hr {
 		left: 8px;
 	}
 
-	.learn-bar #todoapp {
+	.learn-bar .todoapp {
 		width: 550px;
 		margin: 130px auto 40px auto;
 	}

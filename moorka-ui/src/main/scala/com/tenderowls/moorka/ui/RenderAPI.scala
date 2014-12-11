@@ -2,10 +2,11 @@ package com.tenderowls.moorka.ui
 
 import com.tenderowls.moorka.core.Event
 import com.tenderowls.moorka.core.events.Emitter
-import org.scalajs.dom
 
-import scala.scalajs.js
+import scala.concurrent.Future
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.scalajs.js.annotation.JSExport
+import scala.scalajs.js
 
 /**
  * Render bac kend interface
@@ -41,23 +42,20 @@ object RenderAPI {
    */
   @JSExport def defaultMode(incoming:WorkerCallback): js.Function1[Message, _] = {
     postMessage = incoming
-    val f = { (message: Message) =>
-      dom.setTimeout( { () =>
-        _onMessage.emit(message)
-      }, 1)
+    (message: Message) => Future {
+      _onMessage.emit(message)
     }
-    f
   }
 
   def !(msg: Message) = {
     messageBuffer.push(msg)
     if (!inAction) {
       inAction = true
-      dom.setTimeout( { () =>
+      Future {
         postMessage(messageBuffer)
         messageBuffer.splice(0)
         inAction = false
-      }, 1)
+      }
     }
   }
 

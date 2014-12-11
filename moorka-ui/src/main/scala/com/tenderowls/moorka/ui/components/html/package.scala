@@ -1,7 +1,6 @@
 package com.tenderowls.moorka.ui.components
 
 import com.tenderowls.moorka.core._
-import com.tenderowls.moorka.ui.ChangeEventProcessor
 import com.tenderowls.moorka.ui.element._
 import com.tenderowls.moorka.ui.event._
 

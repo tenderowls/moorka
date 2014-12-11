@@ -1,15 +1,14 @@
 package com.tenderowls.moorka.core.binding
 
-import org.scalajs.dom
-
-import scala.scalajs.js
+import scala.concurrent.Future
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class ExpressionBinding[A](dependencies: Seq[Bindable[_]])(expr: => A) extends BindingBase[A] {
+class ExpressionBinding[A](dependencies: Seq[Bindable[_]])(expression: => A) extends BindingBase[A] {
 
-  private var value = expr
+  private var value = expression
 
   private var _valid = true
 
@@ -19,14 +18,14 @@ class ExpressionBinding[A](dependencies: Seq[Bindable[_]])(expr: => A) extends B
         _valid = false
         // Deferred event emit cause more
         // than one dependency could be changed
-        dom.setTimeout( { () => emit(this) }: js.Function , 1)
+        Future(emit(this))          
       }
     }
   }
 
   def apply(): A = {
     if (!_valid) {
-      value = expr
+      value = expression
       _valid = true
     }
     value
