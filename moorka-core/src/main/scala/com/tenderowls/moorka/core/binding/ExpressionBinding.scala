@@ -1,7 +1,6 @@
 package com.tenderowls.moorka.core.binding
 
-import com.tenderowls.moorka.core.Emitter
-import com.tenderowls.moorka.core.rx.RxState
+import com.tenderowls.moorka.core._
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
@@ -9,7 +8,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class ExpressionBinding[A](dependencies: Seq[RxState[_]])
+class ExpressionBinding[A](dependencies: Seq[RxStream[_]])
                           (expression: => A)
   extends Emitter[A] with RxState[A] {
 

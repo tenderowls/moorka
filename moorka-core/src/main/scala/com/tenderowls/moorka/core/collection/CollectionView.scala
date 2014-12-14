@@ -87,7 +87,7 @@ trait CollectionView[A] extends Mortal {
    * Apply function `f` to all elements of collection
    * @param f function to ally
    */
-  def foreach(f: (A) => Unit): Unit
+  def foreach(f: A => Any): Unit
 
   /**
    * Maps collection to `B` type. Note that you receives
@@ -111,6 +111,12 @@ trait CollectionView[A] extends Mortal {
    * @return filtered collection
    */
   def filter(f: (A) => Boolean): CollectionView[A]
+
+ /**
+  * Applies a binary operator to a start value and all elements of this $coll,
+  * going left to right.
+  */
+  def foldLeft[B](z: B)(op: (B, A) => B): RxState[B]
 
   /**
    * Converts to standard scala immutable sequence

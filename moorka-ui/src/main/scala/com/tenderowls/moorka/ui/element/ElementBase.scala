@@ -8,7 +8,7 @@ import com.tenderowls.moorka.ui.Ref
  * DOM element representation
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-abstract class ElementBase extends ElementEntry with Mortal with EventTarget {
+trait ElementBase extends ElementEntry with Mortal with EventTarget {
 
   private[moorka] var parent: EventTarget = null
 

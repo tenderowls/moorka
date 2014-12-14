@@ -1,8 +1,7 @@
 package com.tenderowls.moorka.core.collection
 
-import com.tenderowls.moorka.core.rx.RxState
-
-import scala.scalajs.js
+import com.tenderowls.moorka.core.binding.ExpressionBinding
+import com.tenderowls.moorka.core._
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -17,17 +16,17 @@ private[collection] abstract class CollectionBase[A] extends CollectionView[A] {
     new Filtered[A](this, f)
   }
 
-  def foreach(f: (A) => Unit): Unit = {
-    // todo optimize
-    val l = length
-    val range = 0 until l
-    val a = new js.Array[A](l)
+  def foldLeft[B](z: B)(op: (B, A) => B): RxState[B] = {
+    new ExpressionBinding(Seq(added, removed, inserted, updated))({
+      var result = z
+      foreach (x => result = op(result, x))
+      result
+    })
+  }
 
-    for (i <- range)
-      a(i) = apply(i)
-
-    for (i <- range) {
-      val e = a(i)
+  def foreach(f: A => Any): Unit = {
+    val elements = asSeq
+    for (e <- elements) {
       f(e)
     }
   }

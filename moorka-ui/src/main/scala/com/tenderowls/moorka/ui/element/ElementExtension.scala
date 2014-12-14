@@ -30,7 +30,7 @@ case class ElementAttributeName(name: String) {
 
 case class ElementEventName[EventType <: SyntheticEvent](processor: EventProcessor[EventType]) {
 
-  def listen(listener: (EventType) => Unit) = {
+  def subscribe(listener: (EventType) => Unit) = {
     SyntheticEventExtension[EventType](
       processor,
       listener,

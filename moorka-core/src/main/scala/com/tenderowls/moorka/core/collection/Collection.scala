@@ -83,8 +83,21 @@ class Collection[A](private var buffer: js.Array[A]) extends CollectionBase[A] {
     inserted.emit(IndexedElement(idx, e))
   }
 
-  def update(idx: Int, e: A) = {
+  def update(idx: Int, e: A): Unit = {
     buffer(idx) = e
     updated.emit(IndexedElement(idx, e))
+  }
+
+  def update(e: A, to: A): Unit = {
+    val idx = indexOf(e)
+    update(idx, to)
+  }
+
+  def updateAll(f: A => A) = {
+    val elements = asSeq
+    for (i <- 0 until length) {
+      val e = elements(i)
+      update(i, f(e))
+    }
   }
 }

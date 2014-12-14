@@ -62,4 +62,17 @@ final class RxStreamOps[A](val self: RxStream[A]) extends AnyVal {
       }
     }
   }
+
+  def merge(one: RxStream[_]): RxStream[Any] = {
+    new Emitter[Any] {
+      val rip = Seq(
+        one.subscribe(emit),
+        self.subscribe(emit)
+      )
+      override def kill(): Unit = {
+        rip.foreach(_.kill())
+        super.kill()
+      }
+    }
+  }
 }

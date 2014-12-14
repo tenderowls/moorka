@@ -1,8 +1,8 @@
 package com.tenderowls.moorka.ui.components.base
 
 import com.tenderowls.moorka.core._
-import com.tenderowls.moorka.ui.element._
 import com.tenderowls.moorka.ui.Ref
+import com.tenderowls.moorka.ui.element._
 import com.tenderowls.moorka.ui.event.EventProcessor
 
 import scala.collection.mutable
@@ -12,141 +12,69 @@ import scala.collection.mutable
  */
 object Repeat {
 
-  def apply[A](dataProvider: CollectionView[A], itemRenderer: (A) => ElementBase) = {
-    new Repeat[A](Var(dataProvider), itemRenderer)
-  }
-
-  def apply[A](dataProvider: RxState[CollectionView[A]], itemRenderer: (A) => ElementBase) = {
-    new Repeat[A](dataProvider, itemRenderer)
+  def apply[A](dataProvider: CollectionView[A], componentFactory: RxState[A] => Component[A]) = {
+    new Repeat[A](dataProvider, componentFactory)
   }
 }
 
-class Repeat[A](val dataProvider: RxState[CollectionView[A]],
-                val itemRenderer: (A) => ElementBase)
-
+class Repeat[A](dataProvider: CollectionView[A], factory: RxState[A] => Component[_])
   extends ElementBase {
 
-  case class Child(data:A, dom:ElementBase)
-
-  private val displayState = mutable.HashMap[Child, Boolean]()
-
-  private val observers = mutable.HashMap[Child, RxStream[_]]()
-
-  private var _viewFilter = (_: A) => true
-
-  private var _rxExtractor: (A) => RxState[_] = null
-
-  private var _dataProvider = dataProvider()
-
-  private var children: CollectionView[Child] = null
-
   val ref = Ref("div")
-  println("repeat container " + ref.id)
-  dataProvider observe {
-    updateDataProvider()
+  val components = mutable.Buffer[Component[_]]()
+  val states = mutable.Buffer[Var[A]]()
+
+  private def createAndAppendComponent(x: A): Component[_] = {
+    // Create reactive state and state renderer
+    val state = Var(x)
+    val component = factory(state)
+    // Add theirs to internal cache
+    states += state
+    components += component
+    component
   }
 
-  private def updateDisplayStateOfChild(child: Child) = {
-    if (_viewFilter(child.data)) {
-      if (!displayState(child)) {
-        child.dom.ref.classRemove("hidden")
-        displayState(child) = true
-      }
+  ref.appendChildren(
+    dataProvider.asSeq.map { x =>
+      val c = createAndAppendComponent(x)
+      c.parent = this
+      c.ref
     }
-    else {
-      if (displayState(child)) {
-        child.dom.ref.classAdd("hidden")
-        displayState(child) = false
-      }
-    }
+  )
+
+  dataProvider.added subscribe { x =>
+    val c = createAndAppendComponent(x)
+    c.parent = this
+    ref.appendChild(c.ref)
   }
 
-  private def createObserver(child: Child) = {
-    if (_rxExtractor != null) {
-      observers(child) = _rxExtractor(child.data) subscribe { _ =>
-        updateDisplayStateOfChild(child)
-      }
-    }
+  dataProvider.removed subscribe { x =>
+    states.remove(x.idx)
+    val c = components.remove(x.idx)
+    ref.removeChild(c.ref)
+    c.parent = null
+    c.kill()
   }
 
-  private def killObserver(child: Child) = {
-    if (_rxExtractor != null) {
-      observers(child).kill()
-    }
-  }
-
-  private def killContent() = {
-    if (children != null) children.kill()
-    observers.values.foreach(_.kill())
-  }
-
-  private def updateDataProvider() = {
-
-    killContent()
-    _dataProvider = dataProvider()
-
-    children = _dataProvider.map { x =>
-      val child = Child(x, itemRenderer(x))
-      displayState(child) = true
-      updateDisplayStateOfChild(child)
-      createObserver(child)
-      child
-    }
-
-    ref.appendChildren(children.asSeq.map(_.dom.ref))
-
-    children.foreach(_.dom.parent = this)
-
-    children.added subscribe { x =>
-      x.dom.parent = this
-      ref.appendChild(x.dom.ref)
-    }
-
-    children.inserted subscribe { x =>
-      x.idx + 1 match {
-        case idx if idx < children.length =>
-          x.e.dom.parent = this
-          ref.insertChild(x.e.dom.ref, children(idx).dom.ref)
-        case _ =>
-          x.e.dom.parent = this
-          ref.appendChild(x.e.dom.ref)
-      }
-    }
-
-    children.removed subscribe { x =>
-      x.e.dom.parent = null
-      ref.removeChild(x.e.dom.ref)
-      killObserver(x.e)
-      x.e.dom.kill()
-    }
-
-    children.updated subscribe { x =>
-      val oldChild = children(x.idx)
-      oldChild.dom.parent = null
-      oldChild.dom.kill()
-      x.e.dom.parent = this
-      ref.replaceChild(x.e.dom.ref, oldChild.dom.ref)
+  dataProvider.inserted subscribe { x =>
+    val state = Var(x.e)
+    val c = factory(state)
+    states.insert(x.idx, state)
+    components.insert(x.idx, c)
+    c.parent = this
+    // Insert into DOM
+    x.idx + 1 match {
+      case idx if idx < components.length =>
+        ref.insertChild(c.ref, components(idx).ref)
+      case _ =>
+        c.parent = this
+        ref.appendChild(c.ref)
     }
   }
 
-  /**
-   * Sets elements invisible when they are not satisfy filter
-   */
-  def viewFilter(f: (A) => Boolean): Repeat[A] = {
-    _viewFilter = f
-    children.foreach(updateDisplayStateOfChild)
-    this
-  }
-
-  def makeDataObservable(f: (A) => RxState[_]): Repeat[A] = {
-    _rxExtractor = f
-    children.foreach(createObserver)
-    this
-  }
-
-  override def kill(): Unit = {
-    super.kill()
-    killContent()
+  dataProvider.updated subscribe { x =>
+    val state = states(x.idx)
+    state() = x.e
   }
 
   EventProcessor.registerElement(this)

@@ -82,8 +82,6 @@ package object html {
 
   val `type` = ElementAttributeName("type")
 
-  val `class` = ElementAttributeName("class")
-
   val `style` = ElementAttributeName("style")
 
   val `placeholder` = ElementAttributeName("placeholder")
@@ -124,7 +122,7 @@ package object html {
   //
   //---------------------------------------------------------------------------
 
-  def mkClass(clsName: String, not: Boolean = false) = new BoundExtensionFactory[Boolean](
+  def useClassName(clsName: String, not: Boolean = false) = new BoundExtensionFactory[Boolean](
     x => UseClassExtension(clsName, if (not) !x else x),
     x => UseClassBoundExtension(
       clsName,
@@ -135,7 +133,7 @@ package object html {
     )
   )
 
-  val mkShow = mkClass("hidden", not = true)
+  val `show` = useClassName("hidden", not = true)
 
-  val mkHide = mkClass("hidden", not = false)
+  val `hide` = useClassName("hidden", not = false)
 }

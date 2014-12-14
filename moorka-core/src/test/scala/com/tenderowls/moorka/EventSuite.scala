@@ -1,6 +1,7 @@
 package com.tenderowls.moorka
 
 import com.tenderowls.moorka
+import com.tenderowls.moorka.core.rx.Emitter
 
 import scala.scalajs.test.JasmineTest
 
@@ -41,7 +42,7 @@ object EventSuite extends JasmineTest {
     it("should kills correctly") {
       val emitter = Emitter[Int]
       emitter.map(_.toString).kill()
-      expect(0).toEqual(emitter.numSubscribers)
+      expect(0).toEqual(emitter.children.length)
     }
   }
 
@@ -57,7 +58,7 @@ object EventSuite extends JasmineTest {
     it("should kills correctly") {
       val emitter = Emitter[Int]
       emitter.filter(_ => true).kill()
-      expect(0).toEqual(emitter.numSubscribers)
+      expect(0).toEqual(emitter.children.length)
     }
   }
 
