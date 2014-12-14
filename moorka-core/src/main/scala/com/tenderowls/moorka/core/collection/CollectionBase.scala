@@ -1,6 +1,6 @@
 package com.tenderowls.moorka.core.collection
 
-import com.tenderowls.moorka.core.binding.Bindable
+import com.tenderowls.moorka.core.rx.RxState
 
 import scala.scalajs.js
 
@@ -41,15 +41,11 @@ private[collection] abstract class CollectionBase[A] extends CollectionView[A] {
     count
   }
 
-  def filter(f: Bindable[(A) => Boolean]): CollectionView[A] = {
-    new FilteredWithReactiveFilter(this, f)
-  }
-
   def asSeq: Seq[A] = {
     for (i <- 0 until length) yield apply(i)
   }
 
-  def observe(f: (A) => Bindable[Any]): CollectionView[A] = this
+  def observe(f: (A) => RxState[Any]): CollectionView[A] = this
 
   def kill(): Unit = {
     added.kill()

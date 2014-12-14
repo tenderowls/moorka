@@ -1,7 +1,7 @@
 package com.tenderowls.moorka.ui
 
-import com.tenderowls.moorka.core.Event
-import com.tenderowls.moorka.core.events.Emitter
+import com.tenderowls.moorka.core.RxStream
+import com.tenderowls.moorka.core.rx.Emitter
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
@@ -59,5 +59,5 @@ object RenderAPI {
     }
   }
 
-  val onMessage: Event[Message] = _onMessage
+  val onMessage: RxStream[Message] = _onMessage
 }

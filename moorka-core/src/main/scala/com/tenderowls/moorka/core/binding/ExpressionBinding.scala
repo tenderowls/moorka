@@ -1,12 +1,17 @@
 package com.tenderowls.moorka.core.binding
 
+import com.tenderowls.moorka.core.Emitter
+import com.tenderowls.moorka.core.rx.RxState
+
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class ExpressionBinding[A](dependencies: Seq[Bindable[_]])(expression: => A) extends BindingBase[A] {
+class ExpressionBinding[A](dependencies: Seq[RxState[_]])
+                          (expression: => A)
+  extends Emitter[A] with RxState[A] {
 
   private var value = expression
 
@@ -18,7 +23,7 @@ class ExpressionBinding[A](dependencies: Seq[Bindable[_]])(expression: => A) ext
         _valid = false
         // Deferred event emit cause more
         // than one dependency could be changed
-        Future(emit(this))          
+        Future(emit(value))
       }
     }
   }

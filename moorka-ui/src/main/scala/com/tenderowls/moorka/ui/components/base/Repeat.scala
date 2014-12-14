@@ -16,12 +16,12 @@ object Repeat {
     new Repeat[A](Var(dataProvider), itemRenderer)
   }
 
-  def apply[A](dataProvider: Bindable[CollectionView[A]], itemRenderer: (A) => ElementBase) = {
+  def apply[A](dataProvider: RxState[CollectionView[A]], itemRenderer: (A) => ElementBase) = {
     new Repeat[A](dataProvider, itemRenderer)
   }
 }
 
-class Repeat[A](val dataProvider: Bindable[CollectionView[A]],
+class Repeat[A](val dataProvider: RxState[CollectionView[A]],
                 val itemRenderer: (A) => ElementBase)
 
   extends ElementBase {
@@ -30,11 +30,11 @@ class Repeat[A](val dataProvider: Bindable[CollectionView[A]],
 
   private val displayState = mutable.HashMap[Child, Boolean]()
 
-  private val observers = mutable.HashMap[Child, Event[_]]()
+  private val observers = mutable.HashMap[Child, RxStream[_]]()
 
   private var _viewFilter = (_: A) => true
 
-  private var _rxExtractor: (A) => Bindable[_] = null
+  private var _rxExtractor: (A) => RxState[_] = null
 
   private var _dataProvider = dataProvider()
 
@@ -42,7 +42,7 @@ class Repeat[A](val dataProvider: Bindable[CollectionView[A]],
 
   val ref = Ref("div")
   println("repeat container " + ref.id)
-  dataProvider observe { _ =>
+  dataProvider observe {
     updateDataProvider()
   }
 
@@ -138,7 +138,7 @@ class Repeat[A](val dataProvider: Bindable[CollectionView[A]],
     this
   }
 
-  def makeDataObservable(f: (A) => Bindable[_]): Repeat[A] = {
+  def makeDataObservable(f: (A) => RxState[_]): Repeat[A] = {
     _rxExtractor = f
     children.foreach(createObserver)
     this

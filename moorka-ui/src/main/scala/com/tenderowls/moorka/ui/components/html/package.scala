@@ -18,7 +18,7 @@ package object html {
   //
   //---------------------------------------------------------------------------
 
-  implicit def _bound(node: Bindable[ElementBase]): BoundComponentContainer = {
+  implicit def _bound(node: RxState[ElementBase]): BoundComponentContainer = {
     new BoundComponentContainer(node)
   }
 
@@ -30,7 +30,7 @@ package object html {
     `textContent` := text
   }
 
-  implicit def _reactiveText(text: Bindable[String]): ElementBoundPropertyExtension[String] = {
+  implicit def _reactiveText(text: RxState[String]): ElementBoundPropertyExtension[String] = {
     `textContent` := text
   }
 

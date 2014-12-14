@@ -108,8 +108,8 @@ object MoorkaTodoMVC extends Application {
     })
 
     todosView.makeDataObservable(_.status)
-    filterFunction observe { ff =>
-      todosView.viewFilter(ff())
+    filterFunction observe {
+      todosView.viewFilter(filterFunction())
     }
 
     div(

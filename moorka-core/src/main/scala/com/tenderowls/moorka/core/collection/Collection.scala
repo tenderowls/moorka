@@ -1,7 +1,6 @@
 package com.tenderowls.moorka.core.collection
 
-import com.tenderowls.moorka.core.Emitter
-
+import com.tenderowls.moorka.core._
 import scala.scalajs.js
 
 /**
@@ -27,21 +26,13 @@ object Collection {
 
 class Collection[A](private var buffer: js.Array[A]) extends CollectionBase[A] {
 
-  private val _added = Emitter[A]
+  val added = Emitter[A]
 
-  private val _inserted = Emitter[IndexedElement[A]]
+  val inserted = Emitter[IndexedElement[A]]
 
-  private val _updated = Emitter[IndexedElement[A]]
+  val updated = Emitter[IndexedElement[A]]
 
-  private val _removed = Emitter[IndexedElement[A]]
-
-  val added = _added.view
-
-  val inserted = _inserted.view
-
-  val updated = _updated.view
-
-  val removed = _removed.view
+  val removed = Emitter[IndexedElement[A]]
 
   def apply(x: Int) = buffer(x)
 
@@ -53,7 +44,7 @@ class Collection[A](private var buffer: js.Array[A]) extends CollectionBase[A] {
 
   def +=(e: A) = {
     buffer.push(e)
-    _added.emit(e)
+    added.emit(e)
     this
   }
 
@@ -66,34 +57,34 @@ class Collection[A](private var buffer: js.Array[A]) extends CollectionBase[A] {
   def remove(idx: Int) = {
     val e = buffer.splice(idx, 1)(0)
     val tpl = IndexedElement(idx, e)
-    _removed.emit(tpl)
+    removed.emit(tpl)
     e
   }
 
   def remove(f: (A) => Boolean) = {
-    val removed = new js.Array[IndexedElement[A]]
+    val removedElems = new js.Array[IndexedElement[A]]
     var offset = 0
     for (i <- 0 until buffer.length) {
       val j = i - offset
       val x: js.UndefOr[A] = buffer(j)
       if (x.isDefined && !f(x.get)) {
-        removed(removed.length) = IndexedElement(j, x.get)
+        removedElems(removedElems.length) = IndexedElement(j, x.get)
         buffer.splice(j, 1)
         offset += 1
       }
     }
-    for (x <- removed) {
-      _removed.emit(x)
+    for (x <- removedElems) {
+      removed.emit(x)
     }
   }
 
   def insert(idx: Int, e: A) = {
     buffer.splice(idx, 0, e)
-    _inserted.emit(IndexedElement(idx, e))
+    inserted.emit(IndexedElement(idx, e))
   }
 
   def update(idx: Int, e: A) = {
     buffer(idx) = e
-    _updated.emit(IndexedElement(idx, e))
+    updated.emit(IndexedElement(idx, e))
   }
 }

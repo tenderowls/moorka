@@ -1,8 +1,6 @@
 package com.tenderowls.moorka.core.collection
 
-import com.tenderowls.moorka.core.Mortal
-import com.tenderowls.moorka.core.binding.Bindable
-import com.tenderowls.moorka.core.events.Event
+import com.tenderowls.moorka.core._
 
 /**
  * Reactive collection presentation. You can't modify
@@ -23,22 +21,22 @@ trait CollectionView[A] extends Mortal {
    * raise when reactive variable inside element change its
    * value
    */
-  val updated: Event[IndexedElement[A]]
+  val updated: RxStream[IndexedElement[A]]
 
   /**
    * Element added into end of collection
    */
-  val added: Event[A]
+  val added: RxStream[A]
 
   /**
    * Element removed
    */
-  val removed: Event[IndexedElement[A]]
+  val removed: RxStream[IndexedElement[A]]
 
   /**
    * Element inserted into `idx`. Collection shifted to right
    */
-  val inserted: Event[IndexedElement[A]]
+  val inserted: RxStream[IndexedElement[A]]
 
   //---------------------------------------------------------------------------
   //
@@ -71,16 +69,6 @@ trait CollectionView[A] extends Mortal {
    * event propagation.
    */
   def kill(): Unit
-
-  /**
-   * Use this method when you want to add a linkage
-   * between collection and their elements. It may be
-   * useful when you have `filter` which depends on
-   * on reactive value inside element.
-   * @param f reactive value extractor
-   * @return collection with observers
-   */
-  def observe(f: (A) => Bindable[Any]): CollectionView[A]
 
   /**
    * Find count of elements which satisfy `f`
@@ -123,7 +111,6 @@ trait CollectionView[A] extends Mortal {
    * @return filtered collection
    */
   def filter(f: (A) => Boolean): CollectionView[A]
-  def filter(f: Bindable[(A) => Boolean]): CollectionView[A]
 
   /**
    * Converts to standard scala immutable sequence

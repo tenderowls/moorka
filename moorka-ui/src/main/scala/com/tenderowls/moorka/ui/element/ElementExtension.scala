@@ -25,7 +25,7 @@ case class ElementAttributeName(name: String) {
 
   def :=(x: String) = ElementAttributeExtension(name, x)
 
-  def :=(x: Bindable[String]) = ElementBoundAttributeExtension(name, x)
+  def :=(x: RxState[String]) = ElementBoundAttributeExtension(name, x)
 }
 
 case class ElementEventName[EventType <: SyntheticEvent](processor: EventProcessor[EventType]) {
@@ -59,17 +59,17 @@ case class ElementPropertyName[A](name: String) {
 
   def :=(x: A) = ElementPropertyExtension(name, x)
 
-  def :=(x: Bindable[A]) = ElementBoundPropertyExtension(name, x)
+  def :=(x: RxState[A]) = ElementBoundPropertyExtension(name, x)
 
   def =:= (x: Var[A]) = VarPropertyExtension(name, x)
 
   def from(x: RefHolder): Future[A] = x.ref.get(name).map(_.asInstanceOf[A])
 }
 
-class BoundExtensionFactory[A](static: (A => ElementExtension), bound: (Bindable[A]) => BoundElementExtension)
+class BoundExtensionFactory[A](static: (A => ElementExtension), bound: (RxState[A]) => BoundElementExtension)
   extends StaticExtensionFactory[A](static) {
 
-  def :=(x: Bindable[A]) = bound(x)
+  def :=(x: RxState[A]) = bound(x)
 }
 
 class StaticExtensionFactory[A](static: (A => ElementExtension)) {
@@ -90,7 +90,7 @@ case class SyntheticEventExtension[EventType <: SyntheticEvent](processor: Event
                                                                 useCapture: Boolean)
   extends ElementExtension {
 
-  var slot:Option[Slot[EventType]] = None
+  var slot:Option[RxStream[EventType]] = None
 
   override def assignElement(element: ElementBase): Unit = {
     super.assignElement(element)
@@ -125,7 +125,7 @@ case class UseClassExtension(className: String, trigger:Boolean) extends Element
 
 sealed trait BoundElementExtension extends ElementExtension {
 
-  protected var subscription: Event[_] = null
+  protected var subscription: RxStream[_] = null
 
   override def kill(): Unit = {
     if (subscription != null)
@@ -133,11 +133,11 @@ sealed trait BoundElementExtension extends ElementExtension {
   }
 }
 
-case class UseClassBoundExtension(className: String, trigger:Bindable[Boolean])
+case class UseClassBoundExtension(className: String, trigger:RxState[Boolean])
   extends ElementExtension with BoundElementExtension {
 
   override def assignElement(element: ElementBase): Unit = {
-    subscription = trigger observe { _ =>
+    subscription = trigger observe {
       trigger() match {
         case true => element.ref.classAdd(className)
         case false => element.ref.classRemove(className)
@@ -146,12 +146,12 @@ case class UseClassBoundExtension(className: String, trigger:Bindable[Boolean])
   }
 }
 
-case class ElementBoundPropertyExtension[A](name: String, value: Bindable[A])
+case class ElementBoundPropertyExtension[A](name: String, value: RxState[A])
   extends ElementExtension with BoundElementExtension {
 
   override def assignElement(element: ElementBase): Unit = {
     super.assignElement(element)
-    subscription = value observe { _ =>
+    subscription = value observe {
       element.ref.set(name, value())
     }
   }
@@ -160,11 +160,11 @@ case class ElementBoundPropertyExtension[A](name: String, value: Bindable[A])
 case class VarPropertyExtension[A](name: String, value: Var[A])
   extends ElementExtension {
 
-  var subscriptions: List[Slot[_]] = Nil
+  var subscriptions: List[RxStream[_]] = Nil
 
   override def assignElement(element: ElementBase): Unit = {
     super.assignElement(element)
-    subscriptions ::= value observe { _ =>
+    subscriptions ::= value observe {
       element.ref.set(name, value())
     }
     subscriptions ::= ChangeEventProcessor.addListener(element,
@@ -180,13 +180,13 @@ case class VarPropertyExtension[A](name: String, value: Var[A])
   }
 }
 
-case class ElementBoundAttributeExtension(name: String, value: Bindable[String])
+case class ElementBoundAttributeExtension(name: String, value: RxState[String])
   extends ElementExtension
   with BoundElementExtension {
 
   override def assignElement(component: ElementBase): Unit = {
     super.assignElement(component)
-    subscription = value observe { _ =>
+    subscription = value observe {
       component.ref.updateAttribute(name, value())
     }
   }

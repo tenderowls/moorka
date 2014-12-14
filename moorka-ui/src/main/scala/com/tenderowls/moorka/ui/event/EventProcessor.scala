@@ -102,11 +102,11 @@ sealed trait EventProcessor[A <: SyntheticEvent ] {
     }
   }
 
-  def addListener(element: EventTarget, listener: (A) => Unit): Slot[A] = {
+  def addListener(element: EventTarget, listener: (A) => Unit): RxStream[A] = {
     listeners.getOrElseUpdate(element, Emitter[A]).subscribe(listener)
   }
 
-  def addCapture(element: EventTarget, capture: (A) => Unit): Slot[A] = {
+  def addCapture(element: EventTarget, capture: (A) => Unit): RxStream[A] = {
     captures.getOrElseUpdate(element, Emitter[A]).subscribe(capture)
   }
 

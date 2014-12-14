@@ -8,20 +8,20 @@ import com.tenderowls.moorka.ui.event.EventProcessor
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class BoundComponentContainer(element: Bindable[ElementBase]) extends ElementBase {
+class BoundComponentContainer(element: RxState[ElementBase]) extends ElementBase {
 
   var previous:ElementBase = null
 
   val ref = Ref("div")
 
-  val observer = element observe { reactiveElement =>
+  val observer = element observe {
 
     previous.parent = null
     ref.removeChild(previous.ref)
     previous.kill()
 
     // Swap it
-    val current = reactiveElement()
+    val current = element()
     previous = current
 
     current.parent = this

@@ -1,20 +1,21 @@
 package com.tenderowls.moorka
 
+import com.tenderowls.moorka.core.rx.ops.{RxStateOps, RxStreamOps}
+import scala.language.implicitConversions
+
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 package object core {
 
-  val Emitter = events.Emitter
-  type Emitter[A] = events.Emitter[A]
-  type Event[A] = events.Event[A]
-  type Slot[A] = events.Event[A]
-
+  val Emitter = rx.Emitter
   val Bind = binding.BindingMacro
-  val Var = binding.Var
+  val Var = rx.Var
 
-  type Var[A] = binding.Var[A]
-  type Bindable[A] = binding.Bindable[A]
+  type Emitter[A] = rx.Emitter[A]
+  type RxStream[A] = rx.RxStream[A]
+  type RxState[A] = rx.RxState[A]
+  type Var[A] = rx.Var[A]
 
   val Collection = collection.Collection
   type Collection[A] = collection.Collection[A]
@@ -23,4 +24,7 @@ package object core {
   trait Mortal {
     def kill(): Unit
   }
+
+  implicit def ToRxStreamOps[A](x: RxStream[A]): RxStreamOps[A] = new RxStreamOps(x)
+  implicit def ToRxStateOps[A](x: RxState[A]): RxStateOps[A] = new RxStateOps(x)
 }
