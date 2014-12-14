@@ -1,5 +1,7 @@
 package com.tenderowls.moorka.core.collection
 
+import com.tenderowls.moorka.core._
+
 import scala.scalajs.js
 
 /**
@@ -10,7 +12,7 @@ private[collection] class Mapped[From, A](parent: CollectionView[From],
 
   extends CollectionBase[A] {
 
-  val buffer = new js.Array[A](parent.length)
+  val buffer = new js.Array[A](parent.length())
 
   // Mapped events
   val added = parent.added.map(mapFunction)
@@ -18,12 +20,23 @@ private[collection] class Mapped[From, A](parent: CollectionView[From],
   val inserted = parent.inserted.map(x => x.copy(e = mapFunction(x.e)))
   val updated = parent.updated.map(x => x.copy(e = mapFunction(x.e)))
 
-  added.subscribe { x => buffer.push(x)}
-  removed.subscribe { x => buffer.splice(x.idx, 1)}
-  inserted.subscribe(x => buffer.splice(x.idx, 0, x.e))
-  updated.subscribe(x => buffer(x.idx) = x.e)
+  private val _length = Var(buffer.length)
 
-  def length: Int = parent.length
+  val length: RxState[Int] = _length
+
+  added.subscribe { x =>
+    buffer.push(x)
+    _length() = buffer.length
+  }
+  removed.subscribe {
+    x => buffer.splice(x.idx, 1)
+      _length() = buffer.length
+  }
+  inserted.subscribe { x =>
+    buffer.splice(x.idx, 0, x.e)
+    _length() = buffer.length
+  }
+  updated.subscribe(x => buffer(x.idx) = x.e)
 
   def apply(idx: Int) = {
     val e: js.UndefOr[A] = buffer(idx)
@@ -38,7 +51,7 @@ private[collection] class Mapped[From, A](parent: CollectionView[From],
   }
 
   def indexOf(e: A): Int = {
-    for (i <- 0 until length) {
+    for (i <- 0 until length()) {
       if (apply(i) == e)
         return i
     }

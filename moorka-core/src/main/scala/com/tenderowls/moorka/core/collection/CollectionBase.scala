@@ -33,7 +33,7 @@ private[collection] abstract class CollectionBase[A] extends CollectionView[A] {
 
   def count(f: (A) => Boolean): Int = {
     var count = 0
-    for (i <- 0 until length) {
+    for (i <- 0 until length()) {
       val e = apply(i)
       if (f(e)) count += 1
     }
@@ -41,7 +41,7 @@ private[collection] abstract class CollectionBase[A] extends CollectionView[A] {
   }
 
   def asSeq: Seq[A] = {
-    for (i <- 0 until length) yield apply(i)
+    for (i <- 0 until length()) yield apply(i)
   }
 
   def observe(f: (A) => RxState[Any]): CollectionView[A] = this
@@ -55,7 +55,7 @@ private[collection] abstract class CollectionBase[A] extends CollectionView[A] {
 
   override def toString = {
     // Force elements (for non-strict collection)
-    val values = for (x <- 0 until length) yield apply(x).toString
+    val values = for (x <- 0 until length()) yield apply(x).toString
     s"Collection(${values.reduce(_ + ", " + _)})"
   }
 }

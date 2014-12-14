@@ -17,10 +17,7 @@ object MoorkaTodoMVC extends Application {
       case (num, Todo(_, Completed)) => num + 1
       case (num, _) => num
     }
-    val numActive = todos.foldLeft(0) {
-      case (num, Todo(_, Active)) => num + 1
-      case (num, _) => num
-    }
+    val numActive = Bind { todos.length() - numCompleted() }
     val nowEditing = Var(false)
     val filter = Var[Filter](All)
     // Internal component. It has own state but depends on
@@ -114,7 +111,7 @@ object MoorkaTodoMVC extends Application {
             `className` := "toggle-all",
             `type` := "checkbox",
             `style` := "cursor: pointer",
-            `checked` := Bind { todos.length > 0 && numCompleted() == todos.length },
+            `checked` := Bind { todos.length() > 0 && numCompleted() == todos.length() },
             `click` subscribe { event =>
               `checked` from event.target onSuccess {
                 case true =>

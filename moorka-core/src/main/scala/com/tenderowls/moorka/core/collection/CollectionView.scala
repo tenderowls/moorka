@@ -38,6 +38,11 @@ trait CollectionView[A] extends Mortal {
    */
   val inserted: RxStream[IndexedElement[A]]
 
+  /**
+   * Length of collection
+   */
+  val length: RxState[Int]
+
   //---------------------------------------------------------------------------
   //
   // Methods
@@ -56,11 +61,6 @@ trait CollectionView[A] extends Mortal {
    * @return index of element `e`. -1 if not fount
    */
   def indexOf(e: A): Int
-
-  /**
-   * @return Length of collection
-   */
-  def length: Int
 
   /**
    * Removes all links to another collections or any reactive

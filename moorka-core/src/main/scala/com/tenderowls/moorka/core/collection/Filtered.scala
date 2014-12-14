@@ -49,19 +49,25 @@ private[collection] class Filtered[A](parent: CollectionView[A],
   val inserted = Emitter[IndexedElement[A]]
   val updated = Emitter[IndexedElement[A]]
 
+  private val _length = Var(buffer.length)
+
+  val length: RxState[Int] = _length
+
   // Copy collection to internal buffer
   // filtered with `filterFunction`
   parent foreach { e =>
-    origBuffer(origBuffer.length) = e
+    origBuffer.push(e)
     if (filterFunction(e)) {
-      buffer(buffer.length) = e
+      buffer.push(e)
+      _length() = buffer.length
     }
   }
 
   parent.added subscribe { e =>
-    origBuffer(origBuffer.length) = e
+    origBuffer.push(e)
     if (filterFunction(e)) {
-      buffer(buffer.length) = e
+      buffer.push(e)
+      _length() = buffer.length
       added.emit(e)
     }
   }
@@ -71,6 +77,7 @@ private[collection] class Filtered[A](parent: CollectionView[A],
     if (filterFunction(x.e)) {
       val idx = buffer.indexOf(x.e)
       buffer.splice(idx, 1)
+      _length() = buffer.length
       removed.emit(IndexedElement(idx, x.e))
     }
   }
@@ -88,8 +95,6 @@ private[collection] class Filtered[A](parent: CollectionView[A],
   override def kill(): Unit = {
     super.kill()
   }
-
-  def length: Int = buffer.length
 
   def indexOf(e: A) = buffer.indexOf(e)
 

@@ -34,9 +34,11 @@ class Collection[A](private var buffer: js.Array[A]) extends CollectionBase[A] {
 
   val removed = Emitter[IndexedElement[A]]
 
-  def apply(x: Int) = buffer(x)
+  private val _length = Var(buffer.length)
 
-  def length: Int = buffer.length
+  val length: RxState[Int] = _length
+
+  def apply(x: Int) = buffer(x)
 
   def indexOf(e: A) = buffer.indexOf(e)
 
@@ -44,6 +46,7 @@ class Collection[A](private var buffer: js.Array[A]) extends CollectionBase[A] {
 
   def +=(e: A) = {
     buffer.push(e)
+    _length() = buffer.length
     added.emit(e)
     this
   }
@@ -57,6 +60,7 @@ class Collection[A](private var buffer: js.Array[A]) extends CollectionBase[A] {
   def remove(idx: Int) = {
     val e = buffer.splice(idx, 1)(0)
     val tpl = IndexedElement(idx, e)
+    _length() = buffer.length
     removed.emit(tpl)
     e
   }
@@ -73,6 +77,7 @@ class Collection[A](private var buffer: js.Array[A]) extends CollectionBase[A] {
         offset += 1
       }
     }
+    _length() = buffer.length
     for (x <- removedElems) {
       removed.emit(x)
     }
@@ -80,11 +85,13 @@ class Collection[A](private var buffer: js.Array[A]) extends CollectionBase[A] {
 
   def insert(idx: Int, e: A) = {
     buffer.splice(idx, 0, e)
+    _length() = buffer.length
     inserted.emit(IndexedElement(idx, e))
   }
 
   def update(idx: Int, e: A): Unit = {
     buffer(idx) = e
+    _length() = buffer.length
     updated.emit(IndexedElement(idx, e))
   }
 
@@ -95,7 +102,7 @@ class Collection[A](private var buffer: js.Array[A]) extends CollectionBase[A] {
 
   def updateAll(f: A => A) = {
     val elements = asSeq
-    for (i <- 0 until length) {
+    for (i <- 0 until length()) {
       val e = elements(i)
       update(i, f(e))
     }
