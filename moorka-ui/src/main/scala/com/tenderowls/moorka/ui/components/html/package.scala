@@ -108,7 +108,9 @@ package object html {
   //
   //---------------------------------------------------------------------------
 
-  val `change` = ElementEventName(ChangeEventProcessor)
+  val `change` = ElementEventName(InputEventProcessor)
+
+  val `input` = ElementEventName(ChangeEventProcessor)
 
   val `double-click` = ElementEventName(DoubleClickEventProcessor)
 
@@ -127,6 +129,9 @@ package object html {
     x => UseClassBoundExtension(
       clsName,
       if (not) Bind {
+        List(1,3,4) filter {
+          rr => rr % 2 > 0
+        }
         !x()
       }
       else x

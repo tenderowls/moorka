@@ -1,6 +1,7 @@
 package com.tenderowls.moorka.core.rx.ops
 
 import com.tenderowls.moorka.core._
+import scala.language.existentials
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>

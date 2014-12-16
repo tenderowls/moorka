@@ -95,7 +95,6 @@ sealed trait EventProcessor[A <: SyntheticEvent ] {
   }
   
   def topLevelListener(nativeEvent: js.Dynamic) = {
-    println(nativeEvent)
     val targetId = nativeEvent.target.asInstanceOf[String]
     EventProcessor.nativeElementIndex.get(targetId).foreach { syntheticTarget =>
       propagate(syntheticTarget, nativeEvent)
@@ -156,4 +155,8 @@ object SubmitEventProcessor extends FormEventProcessor {
 
 object ChangeEventProcessor extends FormEventProcessor {
   val eventType: String = "change"
+}
+
+object InputEventProcessor extends FormEventProcessor {
+  val eventType: String = "input"
 }

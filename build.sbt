@@ -1,23 +1,29 @@
 import sbt._
 import sbt.Keys._
-import scala.scalajs.ir.ScalaJSVersions
-import scala.scalajs.sbtplugin.ScalaJSPlugin._
 import bintray.Keys._
 
 val dontPublish = Seq(
   publish := { }
 )
 
-val SCALA_VERSION = "2.11.2"
+val currentScalaVersion = "2.11.4"
 
-scalaVersion := SCALA_VERSION
+scalaVersion := currentScalaVersion
 
 val commonSettings = Seq(
-  scalaVersion := SCALA_VERSION,
-  version := "0.0.1",
+  scalaVersion := currentScalaVersion,
+  version := "0.1.0",
   organization := "com.tenderowls.opensource",
   licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")),
-  homepage := Some(url("http://github.com/tenderowls/moorka"))
+  homepage := Some(url("http://github.com/tenderowls/moorka")),
+  scalacOptions ++= Seq("-deprecation", "-feature")
+)
+
+val utestSetting = Seq(
+  scalaJSStage in Test := FastOptStage,
+  persistLauncher in Test := false,
+  testFrameworks += new TestFramework("utest.runner.Framework"),
+  libraryDependencies += "com.lihaoyi" %%%! "utest" % "0.2.5-M1" % "test"
 )
 
 val publishSettings = bintraySettings ++ bintrayPublishSettings ++ Seq(
@@ -27,38 +33,33 @@ val publishSettings = bintraySettings ++ bintrayPublishSettings ++ Seq(
 )
 
 lazy val `moorka-core` = (project in file("moorka-core"))
+  .enablePlugins(ScalaJSPlugin)
   .settings(publishSettings:_*)
   .settings(commonSettings:_*)
-  .settings(scalaJSSettings: _*)
+  .settings(utestSetting:_*)
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules.scalajs" %%% "scalajs-dom" % "0.6",
-      "org.scala-lang.modules.scalajs" %% "scalajs-jasmine-test-framework" % ScalaJSVersions.current % "test",
-      "org.scala-lang" % "scala-reflect" % SCALA_VERSION
+      "org.scala-js" %%%! "scalajs-dom" % "0.7.0",
+      "org.scala-lang" % "scala-reflect" % currentScalaVersion
     )
   )
 
 lazy val `moorka-ui` = (project in file("moorka-ui"))
+  .enablePlugins(ScalaJSPlugin)
   .settings(publishSettings:_*)
   .settings(commonSettings:_*)
-  .settings(scalaJSSettings: _*)
-  .settings(
-    libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-xml" % "1.0.2"
-    )
-  )
   .dependsOn(`moorka-core`)
 
 lazy val `moorka-todomvc` = (project in file("moorka-todomvc"))
+  .enablePlugins(ScalaJSPlugin)
   .settings(dontPublish:_*)
   .settings(commonSettings:_*)
-  .settings(scalaJSSettings: _*)
   .dependsOn(`moorka-ui`)
 
 lazy val root = (project in file("."))
   .settings(dontPublish:_*)
   .settings(
-    scalaVersion := SCALA_VERSION
+    scalaVersion := currentScalaVersion
   )
   .aggregate(
     `moorka-core`,

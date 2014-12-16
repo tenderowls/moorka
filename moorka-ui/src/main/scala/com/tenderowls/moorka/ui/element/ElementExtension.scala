@@ -1,12 +1,11 @@
 package com.tenderowls.moorka.ui.element
 
 import com.tenderowls.moorka.core._
-import com.tenderowls.moorka.ui.event.{EventProcessor, SyntheticEvent, ChangeEventProcessor}
 import com.tenderowls.moorka.ui.RefHolder
-
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import com.tenderowls.moorka.ui.event._
 
 import scala.concurrent.Future
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 sealed trait ElementExtension extends ElementEntry with Mortal {
 
@@ -161,17 +160,28 @@ case class VarPropertyExtension[A](name: String, value: Var[A])
   extends ElementExtension {
 
   var subscriptions: List[RxStream[_]] = Nil
+  var awaitForValue = false
+
+  def listener(event: SyntheticEvent) = {
+    awaitForValue = true
+    event.target.ref.get(name) onSuccess {
+      case x if awaitForValue =>
+        value() = x.asInstanceOf[A]
+    }
+  }
+
+  def valueObserver(): Unit = {
+    awaitForValue = false
+    element.ref.set(name, value())
+  }
 
   override def assignElement(element: ElementBase): Unit = {
     super.assignElement(element)
-    subscriptions ::= value observe {
-      element.ref.set(name, value())
-    }
-    subscriptions ::= ChangeEventProcessor.addListener(element,
-      _ => element.ref.get(name).onSuccess {
-        case x => value() = x.asInstanceOf[A]
-      }
-    )
+    subscriptions =
+      ChangeEventProcessor.addListener(element, listener) ::
+      InputEventProcessor.addListener(element, listener) ::
+      value.observe(valueObserver()) ::
+      subscriptions
   }
 
   override def kill(): Unit = {

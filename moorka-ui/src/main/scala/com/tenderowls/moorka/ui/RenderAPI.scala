@@ -19,7 +19,7 @@ object RenderAPI {
 
   type WorkerCallback = js.Function1[js.Array[Message], _]
 
-  private val messageBuffer = new js.Array[Message]()
+  private var messageBuffer = new js.Array[Message]()
 
   private var inAction = false
 
@@ -53,7 +53,7 @@ object RenderAPI {
       inAction = true
       Future {
         postMessage(messageBuffer)
-        messageBuffer.splice(0)
+        messageBuffer = new js.Array[Message]
         inAction = false
       }
     }

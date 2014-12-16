@@ -16,13 +16,13 @@ object BindingMacro {
     import c.universe._
     def processTree(t: c.Tree): List[c.Tree] = {
       val withoutFunctions = t.children.filter {
-        case Function(_) => false
+        case Function(_, _) => false
+        case x if x.isDef => false
         case _ => true
       }
       // https://issues.scala-lang.org/browse/SI-4751
-      (withoutFunctions ++ withoutFunctions)
-        .map(processTree(_))
-        .flatten
+      val deep = withoutFunctions.map(processTree(_))
+      withoutFunctions ++ deep.flatten
     }
     val bindingTrait = "com.tenderowls.moorka.core.RxState"
     val bindingConstructor = c.mirror.staticClass(bindingTrait).toTypeConstructor

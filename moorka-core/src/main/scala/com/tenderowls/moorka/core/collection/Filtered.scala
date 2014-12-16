@@ -2,7 +2,7 @@ package com.tenderowls.moorka.core.collection
 
 import com.tenderowls.moorka.core._
 
-import scala.scalajs.js
+import scala.collection.mutable
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -14,11 +14,11 @@ private[collection] class Filtered[A](parent: CollectionView[A],
 
   type RxExtractor = (A) => RxState[Any]
 
-  val buffer = new js.Array[A]
-  val origBuffer = new js.Array[A]
+  val buffer = mutable.Buffer[A]()
+  val origBuffer = mutable.Buffer[A]()
 
   def refreshBuffer(): Unit = {
-    buffer.splice(0)
+    buffer.remove(0, buffer.length)
     for (e <- origBuffer) {
       if (filterFunction(e)) {
         buffer(buffer.length) = e
@@ -31,7 +31,8 @@ private[collection] class Filtered[A](parent: CollectionView[A],
     val idx = buffer.indexOf(x)
     if (idx > -1) {
       if (origBuffer.indexOf(x) < 0 || !filterFunction(x)) {
-        val e = buffer.splice(idx, 1)(0)
+        val e = buffer(idx)
+        buffer.remove(idx, 1)
         removed.emit(IndexedElement(idx, e))
       }
     }
@@ -56,34 +57,34 @@ private[collection] class Filtered[A](parent: CollectionView[A],
   // Copy collection to internal buffer
   // filtered with `filterFunction`
   parent foreach { e =>
-    origBuffer.push(e)
+    origBuffer += e
     if (filterFunction(e)) {
-      buffer.push(e)
+      buffer += e
       _length() = buffer.length
     }
   }
 
   parent.added subscribe { e =>
-    origBuffer.push(e)
+    origBuffer += e
     if (filterFunction(e)) {
-      buffer.push(e)
+      buffer += e
       _length() = buffer.length
       added.emit(e)
     }
   }
 
   parent.removed subscribe { x =>
-    origBuffer.splice(x.idx, 1)
+    origBuffer.remove(x.idx, 1)
     if (filterFunction(x.e)) {
       val idx = buffer.indexOf(x.e)
-      buffer.splice(idx, 1)
+      buffer.remove(idx, 1)
       _length() = buffer.length
       removed.emit(IndexedElement(idx, x.e))
     }
   }
 
   parent.inserted subscribe { x =>
-    origBuffer.splice(x.idx, 0, x.e)
+    origBuffer.insert(x.idx, x.e)
     refreshElement(x.e)
   }
 

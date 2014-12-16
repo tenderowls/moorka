@@ -136,7 +136,7 @@ function Moorka() {
       }
     };
 
-    ["click", "dblclick", "change"].forEach(function (eventType) {
+    ["click", "dblclick", "change", "input"].forEach(function (eventType) {
       document.addEventListener(eventType, function (event) {
         self.send(["event", copyEvent(event)]);
       });
@@ -151,12 +151,12 @@ function Moorka() {
 
   this.application = function(main, script) {
     var bootstrap = document.createElement("script");
-    bootstrap.onload = function() {
+    bootstrap.addEventListener("load", function() {
       var renderBackend = new RenderBackendImpl();
       renderBackend.send = renderBackendApi().defaultMode(renderBackend.receive);
       renderBackend.send(["start"]);
       eval(main + "().main()");
-    };
+    });
     bootstrap.setAttribute("src", script);
     document.body.appendChild(bootstrap);
   };
