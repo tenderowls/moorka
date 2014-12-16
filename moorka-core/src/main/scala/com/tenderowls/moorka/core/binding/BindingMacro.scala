@@ -14,13 +14,15 @@ object BindingMacro {
 
   def macroBindingImpl[A](c: whitebox.Context)(f: c.Tree) = {
     import c.universe._
-    def processTree(t:c.Tree):List[c.Tree] = {
+    def processTree(t: c.Tree): List[c.Tree] = {
       val withoutFunctions = t.children.filter {
         case Function(_) => false
         case _ => true
       }
-      // todo fomkin: make something smarter
-      withoutFunctions ++ withoutFunctions.map( x => processTree(x)).flatten
+      // https://issues.scala-lang.org/browse/SI-4751
+      (withoutFunctions ++ withoutFunctions)
+        .map(processTree(_))
+        .flatten
     }
     val bindingTrait = "com.tenderowls.moorka.core.RxState"
     val bindingConstructor = c.mirror.staticClass(bindingTrait).toTypeConstructor

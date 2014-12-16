@@ -7,6 +7,11 @@ import com.tenderowls.moorka.core._
  */
 final class RxStateOps[A](val self: RxState[A]) extends AnyVal {
 
+  /**
+   * Same as [[RxStreamOps.subscribe]] but calls f immediately
+   * @param f listener
+   * @return slot
+   */
   def observe(f: => Any): RxStream[A] = {
     val x = self.subscribe(_ => f)
     f
@@ -34,7 +39,7 @@ final class RxStateOps[A](val self: RxState[A]) extends AnyVal {
       }
       val rip = Seq(
         self subscribe subscriber,
-        another  subscribe subscriber
+        another subscribe subscriber
       )
       override def kill(): Unit = {
         rip.foreach(_.kill())

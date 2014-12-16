@@ -38,7 +38,7 @@ object MoorkaTodoMVC extends Application {
             `double-click` listen {
               val todo = state()
               if (todo.status == Active && !nowEditing()) {
-                todos.update(todo, todo.copy(status = Editing))
+                todos.updateElement(todo, todo.copy(status = Editing))
                 nowEditing() = true
               }
             },
@@ -53,7 +53,7 @@ object MoorkaTodoMVC extends Application {
                   case Completed => Active
                   case Editing => Active
                 }
-                todos.update(todo, todo.copy(status = newStatus))
+                todos.updateElement(todo, todo.copy(status = newStatus))
               },
               `checked` := state.map(_.status == Completed)
             ),
@@ -69,7 +69,7 @@ object MoorkaTodoMVC extends Application {
           form(
             `submit` listen {
               val todo = state()
-              todos.update(todo, Todo(txt = fieldText(), status = Active))
+              todos.updateElement(todo, Todo(txt = fieldText(), status = Active))
               nowEditing() = false
             },
             input(`className` := "edit", `value` =:= fieldText)

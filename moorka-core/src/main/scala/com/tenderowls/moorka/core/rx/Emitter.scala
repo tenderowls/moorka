@@ -28,6 +28,6 @@ class Emitter[A] extends RxStream[A] {
 
   def kill(): Unit = {
     children.foreach(_.kill())
-    children.remove(children.length)
+    children.remove(0, children.length)
   }
 }

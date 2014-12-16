@@ -95,7 +95,7 @@ class Collection[A](private var buffer: js.Array[A]) extends CollectionBase[A] {
     updated.emit(IndexedElement(idx, e))
   }
 
-  def update(e: A, to: A): Unit = {
+  def updateElement(e: A, to: A): Unit = {
     val idx = indexOf(e)
     update(idx, to)
   }

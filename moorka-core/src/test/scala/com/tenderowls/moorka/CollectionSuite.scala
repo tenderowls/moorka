@@ -29,7 +29,7 @@ object CollectionSuite extends JasmineTest {
       }
       collection -= 4
       expect(1).toEqual(calls)
-      expect(4).toEqual(collection.length)
+      expect(4).toEqual(collection.length())
       expect(5).toEqual(collection(3))
     }
 
@@ -54,7 +54,7 @@ object CollectionSuite extends JasmineTest {
       }
       collection.insert(2, 10)
       expect(1).toEqual(calls)
-      expect(6).toEqual(collection.length)
+      expect(6).toEqual(collection.length())
       expect(10).toEqual(collection(2))
       expect(3).toEqual(collection(3))
     }
@@ -106,9 +106,7 @@ object CollectionSuite extends JasmineTest {
       collection(0) = 2
       expect("two").toEqual(mapped(0))
     }
-
-    // todo
-    // test removed element is a same
+    // todo test removed element is a same
   }
 
   describe("Filtered collection should be") {
@@ -117,7 +115,7 @@ object CollectionSuite extends JasmineTest {
       val filtered = collection.filter(_.startsWith("J"))
       expect(Collection("John", "Jane").toString).toEqual(filtered.toString)
       collection += "Jade"
-      expect(3).toEqual(filtered.length)
+      expect(3).toEqual(filtered.length())
     }
   }
 }

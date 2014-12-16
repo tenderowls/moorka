@@ -1,16 +1,16 @@
 package com.tenderowls.moorka
 
-import com.tenderowls.moorka
-import com.tenderowls.moorka.core.rx.Emitter
+import com.tenderowls.moorka.core._
 
 import scala.scalajs.test.JasmineTest
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-object EventSuite extends JasmineTest {
+object RxStreamOpsSuite extends JasmineTest {
 
-  describe("Emitter") {
+  // Test .subscribe
+  describe("RxStream") {
     it("should broadcast event to all subscribers") {
       val emitter = Emitter[Unit]
       var calls = 0
@@ -31,7 +31,7 @@ object EventSuite extends JasmineTest {
     }
   }
 
-  describe("Mapped emitter") {
+  describe("Mapped RxStream") {
     it("changes type of event value") {
       val emitter = Emitter[Int]
       var result:String = ""
@@ -46,7 +46,7 @@ object EventSuite extends JasmineTest {
     }
   }
 
-  describe("Filtered emitter") {
+  describe("Filtered RxStream") {
     it("blocks events which not satisfy condition") {
       val emitter = Emitter[Int]
       var calls:Int = 0
@@ -61,14 +61,4 @@ object EventSuite extends JasmineTest {
       expect(0).toEqual(emitter.children.length)
     }
   }
-
-//  xdescribe("Expression bindings") {
-//    it("should emit event when one of dependencies changed") {
-//      var calls = 0
-//      val a = moorka.Var(10)
-//      val b = moorka.Var(20)
-//      val c = Bind { calls += 1; a() + b() }
-//      expect(1).toBe(calls)
-//    }
-//  }
 }
