@@ -3,7 +3,7 @@ package moorka.rx.binding
 import moorka.rx._
 
 import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -22,7 +22,7 @@ class ExpressionBinding[A](dependencies: Seq[Channel[_]])
         _valid = false
         // Deferred event emit cause more
         // than one dependency could be changed
-        Future(emit(value))
+        Future(emit(apply()))
       }
     }
   }

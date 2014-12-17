@@ -4,11 +4,11 @@ import utest._
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-object RxStreamOpsSuite extends TestSuite {
+object ChannelOpsSuite extends TestSuite {
   val tests = TestSuite {
     // Test .subscribe
-    "RxStream" - {
-      "should broadcast event to all subscribers" - {
+    "Chanel" - {
+      "broadcast event to all subscribers" - {
         val emitter = Channel[String]
         var calls = 0
         emitter.subscribe( _ => calls += 1)
@@ -17,7 +17,7 @@ object RxStreamOpsSuite extends TestSuite {
         emitter.emit("")
         assert(calls == 3)
       }
-      "should stop broadcasting when slot killed" - {
+      "stop broadcasting when slot killed" - {
         val emitter = Channel[String]
         var calls = 0
         emitter.subscribe( _ => calls += 1)
@@ -26,9 +26,18 @@ object RxStreamOpsSuite extends TestSuite {
         emitter.emit("")
         assert(calls == 1)
       }
+      "swept by Reaper" - {
+        implicit val reaper = Reaper()
+        val channel = Channel[Int]
+        var calls = 0
+        channel.subscribe(_ => calls += 1)
+        reaper.sweep()
+        channel.emit(0)
+        assert(calls == 0)
+      }
     }
 
-    "Mapped RxStream" - {
+    "Mapped Channel" - {
       "changes type of event value" - {
         val emitter = Channel[Int]
         var result:String = ""
@@ -36,26 +45,54 @@ object RxStreamOpsSuite extends TestSuite {
         emitter.emit(42)
         assert(result == "42")
       }
-      "should kills correctly" - {
+      "is killed correctly" - {
         val emitter = Channel[Int]
         emitter.map(_.toString).kill()
         assert(emitter.children.length == 0)
       }
+      "swept by Reaper" - {
+        val channel = Channel[Int]
+        def f() = {
+          implicit val reaper = Reaper()
+          val mapped = channel.map(_.toString)
+          var calls = 0
+          mapped.subscribe(_ => calls += 1)
+          reaper.sweep()
+          channel.emit(0)
+          assert(calls == 0)
+        }
+        f()
+      }
     }
 
-    "Filtered RxStream" - {
+    "Filtered Channel" - {
       "blocks events which not satisfy condition" - {
         val emitter = Channel[Int]
         var calls:Int = 0
-        emitter.filter(x => x != 42).subscribe(_ => calls += 1)
+        emitter
+          .filter(x => x != 42)
+          .subscribe(_ => calls += 1)
         emitter.emit(42)
         emitter.emit(25)
         assert(calls == 1)
       }
-      "should kills correctly" - {
+      "is killed correctly" - {
         val emitter = Channel[Int]
         emitter.filter(_ => true).kill()
         assert(emitter.children.length == 0)
+      }
+      "swept by Reaper" - {
+        val channel = Channel[Int]
+        def f() = {
+          implicit val reaper = Reaper()
+          val filtered = channel.filter(_ > 0)
+          var calls = 0
+          filtered.subscribe(_ => calls += 1)
+          reaper.sweep()
+          channel.emit(1)
+          assert(calls == 0)
+        }
+        f()
       }
     }
   }

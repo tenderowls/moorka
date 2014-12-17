@@ -6,9 +6,9 @@ import scala.language.existentials
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-final class RxStreamOps[A](val self: Channel[A]) extends AnyVal {
+final class ChannelOps[A](val self: Channel[A]) extends AnyVal {
 
-  def until(f: A => Boolean): Channel[A] = {
+  def until(f: A => Boolean)(implicit reaper: Reaper = Reaper.nice): Channel[A] = {
     val child = new Channel[A] {
       override def kill(): Unit = {
         self.unlinkChild(this)
@@ -20,10 +20,11 @@ final class RxStreamOps[A](val self: Channel[A]) extends AnyVal {
       }
     }
     self.linkChild(child)
+    reaper.mark(child)
     child
   }
 
-  def subscribe(f: A => Any): Channel[A] = {
+  def subscribe(f: A => Any)(implicit reaper: Reaper = Reaper.nice): Channel[A] = {
     val child = new Channel[A] {
       override def kill(): Unit = {
         self.unlinkChild(this)
@@ -35,10 +36,11 @@ final class RxStreamOps[A](val self: Channel[A]) extends AnyVal {
       }
     }
     self.linkChild(child)
+    reaper.mark(child)
     child
   }
 
-  def filter(f: A => Boolean): Channel[A] = {
+  def filter(f: A => Boolean)(implicit reaper: Reaper = Reaper.nice): Channel[A] = {
     val child = new Channel[A] {
       override def kill(): Unit = {
         self.unlinkChild(this)
@@ -49,11 +51,12 @@ final class RxStreamOps[A](val self: Channel[A]) extends AnyVal {
       }
     }
     self.linkChild(child)
+    reaper.mark(child)
     child
   }
 
-  def map[B](f: A => B): Channel[B] = {
-    new Channel[B] {
+  def map[B](f: A => B)(implicit reaper: Reaper = Reaper.nice): Channel[B] = {
+    val child = new Channel[B] {
       val rip = self subscribe { x =>
         emit(f(x))
       }
@@ -62,10 +65,12 @@ final class RxStreamOps[A](val self: Channel[A]) extends AnyVal {
         super.kill()
       }
     }
+    reaper.mark(child)
+    child
   }
 
-  def merge(one: Channel[_]): Channel[Any] = {
-    new Channel[Any] {
+  def merge(one: Channel[_])(implicit reaper: Reaper = Reaper.nice): Channel[Any] = {
+    val child = new Channel[Any] {
       val rip = Seq(
         one.subscribe(emit),
         self.subscribe(emit)
@@ -75,5 +80,7 @@ final class RxStreamOps[A](val self: Channel[A]) extends AnyVal {
         super.kill()
       }
     }
+    reaper.mark(child)
+    child
   }
 }

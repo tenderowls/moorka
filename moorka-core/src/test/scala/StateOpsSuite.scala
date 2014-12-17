@@ -4,9 +4,9 @@ import utest._
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-object RxStateOpsSuite extends TestSuite {
+object StateOpsSuite extends TestSuite {
   val tests = TestSuite {
-    "Mapped RxState" - {
+    "Mapped State" - {
       "changes type of event value" - {
         val emitter = Var(42)
         val result = emitter.map(_.toString)
@@ -17,9 +17,22 @@ object RxStateOpsSuite extends TestSuite {
         emitter.map(_.toString).kill()
         assert(emitter.children.length == 0)
       }
+      "swept by Reaper" - {
+        val state = Var(0)
+        def f() = {
+          var calls = 0
+          implicit val reaper = Reaper()
+          val mapped = state.map(_.toString)
+          mapped.subscribe(_ => calls += 1)
+          reaper.sweep()
+          state() = 1
+          assert(calls == 0)
+        }
+        f()
+      }
     }
 
-    "RxState observer" - {
+    "State observer" - {
       "calls immediately" - {
         val v = Var(42)
         var calls = 0
@@ -28,7 +41,7 @@ object RxStateOpsSuite extends TestSuite {
       }
     }
 
-    "Zipped RxStream" - {
+    "Zipped State" - {
       "emits when any parent was changed" - {
         val state1 = Var("Cat")
         val state2 = Var(1)
@@ -44,7 +57,18 @@ object RxStateOpsSuite extends TestSuite {
         state1() = "Dog"
         state2() = 2
       }
-      // todo test kill
+
+      "is killed correctly" - {
+        var calls = 0
+        val state1 = Var("Cat")
+        val state2 = Var(1)
+        val zipped = state1 zip state2
+        val slot = zipped.subscribe(_ => calls += 1)
+        state1() = "Dog"
+        slot.kill()
+        state2() = 2
+        assert(calls == 1)
+      }
     }
   }
 }

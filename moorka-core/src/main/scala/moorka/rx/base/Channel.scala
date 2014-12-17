@@ -1,17 +1,23 @@
 package moorka.rx.base
 
-import moorka.rx.Mortal
+import moorka.rx.{Reaper, Mortal}
 import scala.collection.mutable
 
 object Channel {
 
-  def apply[A] = new Channel[A] {
+  def apply[A](implicit reaper: Reaper = Reaper.nice): Channel[A] = {
+    val channel = new Channel[A] {}
+    reaper.mark(channel)
+    channel
   }
+
 }
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 trait Channel[A] extends Mortal {
+
+  @volatile private var dead: Boolean = false
 
   val children = mutable.Buffer[Channel[A]]()
 
@@ -29,7 +35,10 @@ trait Channel[A] extends Mortal {
   }
 
   def kill(): Unit = {
-    children.foreach(_.kill())
-    children.remove(0, children.length)
+    if (!dead) {
+      children.foreach(_.kill())
+      children.remove(0, children.length)
+      dead = true
+    }
   }
 }

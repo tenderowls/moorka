@@ -1,25 +1,25 @@
 package moorka.rx.base.ops
 
 import moorka.rx._
+import moorka.rx.death.Reaper
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-final class RxStateOps[A](val self: State[A]) extends AnyVal {
+final class StateOps[A](val self: State[A]) extends AnyVal {
 
   /**
-   * Same as [[RxStreamOps.subscribe]] but calls f immediately
+   * Same as [[ChannelOps.subscribe]] but calls f immediately
    * @param f listener
    * @return slot
    */
-  def observe(f: => Any): Channel[A] = {
+  def observe(f: => Any)(implicit reaper: Reaper = Reaper.nice): Channel[A] = {
     val x = self.subscribe(_ => f)
-    f
-    x
+    f; x
   }
 
-  def map[B](f: (A) => B): State[B] = {
-    new Var[B](f(self())) {
+  def map[B](f: (A) => B)(implicit reaper: Reaper = Reaper.nice): State[B] = {
+    val x = new Var[B](f(self())) {
       val rip = self subscribe { _ =>
         this.value = f(self())
         emit(value)
@@ -29,10 +29,12 @@ final class RxStateOps[A](val self: State[A]) extends AnyVal {
         super.kill()
       }
     }
+    reaper.mark(x)
+    x
   }
 
-  def zip[B](another: State[B]): State[(A, B)] = {
-    new Var[(A, B)]((self(), another())) {
+  def zip[B](another: State[B])(implicit reaper: Reaper = Reaper.nice): State[(A, B)] = {
+    val x = new Var[(A, B)]((self(), another())) {
       def subscriber(x: Any): Unit = {
         value = (self(), another())
         emit(value)
@@ -46,5 +48,7 @@ final class RxStateOps[A](val self: State[A]) extends AnyVal {
         super.kill()
       }
     }
+    reaper.mark(x)
+    x
   }
 }

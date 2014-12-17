@@ -1,6 +1,6 @@
  package moorka
 
-import moorka.rx.base.ops.{RxStateOps, RxStreamOps}
+import moorka.rx.base.ops.{StateOps, ChannelOps}
 import scala.language.implicitConversions
 
 /**
@@ -17,14 +17,14 @@ package object rx {
 
   val Buffer = collection.Buffer
   val Channel = base.Channel
+  val Reaper = death.Reaper
 
-  type Collection[A] = collection.Buffer[A]
+  type Buffer[A] = collection.Buffer[A]
   type BufferView[A] = collection.BufferView[A]
 
-  trait Mortal {
-    def kill(): Unit
-  }
+  type Mortal = death.Mortal
+  type Reaper = death.Reaper
 
-  implicit def ToRxStreamOps[A](x: Channel[A]): RxStreamOps[A] = new RxStreamOps(x)
-  implicit def ToRxStateOps[A](x: State[A]): RxStateOps[A] = new RxStateOps(x)
+  implicit def ToRxStreamOps[A](x: Channel[A]): ChannelOps[A] = new ChannelOps(x)
+  implicit def ToRxStateOps[A](x: State[A]): StateOps[A] = new StateOps(x)
 }

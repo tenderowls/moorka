@@ -6,7 +6,7 @@ import utest._
  */
 object BufferSuite extends TestSuite {
   val tests = TestSuite {
-    'Collection {
+    'Buffer {
       "must emit `added` when +=" - {
         val collection = Buffer[Int]
         var calls = 0
@@ -56,7 +56,7 @@ object BufferSuite extends TestSuite {
       }
     }
 
-    "Mapped collection should be changed" - {
+    "Mapped buffer should be changed" - {
 
       def mapFunction(x:Int):String = x match {
         case 1 => "one"
@@ -105,7 +105,7 @@ object BufferSuite extends TestSuite {
       // todo test removed element is a same
     }
 
-    "Filtered collection should be" - {
+    "Filtered buffer should be" - {
       "updated when changes of parent collection satisfy to filter" - {
         val collection = Buffer("John", "Tom", "Jane")
         val filtered = collection.filter(_.startsWith("J"))
