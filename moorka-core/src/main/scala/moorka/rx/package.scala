@@ -1,6 +1,8 @@
  package moorka
 
-import moorka.rx.base.ops.{StateOps, ChannelOps}
+import moorka.rx.base.ops.{ChannelOps, StateOps}
+import moorka.rx.collection.ops.BufferOps
+
 import scala.language.implicitConversions
 
 /**
@@ -25,6 +27,7 @@ package object rx {
   type Mortal = death.Mortal
   type Reaper = death.Reaper
 
-  implicit def ToRxStreamOps[A](x: Channel[A]): ChannelOps[A] = new ChannelOps(x)
-  implicit def ToRxStateOps[A](x: State[A]): StateOps[A] = new StateOps(x)
+  implicit def ToChannelOps[A](x: Channel[A]): ChannelOps[A] = new ChannelOps(x)
+  implicit def ToStateOps[A](x: State[A]): StateOps[A] = new StateOps(x)
+  implicit def ToBufferOps[A](x: BufferView[A]): BufferOps[A] = new BufferOps(x)
 }

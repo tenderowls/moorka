@@ -1,16 +1,16 @@
-package moorka.rx.collection
+package moorka.rx.collection.ops
 
 import moorka.rx._
+import moorka.rx.collection.{BufferView, IndexedElement}
 
 import scala.collection.mutable
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-private[collection] class Filtered[A](parent: BufferView[A],
+private[collection] class FilteredBuffer[A](parent: BufferView[A],
                                       filterFunction: (A) => Boolean)
-
-  extends BufferBase[A] {
+  extends BufferView[A] {
 
   type RxExtractor = (A) => State[Any]
 

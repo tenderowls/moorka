@@ -8,7 +8,7 @@ object BufferSuite extends TestSuite {
   val tests = TestSuite {
     'Buffer {
       "must emit `added` when +=" - {
-        val collection = Buffer[Int]
+        val collection = Buffer[Int]()
         var calls = 0
         collection.added.subscribe( x => calls += 1)
         collection += 1

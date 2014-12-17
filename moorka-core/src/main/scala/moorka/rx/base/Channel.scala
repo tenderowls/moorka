@@ -1,7 +1,6 @@
 package moorka.rx.base
 
-import moorka.rx.{Reaper, Mortal}
-import scala.collection.mutable
+import moorka.rx.{Mortal, Reaper}
 
 object Channel {
 
@@ -18,26 +17,28 @@ object Channel {
 trait Channel[A] extends Mortal {
 
   @volatile private var dead: Boolean = false
-
-  val children = mutable.Buffer[Channel[A]]()
+  var children = List[Channel[A]]()
 
   def linkChild(child: Channel[A]): Unit = {
-    children += child
+    this.synchronized {
+      children ::= child
+    }
   }
 
   def unlinkChild(child: Channel[A]): Unit = {
-    children -= child
+    this.synchronized {
+      children = children.filterNot(_ == child)
+    }
   }
 
   def emit(x: A): Unit = {
-    for (slot <- children)
-      slot.emit(x)
+    children.foreach(_.emit(x))
   }
 
   def kill(): Unit = {
     if (!dead) {
       children.foreach(_.kill())
-      children.remove(0, children.length)
+      children = Nil
       dead = true
     }
   }

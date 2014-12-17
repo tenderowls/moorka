@@ -1,6 +1,8 @@
 package moorka.rx.collection
 
 import moorka.rx._
+
+import scala.collection.mutable
 import scala.scalajs.js
 
 /**
@@ -10,21 +12,18 @@ import scala.scalajs.js
  */
 object Buffer {
 
-  def apply[A](es: A*): Buffer[A] = {
+  def apply[A](es: A*)(implicit reaper: Reaper = Reaper.nice): Buffer[A] = {
     fromSeq(es)
   }
 
-  def fromSeq[A](es: Seq[A]): Buffer[A] = {
-    val array = new js.Array[A](es.length)
-    for (i <- 0 until es.length)
-      array(i) = es(i)
-    new Buffer[A](array)
+  def fromSeq[A](es: Seq[A])(implicit reaper: Reaper = Reaper.nice): Buffer[A] = {
+    val buff = new Buffer[A](mutable.Buffer.concat(es))
+    reaper.mark(buff)
+    buff
   }
-
-  def apply[A] = new Buffer[A](new js.Array[A])
 }
 
-class Buffer[A](private var buffer: js.Array[A]) extends BufferBase[A] {
+class Buffer[A](private var buffer: mutable.Buffer[A]) extends BufferView[A] {
 
   val added = Channel[A]
 
@@ -45,7 +44,7 @@ class Buffer[A](private var buffer: js.Array[A]) extends BufferBase[A] {
   def view: BufferView[A] = this
 
   def +=(e: A) = {
-    buffer.push(e)
+    buffer += e
     _length() = buffer.length
     added.emit(e)
     this
@@ -58,7 +57,8 @@ class Buffer[A](private var buffer: js.Array[A]) extends BufferBase[A] {
   }
 
   def remove(idx: Int) = {
-    val e = buffer.splice(idx, 1)(0)
+    val e = buffer(idx)
+    buffer.remove(idx)
     val tpl = IndexedElement(idx, e)
     _length() = buffer.length
     removed.emit(tpl)
@@ -73,7 +73,7 @@ class Buffer[A](private var buffer: js.Array[A]) extends BufferBase[A] {
       val x: js.UndefOr[A] = buffer(j)
       if (x.isDefined && !f(x.get)) {
         removedElems(removedElems.length) = IndexedElement(j, x.get)
-        buffer.splice(j, 1)
+        buffer.remove(j)
         offset += 1
       }
     }
@@ -84,7 +84,7 @@ class Buffer[A](private var buffer: js.Array[A]) extends BufferBase[A] {
   }
 
   def insert(idx: Int, e: A) = {
-    buffer.splice(idx, 0, e)
+    buffer.insert(idx, e)
     _length() = buffer.length
     inserted.emit(IndexedElement(idx, e))
   }
@@ -101,7 +101,7 @@ class Buffer[A](private var buffer: js.Array[A]) extends BufferBase[A] {
   }
 
   def updateAll(f: A => A) = {
-    val elements = asSeq
+    val elements = this.asSeq
     for (i <- 0 until length()) {
       val e = elements(i)
       update(i, f(e))

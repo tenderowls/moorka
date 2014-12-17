@@ -10,6 +10,7 @@ import moorka.rx._
  */
 trait BufferView[A] extends Mortal {
 
+
   //---------------------------------------------------------------------------
   //
   //  Events
@@ -68,60 +69,20 @@ trait BufferView[A] extends Mortal {
    * `b` which were mapped to `a`, `b.kill()` would stop `a` -> `b`
    * event propagation.
    */
-  def kill(): Unit
+  def kill(): Unit = {
+    added.kill()
+    removed.kill()
+    inserted.kill()
+    updated.kill()
+  }
 
-  /**
-   * Find count of elements which satisfy `f`
-   * @param f `true` if satisfy. `false` if not
-   * @return count of elements
-   */
-  def count(f: (A) => Boolean): Int
-
-  //---------------------------------------------------------------------------
-  //
-  // Combinators
-  //
-  //---------------------------------------------------------------------------
-
-  /**
-   * Apply function `f` to all elements of collection
-   * @param f function to ally
-   */
-  def foreach(f: A => Any): Unit
-
-  /**
-   * Maps collection to `B` type. Note that you receives
-   * a reactive version of collection. It means that if
-   * you change this collection, mapped collection will
-   * changed too. Also, be aware that mapped version
-   * will not convert elements immediately, its will be done
-   * when you'll try to get element or parent collection
-   * raise the event
-   * @param f map function
-   * @tparam B mapped element type
-   * @return mapped collection
-   */
-  def map[B](f: (A) => B): BufferView[B]
-
-  /**
-   * Filters collection with `f` function. Note that you receives
-   * a reactive version of collection. Meaning if you change
-   * this collection, filtered collection will change too.
-   * @param f filter function. `false` if element need to be removed
-   * @return filtered collection
-   */
-  def filter(f: (A) => Boolean): BufferView[A]
-
- /**
-  * Applies a binary operator to a start value and all elements of this $coll,
-  * going left to right.
-  */
-  def foldLeft[B](z: B)(op: (B, A) => B): State[B]
-
-  /**
-   * Converts to standard scala immutable sequence
-   */
-  def asSeq: Seq[A]
+  override def toString = {
+    // Force elements (for non-strict collection)
+    val values =
+      for (x <- 0 until length())
+      yield apply(x).toString
+    s"Collection(${values.reduce(_ + "," + _)})"
+  }
 }
 
 case class IndexedElement[A](idx: Int, e: A)
