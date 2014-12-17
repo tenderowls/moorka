@@ -1,4 +1,4 @@
-import com.tenderowls.moorka.core._
+import moorka.rx._
 import utest._
 
 /**

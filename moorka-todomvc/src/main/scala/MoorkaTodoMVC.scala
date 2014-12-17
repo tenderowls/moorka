@@ -1,9 +1,8 @@
-
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
-import com.tenderowls.moorka.core._
-import com.tenderowls.moorka.ui.components.html._
-import com.tenderowls.moorka.ui.components.base._
+import moorka.rx._
+import moorka.ui.components.html._
+import moorka.ui.components.base._
 
 object MoorkaTodoMVC extends Application {
   def start() = {
