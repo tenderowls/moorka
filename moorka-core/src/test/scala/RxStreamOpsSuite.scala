@@ -9,7 +9,7 @@ object RxStreamOpsSuite extends TestSuite {
     // Test .subscribe
     "RxStream" - {
       "should broadcast event to all subscribers" - {
-        val emitter = Emitter[String]
+        val emitter = Channel[String]
         var calls = 0
         emitter.subscribe( _ => calls += 1)
         emitter.subscribe( _ => calls += 1)
@@ -18,7 +18,7 @@ object RxStreamOpsSuite extends TestSuite {
         assert(calls == 3)
       }
       "should stop broadcasting when slot killed" - {
-        val emitter = Emitter[String]
+        val emitter = Channel[String]
         var calls = 0
         emitter.subscribe( _ => calls += 1)
         emitter.subscribe( _ => calls += 1).kill()
@@ -30,14 +30,14 @@ object RxStreamOpsSuite extends TestSuite {
 
     "Mapped RxStream" - {
       "changes type of event value" - {
-        val emitter = Emitter[Int]
+        val emitter = Channel[Int]
         var result:String = ""
         emitter.map(_.toString).subscribe(result = _)
         emitter.emit(42)
         assert(result == "42")
       }
       "should kills correctly" - {
-        val emitter = Emitter[Int]
+        val emitter = Channel[Int]
         emitter.map(_.toString).kill()
         assert(emitter.children.length == 0)
       }
@@ -45,7 +45,7 @@ object RxStreamOpsSuite extends TestSuite {
 
     "Filtered RxStream" - {
       "blocks events which not satisfy condition" - {
-        val emitter = Emitter[Int]
+        val emitter = Channel[Int]
         var calls:Int = 0
         emitter.filter(x => x != 42).subscribe(_ => calls += 1)
         emitter.emit(42)
@@ -53,7 +53,7 @@ object RxStreamOpsSuite extends TestSuite {
         assert(calls == 1)
       }
       "should kills correctly" - {
-        val emitter = Emitter[Int]
+        val emitter = Channel[Int]
         emitter.filter(_ => true).kill()
         assert(emitter.children.length == 0)
       }

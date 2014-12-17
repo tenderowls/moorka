@@ -7,12 +7,12 @@ import scala.collection.mutable
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-private[collection] class Filtered[A](parent: CollectionView[A],
+private[collection] class Filtered[A](parent: BufferView[A],
                                       filterFunction: (A) => Boolean)
 
-  extends CollectionBase[A] {
+  extends BufferBase[A] {
 
-  type RxExtractor = (A) => RxState[Any]
+  type RxExtractor = (A) => State[Any]
 
   val buffer = mutable.Buffer[A]()
   val origBuffer = mutable.Buffer[A]()
@@ -45,14 +45,14 @@ private[collection] class Filtered[A](parent: CollectionView[A],
   }
 
   // Overridden events
-  val added = Emitter[A]
-  val removed = Emitter[IndexedElement[A]]
-  val inserted = Emitter[IndexedElement[A]]
-  val updated = Emitter[IndexedElement[A]]
+  val added = Channel[A]
+  val removed = Channel[IndexedElement[A]]
+  val inserted = Channel[IndexedElement[A]]
+  val updated = Channel[IndexedElement[A]]
 
   private val _length = Var(buffer.length)
 
-  val length: RxState[Int] = _length
+  val length: State[Int] = _length
 
   // Copy collection to internal buffer
   // filtered with `filterFunction`

@@ -1,12 +1,12 @@
 package moorka.ui.components.base
 
-import moorka.rx.RxState
+import moorka.rx.State
 import moorka.ui.Ref
 import moorka.ui.element.ElementBase
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-trait Component[State] extends Block {
-  val state: RxState[State]
+trait Component[A] extends Block {
+  val state: State[A]
 }

@@ -1,6 +1,6 @@
 package moorka.rx.binding
 
-import moorka.rx.base.RxState
+import moorka.rx.base.State
 
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox
@@ -10,7 +10,7 @@ import scala.reflect.macros.whitebox
  */
 object BindingMacro {
 
-  def apply[A](f: => A): RxState[A] = macro macroBindingImpl[A]
+  def apply[A](f: => A): State[A] = macro macroBindingImpl[A]
 
   def macroBindingImpl[A](c: whitebox.Context)(f: c.Tree) = {
     import c.universe._
@@ -24,7 +24,7 @@ object BindingMacro {
       val deep = withoutFunctions.map(processTree(_))
       withoutFunctions ++ deep.flatten
     }
-    val bindingTrait = "moorka.rx.RxState"
+    val bindingTrait = "moorka.rx.State"
     val bindingConstructor = c.mirror.staticClass(bindingTrait).toTypeConstructor
     val bindings = processTree(f).filter(_.tpe.typeConstructor <:< bindingConstructor)
     q"new moorka.rx.binding.ExpressionBinding(Seq(..$bindings))($f)"

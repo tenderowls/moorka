@@ -1,7 +1,6 @@
 package moorka.ui
 
-import moorka.rx.RxStream
-import moorka.rx.base.Emitter
+import moorka.rx._
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
@@ -25,7 +24,7 @@ object RenderAPI {
 
   private var postMessage:WorkerCallback = null
 
-  private val _onMessage = Emitter[Message]
+  private val _onMessage = Channel[Message]
   
   /**
    * Initialize renderBackend for worker mode
@@ -59,5 +58,5 @@ object RenderAPI {
     }
   }
 
-  val onMessage: RxStream[Message] = _onMessage
+  val onMessage: Channel[Message] = _onMessage
 }

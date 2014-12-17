@@ -1,3 +1,4 @@
+
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 import moorka.rx._
@@ -7,7 +8,7 @@ import moorka.ui.components.base._
 object MoorkaTodoMVC extends Application {
   def start() = {
     // Inject Data
-    val todos = Collection.fromSeq(
+    val todos = Buffer.fromSeq(
       0 to 20 map(x => Todo(s"$x todo", Active))
     )
     // The values represents display state of this component.
@@ -21,7 +22,7 @@ object MoorkaTodoMVC extends Application {
     val filter = Var[Filter](All)
     // Internal component. It has own state but depends on
     // display state of main component
-    case class TodoComponent(state: RxState[Todo]) extends Component[Todo] {
+    case class TodoComponent(state: State[Todo]) extends Component[Todo] {
       def start() = {
         val fieldText = Var("")
         state.observe(fieldText() = state().txt)
@@ -124,7 +125,7 @@ object MoorkaTodoMVC extends Application {
           ul(`className` := "todo-list",
             Repeat[Todo](
               dataProvider = todos,
-              (x: RxState[Todo]) => TodoComponent(x)
+              x => TodoComponent(x)
             )
           ),
           footer(`className` := "footer",

@@ -7,10 +7,10 @@ import scala.scalajs.js
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-private[collection] class Mapped[From, A](parent: CollectionView[From],
+private[collection] class Mapped[From, A](parent: BufferView[From],
                                           mapFunction: From => A)
 
-  extends CollectionBase[A] {
+  extends BufferBase[A] {
 
   val buffer = new js.Array[A](parent.length())
 
@@ -22,7 +22,7 @@ private[collection] class Mapped[From, A](parent: CollectionView[From],
 
   private val _length = Var(buffer.length)
 
-  val length: RxState[Int] = _length
+  val length: State[Int] = _length
 
   added.subscribe { x =>
     buffer.push(x)

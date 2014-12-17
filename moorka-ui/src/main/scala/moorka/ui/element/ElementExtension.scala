@@ -24,7 +24,7 @@ case class ElementAttributeName(name: String) {
 
   def :=(x: String) = ElementAttributeExtension(name, x)
 
-  def :=(x: RxState[String]) = ElementBoundAttributeExtension(name, x)
+  def :=(x: State[String]) = ElementBoundAttributeExtension(name, x)
 }
 
 case class ElementEventName[EventType <: SyntheticEvent](processor: EventProcessor[EventType]) {
@@ -58,17 +58,17 @@ case class ElementPropertyName[A](name: String) {
 
   def :=(x: A) = ElementPropertyExtension(name, x)
 
-  def :=(x: RxState[A]) = ElementBoundPropertyExtension(name, x)
+  def :=(x: State[A]) = ElementBoundPropertyExtension(name, x)
 
   def =:= (x: Var[A]) = VarPropertyExtension(name, x)
 
   def from(x: RefHolder): Future[A] = x.ref.get(name).map(_.asInstanceOf[A])
 }
 
-class BoundExtensionFactory[A](static: (A => ElementExtension), bound: (RxState[A]) => BoundElementExtension)
+class BoundExtensionFactory[A](static: (A => ElementExtension), bound: (State[A]) => BoundElementExtension)
   extends StaticExtensionFactory[A](static) {
 
-  def :=(x: RxState[A]) = bound(x)
+  def :=(x: State[A]) = bound(x)
 }
 
 class StaticExtensionFactory[A](static: (A => ElementExtension)) {
@@ -89,7 +89,7 @@ case class SyntheticEventExtension[EventType <: SyntheticEvent](processor: Event
                                                                 useCapture: Boolean)
   extends ElementExtension {
 
-  var slot:Option[RxStream[EventType]] = None
+  var slot:Option[Channel[EventType]] = None
 
   override def assignElement(element: ElementBase): Unit = {
     super.assignElement(element)
@@ -124,7 +124,7 @@ case class UseClassExtension(className: String, trigger:Boolean) extends Element
 
 sealed trait BoundElementExtension extends ElementExtension {
 
-  protected var subscription: RxStream[_] = null
+  protected var subscription: Channel[_] = null
 
   override def kill(): Unit = {
     if (subscription != null)
@@ -132,7 +132,7 @@ sealed trait BoundElementExtension extends ElementExtension {
   }
 }
 
-case class UseClassBoundExtension(className: String, trigger:RxState[Boolean])
+case class UseClassBoundExtension(className: String, trigger:State[Boolean])
   extends ElementExtension with BoundElementExtension {
 
   override def assignElement(element: ElementBase): Unit = {
@@ -145,7 +145,7 @@ case class UseClassBoundExtension(className: String, trigger:RxState[Boolean])
   }
 }
 
-case class ElementBoundPropertyExtension[A](name: String, value: RxState[A])
+case class ElementBoundPropertyExtension[A](name: String, value: State[A])
   extends ElementExtension with BoundElementExtension {
 
   override def assignElement(element: ElementBase): Unit = {
@@ -159,7 +159,7 @@ case class ElementBoundPropertyExtension[A](name: String, value: RxState[A])
 case class VarPropertyExtension[A](name: String, value: Var[A])
   extends ElementExtension {
 
-  var subscriptions: List[RxStream[_]] = Nil
+  var subscriptions: List[Channel[_]] = Nil
   var awaitForValue = false
 
   def listener(event: SyntheticEvent) = {
@@ -190,7 +190,7 @@ case class VarPropertyExtension[A](name: String, value: Var[A])
   }
 }
 
-case class ElementBoundAttributeExtension(name: String, value: RxState[String])
+case class ElementBoundAttributeExtension(name: String, value: State[String])
   extends ElementExtension
   with BoundElementExtension {
 

@@ -4,11 +4,11 @@ import utest._
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-object CollectionSuite extends TestSuite {
+object BufferSuite extends TestSuite {
   val tests = TestSuite {
     'Collection {
       "must emit `added` when +=" - {
-        val collection = Collection[Int]
+        val collection = Buffer[Int]
         var calls = 0
         collection.added.subscribe( x => calls += 1)
         collection += 1
@@ -18,7 +18,7 @@ object CollectionSuite extends TestSuite {
 
       "check remove -= action" - {
         var calls = 0
-        val collection = Collection(1, 2, 3, 4, 5)
+        val collection = Buffer(1, 2, 3, 4, 5)
         collection.removed subscribe { x =>
           assert(x.idx == 3)
           calls += 1
@@ -31,7 +31,7 @@ object CollectionSuite extends TestSuite {
 
       "check update element action" - {
         var calls = 0
-        val collection = Collection(1, 2, 3, 4, 5)
+        val collection = Buffer(1, 2, 3, 4, 5)
         collection.updated subscribe { x =>
           assert(x.idx == 3)
           calls += 1
@@ -43,7 +43,7 @@ object CollectionSuite extends TestSuite {
 
       "check insert element action" - {
         var calls = 0
-        val collection = Collection(1, 2, 3, 4, 5)
+        val collection = Buffer(1, 2, 3, 4, 5)
         collection.inserted subscribe { x =>
           assert(x.idx == 2)
           calls += 1
@@ -69,14 +69,14 @@ object CollectionSuite extends TestSuite {
       }
 
       "when new element added into parent collection" - {
-        val collection = Collection(1, 2, 3)
+        val collection = Buffer(1, 2, 3)
         val mapped = collection.map(mapFunction)
         collection += 4
         assert(mapped(3) == "four")
       }
 
       "when element removed from parent collection" - {
-        val collection = Collection(1, 2, 3)
+        val collection = Buffer(1, 2, 3)
         val mapped = collection.map(mapFunction)
         collection -= 2
         assert(mapped(0) == "one")
@@ -84,7 +84,7 @@ object CollectionSuite extends TestSuite {
       }
 
       "when new element inserted into parent collection" - {
-        val collection = Collection(1, 3)
+        val collection = Buffer(1, 3)
         val mapped = collection.map(mapFunction)
         //println(collection)
         //println(mapped)
@@ -97,7 +97,7 @@ object CollectionSuite extends TestSuite {
       }
 
       "when element updated in parent collection" - {
-        val collection = Collection(1, 2)
+        val collection = Buffer(1, 2)
         val mapped = collection.map(mapFunction)
         collection(0) = 2
         assert(mapped(0) == "two")
@@ -107,9 +107,9 @@ object CollectionSuite extends TestSuite {
 
     "Filtered collection should be" - {
       "updated when changes of parent collection satisfy to filter" - {
-        val collection = Collection("John", "Tom", "Jane")
+        val collection = Buffer("John", "Tom", "Jane")
         val filtered = collection.filter(_.startsWith("J"))
-        assert(filtered.toString == Collection("John", "Jane").toString)
+        assert(filtered.toString == Buffer("John", "Jane").toString)
         collection += "Jade"
         assert(filtered.length() == 3)
       }

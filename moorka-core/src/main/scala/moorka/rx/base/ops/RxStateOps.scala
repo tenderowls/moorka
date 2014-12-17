@@ -5,20 +5,20 @@ import moorka.rx._
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-final class RxStateOps[A](val self: RxState[A]) extends AnyVal {
+final class RxStateOps[A](val self: State[A]) extends AnyVal {
 
   /**
    * Same as [[RxStreamOps.subscribe]] but calls f immediately
    * @param f listener
    * @return slot
    */
-  def observe(f: => Any): RxStream[A] = {
+  def observe(f: => Any): Channel[A] = {
     val x = self.subscribe(_ => f)
     f
     x
   }
 
-  def map[B](f: (A) => B): RxState[B] = {
+  def map[B](f: (A) => B): State[B] = {
     new Var[B](f(self())) {
       val rip = self subscribe { _ =>
         this.value = f(self())
@@ -31,7 +31,7 @@ final class RxStateOps[A](val self: RxState[A]) extends AnyVal {
     }
   }
 
-  def zip[B](another: RxState[B]): RxState[(A, B)] = {
+  def zip[B](another: State[B]): State[(A, B)] = {
     new Var[(A, B)]((self(), another())) {
       def subscriber(x: Any): Unit = {
         value = (self(), another())

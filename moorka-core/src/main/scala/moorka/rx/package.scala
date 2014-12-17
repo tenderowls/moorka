@@ -8,23 +8,23 @@ import scala.language.implicitConversions
  */
 package object rx {
 
-  val Emitter = base.Emitter
   val Bind = binding.BindingMacro
   val Var = base.Var
 
-  type Emitter[A] = base.Emitter[A]
-  type RxStream[A] = base.RxStream[A]
-  type RxState[A] = base.RxState[A]
+  type Channel[A] = base.Channel[A]
+  type State[A] = base.State[A]
   type Var[A] = base.Var[A]
 
-  val Collection = collection.Collection
-  type Collection[A] = collection.Collection[A]
-  type CollectionView[A] = collection.CollectionView[A]
-  
+  val Buffer = collection.Buffer
+  val Channel = base.Channel
+
+  type Collection[A] = collection.Buffer[A]
+  type BufferView[A] = collection.BufferView[A]
+
   trait Mortal {
     def kill(): Unit
   }
 
-  implicit def ToRxStreamOps[A](x: RxStream[A]): RxStreamOps[A] = new RxStreamOps(x)
-  implicit def ToRxStateOps[A](x: RxState[A]): RxStateOps[A] = new RxStateOps(x)
+  implicit def ToRxStreamOps[A](x: Channel[A]): RxStreamOps[A] = new RxStreamOps(x)
+  implicit def ToRxStateOps[A](x: State[A]): RxStateOps[A] = new RxStateOps(x)
 }

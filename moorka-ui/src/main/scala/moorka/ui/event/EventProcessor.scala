@@ -34,9 +34,9 @@ sealed trait EventProcessor[A <: SyntheticEvent ] {
 
   val event: A
 
-  val listeners = new mutable.HashMap[EventTarget, Emitter[A]]()
+  val listeners = new mutable.HashMap[EventTarget, Channel[A]]()
 
-  val captures = new mutable.HashMap[EventTarget, Emitter[A]]()
+  val captures = new mutable.HashMap[EventTarget, Channel[A]]()
 
   def fillEvent(element: EventTarget, nativeEvent: js.Dynamic) = {
     event._target = element
@@ -101,12 +101,12 @@ sealed trait EventProcessor[A <: SyntheticEvent ] {
     }
   }
 
-  def addListener(element: EventTarget, listener: (A) => Unit): RxStream[A] = {
-    listeners.getOrElseUpdate(element, Emitter[A]).subscribe(listener)
+  def addListener(element: EventTarget, listener: (A) => Unit): Channel[A] = {
+    listeners.getOrElseUpdate(element, Channel[A]).subscribe(listener)
   }
 
-  def addCapture(element: EventTarget, capture: (A) => Unit): RxStream[A] = {
-    captures.getOrElseUpdate(element, Emitter[A]).subscribe(capture)
+  def addCapture(element: EventTarget, capture: (A) => Unit): Channel[A] = {
+    captures.getOrElseUpdate(element, Channel[A]).subscribe(capture)
   }
 
   RenderAPI.onMessage subscribe { x =>

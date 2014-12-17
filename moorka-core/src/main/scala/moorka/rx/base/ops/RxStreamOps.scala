@@ -6,10 +6,10 @@ import scala.language.existentials
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-final class RxStreamOps[A](val self: RxStream[A]) extends AnyVal {
+final class RxStreamOps[A](val self: Channel[A]) extends AnyVal {
 
-  def until(f: A => Boolean): RxStream[A] = {
-    val child = new Emitter[A] {
+  def until(f: A => Boolean): Channel[A] = {
+    val child = new Channel[A] {
       override def kill(): Unit = {
         self.unlinkChild(this)
         super.kill()
@@ -23,8 +23,8 @@ final class RxStreamOps[A](val self: RxStream[A]) extends AnyVal {
     child
   }
 
-  def subscribe(f: A => Any): RxStream[A] = {
-    val child = new Emitter[A] {
+  def subscribe(f: A => Any): Channel[A] = {
+    val child = new Channel[A] {
       override def kill(): Unit = {
         self.unlinkChild(this)
         super.kill()
@@ -38,8 +38,8 @@ final class RxStreamOps[A](val self: RxStream[A]) extends AnyVal {
     child
   }
 
-  def filter(f: A => Boolean): RxStream[A] = {
-    val child = new Emitter[A] {
+  def filter(f: A => Boolean): Channel[A] = {
+    val child = new Channel[A] {
       override def kill(): Unit = {
         self.unlinkChild(this)
         super.kill()
@@ -52,8 +52,8 @@ final class RxStreamOps[A](val self: RxStream[A]) extends AnyVal {
     child
   }
 
-  def map[B](f: A => B): RxStream[B] = {
-    new Emitter[B] {
+  def map[B](f: A => B): Channel[B] = {
+    new Channel[B] {
       val rip = self subscribe { x =>
         emit(f(x))
       }
@@ -64,8 +64,8 @@ final class RxStreamOps[A](val self: RxStream[A]) extends AnyVal {
     }
   }
 
-  def merge(one: RxStream[_]): RxStream[Any] = {
-    new Emitter[Any] {
+  def merge(one: Channel[_]): Channel[Any] = {
+    new Channel[Any] {
       val rip = Seq(
         one.subscribe(emit),
         self.subscribe(emit)

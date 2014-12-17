@@ -12,12 +12,12 @@ import scala.collection.mutable
  */
 object Repeat {
 
-  def apply[A](dataProvider: CollectionView[A], componentFactory: RxState[A] => Component[A]) = {
+  def apply[A](dataProvider: BufferView[A], componentFactory: State[A] => Component[A]) = {
     new Repeat[A](dataProvider, componentFactory)
   }
 }
 
-class Repeat[A](dataProvider: CollectionView[A], factory: RxState[A] => Component[_])
+class Repeat[A](dataProvider: BufferView[A], factory: State[A] => Component[_])
   extends ElementBase {
 
   val ref = Ref("div")

@@ -6,17 +6,17 @@ import moorka.rx._
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-private[collection] abstract class CollectionBase[A] extends CollectionView[A] {
+private[collection] abstract class BufferBase[A] extends BufferView[A] {
 
-  def map[B](f: (A) => B): CollectionView[B] = {
+  def map[B](f: (A) => B): BufferView[B] = {
     new Mapped[A, B](this, f)
   }
 
-  def filter(f: (A) => Boolean): CollectionView[A] = {
+  def filter(f: (A) => Boolean): BufferView[A] = {
     new Filtered[A](this, f)
   }
 
-  def foldLeft[B](z: B)(op: (B, A) => B): RxState[B] = {
+  def foldLeft[B](z: B)(op: (B, A) => B): State[B] = {
     new ExpressionBinding(Seq(added, removed, inserted, updated))({
       var result = z
       foreach (x => result = op(result, x))
@@ -44,7 +44,7 @@ private[collection] abstract class CollectionBase[A] extends CollectionView[A] {
     for (i <- 0 until length()) yield apply(i)
   }
 
-  def observe(f: (A) => RxState[Any]): CollectionView[A] = this
+  def observe(f: (A) => State[Any]): BufferView[A] = this
 
   def kill(): Unit = {
     added.kill()

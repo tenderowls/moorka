@@ -1,23 +1,25 @@
 package moorka.rx.base
 
+import moorka.rx.Mortal
 import scala.collection.mutable
 
+object Channel {
+
+  def apply[A] = new Channel[A] {
+  }
+}
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-object Emitter {
-  def apply[A] = new Emitter[A]
-}
+trait Channel[A] extends Mortal {
 
-class Emitter[A] extends RxStream[A] {
+  val children = mutable.Buffer[Channel[A]]()
 
-  val children = mutable.Buffer[RxStream[A]]()
-
-  def linkChild(child: RxStream[A]): Unit = {
+  def linkChild(child: Channel[A]): Unit = {
     children += child
   }
 
-  def unlinkChild(child: RxStream[A]): Unit = {
+  def unlinkChild(child: Channel[A]): Unit = {
     children -= child
   }
 

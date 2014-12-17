@@ -7,7 +7,7 @@ object Var {
   def apply[A](x: A) = new Var[A](x)
 }
 
-class Var[A](protected var value: A) extends Emitter[A] with RxState[A] {
+class Var[A](protected var value: A) extends Channel[A] with State[A] {
 
   def apply(): A = {
     value

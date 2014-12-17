@@ -8,41 +8,41 @@ import scala.scalajs.js
  * for all changes which you would make.
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-object Collection {
+object Buffer {
 
-  def apply[A](es: A*): Collection[A] = {
+  def apply[A](es: A*): Buffer[A] = {
     fromSeq(es)
   }
 
-  def fromSeq[A](es: Seq[A]): Collection[A] = {
+  def fromSeq[A](es: Seq[A]): Buffer[A] = {
     val array = new js.Array[A](es.length)
     for (i <- 0 until es.length)
       array(i) = es(i)
-    new Collection[A](array)
+    new Buffer[A](array)
   }
 
-  def apply[A] = new Collection[A](new js.Array[A])
+  def apply[A] = new Buffer[A](new js.Array[A])
 }
 
-class Collection[A](private var buffer: js.Array[A]) extends CollectionBase[A] {
+class Buffer[A](private var buffer: js.Array[A]) extends BufferBase[A] {
 
-  val added = Emitter[A]
+  val added = Channel[A]
 
-  val inserted = Emitter[IndexedElement[A]]
+  val inserted = Channel[IndexedElement[A]]
 
-  val updated = Emitter[IndexedElement[A]]
+  val updated = Channel[IndexedElement[A]]
 
-  val removed = Emitter[IndexedElement[A]]
+  val removed = Channel[IndexedElement[A]]
 
   private val _length = Var(buffer.length)
 
-  val length: RxState[Int] = _length
+  val length: State[Int] = _length
 
   def apply(x: Int) = buffer(x)
 
   def indexOf(e: A) = buffer.indexOf(e)
 
-  def view: CollectionView[A] = this
+  def view: BufferView[A] = this
 
   def +=(e: A) = {
     buffer.push(e)

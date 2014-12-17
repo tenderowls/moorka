@@ -8,9 +8,9 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class ExpressionBinding[A](dependencies: Seq[RxStream[_]])
+class ExpressionBinding[A](dependencies: Seq[Channel[_]])
                           (expression: => A)
-  extends Emitter[A] with RxState[A] {
+  extends Channel[A] with State[A] {
 
   private var value = expression
 

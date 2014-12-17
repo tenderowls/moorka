@@ -8,7 +8,7 @@ import moorka.ui.event.EventProcessor
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class BoundComponentContainer(element: RxState[ElementBase]) extends ElementBase {
+class BoundComponentContainer(element: State[ElementBase]) extends ElementBase {
 
   var previous:ElementBase = null
 

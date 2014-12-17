@@ -8,7 +8,7 @@ import moorka.rx._
  * @tparam A type of elements
  * @author Aleksey Fomkin <fomkin@tenderowls.com>
  */
-trait CollectionView[A] extends Mortal {
+trait BufferView[A] extends Mortal {
 
   //---------------------------------------------------------------------------
   //
@@ -21,27 +21,27 @@ trait CollectionView[A] extends Mortal {
    * raise when reactive variable inside element change its
    * value
    */
-  val updated: RxStream[IndexedElement[A]]
+  val updated: Channel[IndexedElement[A]]
 
   /**
    * Element added into end of collection
    */
-  val added: RxStream[A]
+  val added: Channel[A]
 
   /**
    * Element removed
    */
-  val removed: RxStream[IndexedElement[A]]
+  val removed: Channel[IndexedElement[A]]
 
   /**
    * Element inserted into `idx`. Collection shifted to right
    */
-  val inserted: RxStream[IndexedElement[A]]
+  val inserted: Channel[IndexedElement[A]]
 
   /**
    * Length of collection
    */
-  val length: RxState[Int]
+  val length: State[Int]
 
   //---------------------------------------------------------------------------
   //
@@ -101,7 +101,7 @@ trait CollectionView[A] extends Mortal {
    * @tparam B mapped element type
    * @return mapped collection
    */
-  def map[B](f: (A) => B): CollectionView[B]
+  def map[B](f: (A) => B): BufferView[B]
 
   /**
    * Filters collection with `f` function. Note that you receives
@@ -110,13 +110,13 @@ trait CollectionView[A] extends Mortal {
    * @param f filter function. `false` if element need to be removed
    * @return filtered collection
    */
-  def filter(f: (A) => Boolean): CollectionView[A]
+  def filter(f: (A) => Boolean): BufferView[A]
 
  /**
   * Applies a binary operator to a start value and all elements of this $coll,
   * going left to right.
   */
-  def foldLeft[B](z: B)(op: (B, A) => B): RxState[B]
+  def foldLeft[B](z: B)(op: (B, A) => B): State[B]
 
   /**
    * Converts to standard scala immutable sequence
