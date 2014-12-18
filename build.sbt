@@ -12,7 +12,7 @@ val dontPublish = Seq(
 
 val commonSettings = Seq(
   scalaVersion := currentScalaVersion,
-  version := "0.1.0",
+  version := "0.2.0-SNAPSHOT",
   organization := "com.tenderowls.opensource",
   licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")),
   homepage := Some(url("http://github.com/tenderowls/moorka")),
