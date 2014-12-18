@@ -148,34 +148,51 @@ function Moorka() {
       self.send(["event", copyEvent(event)])
     });
   }
+  
+  function loadScript(path, cb, progressCb) {
+      http = new XMLHttpRequest();
+      http.open('GET', path, true);
+      http.addEventListener("progress", function() {
+        if (progressCb) {
+          progressCb(oEvent.loaded / oEvent.total);
+        }
+      });
+      http.addEventListener("load", function() {
+       cb(http.responseText)
+      });
+      http.addEventListener("error", function() {
+        console.error("Can't load " + path);
+      });
+      http.send();
+  }
 
   this.application = function(main, script) {
-    var bootstrap = document.createElement("script");
-    bootstrap.addEventListener("load", function() {
+    loadScript(script, function(scriptText) {
+      eval(scriptText);
       var renderBackend = new RenderBackendImpl();
       renderBackend.send = renderBackendApi().defaultMode(renderBackend.receive);
       renderBackend.send(["start"]);
       eval(main + "().main()");
     });
-    bootstrap.setAttribute("src", script);
-    document.body.appendChild(bootstrap);
   };
 
   this.workerApplication = function (main, script) {
-    var workerScript = [
-      "importScripts('" + script + "');\n",
-      "renderBackendApi().workerMode();\n",
-      main + "().main();"
-    ];
-    var blob = new Blob(workerScript, { "type": "application/javascript" });
-    var worker = new Worker(URL.createObjectURL(blob));
-    var renderBackend = new RenderBackendImpl();
-    renderBackend.send = function(x) {
-      worker.postMessage(x)
-    };
-    worker.onmessage = function(x) {
-      renderBackend.receive(x.data);
-    };
-    worker.postMessage(["start"]);
+    loadScript(script, function(scriptText) {
+      var workerScript = [
+        scriptText,
+        "\n renderBackendApi().workerMode();\n",
+        main + "().main();"
+      ];
+      var blob = new Blob(workerScript, { "type": "application/javascript" });
+      var worker = new Worker(URL.createObjectURL(blob));
+      var renderBackend = new RenderBackendImpl();
+      renderBackend.send = function(x) {
+        worker.postMessage(x)
+      };
+      worker.onmessage = function(x) {
+        renderBackend.receive(x.data);
+      };
+      worker.postMessage(["start"]);
+    });
   }
 }

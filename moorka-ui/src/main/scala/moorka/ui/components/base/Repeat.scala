@@ -12,12 +12,16 @@ import scala.collection.mutable
  */
 object Repeat {
 
-  def apply[A](dataProvider: BufferView[A], componentFactory: State[A] => Component[A]) = {
-    new Repeat[A](dataProvider, componentFactory)
+  def apply[A](dataProvider: BufferView[A],
+               componentFactory: State[A] => Component[A],
+               styles: Seq[String] = Nil) = {
+    new Repeat[A](dataProvider, componentFactory, styles)
   }
 }
 
-class Repeat[A](dataProvider: BufferView[A], factory: State[A] => Component[_])
+class Repeat[A](dataProvider: BufferView[A],
+                factory: State[A] => Component[_],
+                classNames: Seq[String] = Nil)
   extends ElementBase {
 
   val ref = Ref("div")
@@ -33,6 +37,8 @@ class Repeat[A](dataProvider: BufferView[A], factory: State[A] => Component[_])
     components += component
     component
   }
+
+  classNames.foreach(ref.classAdd)
 
   ref.appendChildren(
     dataProvider.asSeq.map { x =>

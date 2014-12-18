@@ -1,6 +1,6 @@
 {
   "name": "moorka-render-backend",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "homepage": "https://github.com/tenderowls/moorka",
   "authors": [
     "Aleksey Fomkin <aleksey.fomkin@gmail.com>"
@@ -14,5 +14,8 @@
     "functional",
     "fp"
   ],
+  "ignore": [
+    "*", "js/moorka.js"
+  ]
   "license": "Apache 2.0"
 }
