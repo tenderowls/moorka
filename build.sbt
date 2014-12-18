@@ -2,13 +2,13 @@ import sbt._
 import sbt.Keys._
 import bintray.Keys._
 
-val dontPublish = Seq(
-  publish := { }
-)
-
 val currentScalaVersion = "2.11.4"
 
 scalaVersion := currentScalaVersion
+
+val dontPublish = Seq(
+  publish := { }
+)
 
 val commonSettings = Seq(
   scalaVersion := currentScalaVersion,
@@ -50,12 +50,6 @@ lazy val `moorka-ui` = (project in file("moorka-ui"))
   .settings(commonSettings:_*)
   .dependsOn(`moorka-core`)
 
-lazy val `moorka-todomvc` = (project in file("moorka-todomvc"))
-  .enablePlugins(ScalaJSPlugin)
-  .settings(dontPublish:_*)
-  .settings(commonSettings:_*)
-  .dependsOn(`moorka-ui`)
-
 lazy val root = (project in file("."))
   .settings(dontPublish:_*)
   .settings(
@@ -63,7 +57,6 @@ lazy val root = (project in file("."))
   )
   .aggregate(
     `moorka-core`,
-    `moorka-ui`,
-    `moorka-todomvc`
+    `moorka-ui`
   )
 
