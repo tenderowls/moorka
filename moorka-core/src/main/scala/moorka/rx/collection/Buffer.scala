@@ -3,7 +3,6 @@ package moorka.rx.collection
 import moorka.rx._
 
 import scala.collection.mutable
-import scala.scalajs.js
 
 /**
  * Default reactive collection implementation. Events will be triggered
@@ -66,16 +65,13 @@ class Buffer[A](private var buffer: mutable.Buffer[A]) extends BufferView[A] {
   }
 
   def remove(f: (A) => Boolean) = {
-    val removedElems = new js.Array[IndexedElement[A]]
+    val removedElems = mutable.Buffer[IndexedElement[A]]()
     var offset = 0
     for (i <- 0 until buffer.length) {
       val j = i - offset
-      val x: js.UndefOr[A] = buffer(j)
-      if (x.isDefined && !f(x.get)) {
-        removedElems(removedElems.length) = IndexedElement(j, x.get)
-        buffer.remove(j)
-        offset += 1
-      }
+      removedElems += IndexedElement(j, buffer(i))
+      buffer.remove(j)
+      offset += 1
     }
     _length() = buffer.length
     for (x <- removedElems) {
@@ -90,9 +86,11 @@ class Buffer[A](private var buffer: mutable.Buffer[A]) extends BufferView[A] {
   }
 
   def update(idx: Int, e: A): Unit = {
-    buffer(idx) = e
-    _length() = buffer.length
-    updated.emit(IndexedElement(idx, e))
+    if (buffer(idx) != e) {
+      buffer(idx) = e
+      _length() = buffer.length
+      updated.emit(IndexedElement(idx, e))
+    }
   }
 
   def updateElement(e: A, to: A): Unit = {

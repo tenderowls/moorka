@@ -26,7 +26,7 @@ class Element(tagName: String, children: Seq[ElementEntry]) extends ElementBase 
       ref.appendChildren(sequence.value.map(_.ref))
     case processor: ElementExtension =>
       observers ::= processor
-      processor.assignElement(this)
+      processor.start(this)
   }
 
   override def kill(): Unit = {

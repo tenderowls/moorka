@@ -7,16 +7,9 @@ import moorka.ui.event._
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
-sealed trait ElementExtension extends ElementEntry with Mortal {
-
-  protected var element:ElementBase = null
-
-  def assignElement(element: ElementBase): Unit = {
-    this.element = element
-  }
-
-  override def kill(): Unit = {
-
+trait ElementExtension extends ElementEntry with Mortal {
+  def start(element: ElementBase): Unit
+  def kill(): Unit = {
   }
 }
 
@@ -77,9 +70,7 @@ class StaticExtensionFactory[A](static: (A => ElementExtension)) {
 }
 
 case class ElementAttributeExtension(name: String, value: String) extends ElementExtension {
-
-  override def assignElement(element: ElementBase): Unit = {
-    super.assignElement(element)
+  def start(element: ElementBase): Unit = {
     element.ref.updateAttribute(name, value)
   }
 }
@@ -91,8 +82,7 @@ case class SyntheticEventExtension[EventType <: SyntheticEvent](processor: Event
 
   var slot:Option[Channel[EventType]] = None
 
-  override def assignElement(element: ElementBase): Unit = {
-    super.assignElement(element)
+  def start(element: ElementBase): Unit = {
     slot = useCapture match {
       case false => Some(processor.addListener(element, listener))
       case true => Some(processor.addCapture(element, listener))
@@ -105,14 +95,14 @@ case class SyntheticEventExtension[EventType <: SyntheticEvent](processor: Event
 }
 
 case class ElementPropertyExtension[A](name: String, value: A) extends ElementExtension {
-  override def assignElement(element: ElementBase): Unit = {
-    super.assignElement(element)
+  def start(element: ElementBase): Unit = {
+    
     element.ref.set(name, value)
   }
 }
 
 case class UseClassExtension(className: String, trigger:Boolean) extends ElementExtension {
-  override def assignElement(element: ElementBase): Unit = {
+  def start(element: ElementBase): Unit = {
     if (trigger) {
       element.ref.classAdd(className)
     }
@@ -135,7 +125,7 @@ sealed trait BoundElementExtension extends ElementExtension {
 case class UseClassBoundExtension(className: String, trigger:State[Boolean])
   extends ElementExtension with BoundElementExtension {
 
-  override def assignElement(element: ElementBase): Unit = {
+  def start(element: ElementBase): Unit = {
     subscription = trigger observe {
       trigger() match {
         case true => element.ref.classAdd(className)
@@ -148,8 +138,8 @@ case class UseClassBoundExtension(className: String, trigger:State[Boolean])
 case class ElementBoundPropertyExtension[A](name: String, value: State[A])
   extends ElementExtension with BoundElementExtension {
 
-  override def assignElement(element: ElementBase): Unit = {
-    super.assignElement(element)
+  def start(element: ElementBase): Unit = {
+    
     subscription = value observe {
       element.ref.set(name, value())
     }
@@ -170,17 +160,15 @@ case class VarPropertyExtension[A](name: String, value: Var[A])
     }
   }
 
-  def valueObserver(): Unit = {
-    awaitForValue = false
-    element.ref.set(name, value())
-  }
-
-  override def assignElement(element: ElementBase): Unit = {
-    super.assignElement(element)
+  def start(element: ElementBase): Unit = {
+    
     subscriptions =
       ChangeEventProcessor.addListener(element, listener) ::
       InputEventProcessor.addListener(element, listener) ::
-      value.observe(valueObserver()) ::
+      value.observe {
+        awaitForValue = false
+        element.ref.set(name, value())
+      } ::
       subscriptions
   }
 
@@ -194,10 +182,9 @@ case class ElementBoundAttributeExtension(name: String, value: State[String])
   extends ElementExtension
   with BoundElementExtension {
 
-  override def assignElement(component: ElementBase): Unit = {
-    super.assignElement(component)
+  def start(element: ElementBase): Unit = {
     subscription = value observe {
-      component.ref.updateAttribute(name, value())
+      element.ref.updateAttribute(name, value())
     }
   }
 }

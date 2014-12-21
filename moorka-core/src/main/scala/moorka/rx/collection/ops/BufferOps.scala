@@ -4,6 +4,8 @@ import moorka.rx._
 import moorka.rx.binding.ExpressionBinding
 import moorka.rx.collection.BufferView
 
+import scala.concurrent.ExecutionContext
+
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
@@ -41,10 +43,11 @@ final class BufferOps[A](val self: BufferView[A]) extends AnyVal {
   }
 
   /**
-   * Applies a binary operator to a start value and all elements of this $coll,
+   * Applies a binary operator to a start value and all elements of this buffer,
    * going left to right.
    */
-  def foldLeft[B](z: B)(op: (B, A) => B)(implicit reaper: Reaper = Reaper.nice): State[B] = {
+  def foldLeft[B](z: B)(op: (B, A) => B)
+                 (implicit executor: ExecutionContext, reaper: Reaper = Reaper.nice): State[B] = {
     val channels = Seq(
       self.added,
       self.removed,

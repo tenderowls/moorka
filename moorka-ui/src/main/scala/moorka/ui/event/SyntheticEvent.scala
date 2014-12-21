@@ -38,7 +38,11 @@ final class FormEvent extends SyntheticEvent {
 
 }
 
-sealed class MouseEvent extends SyntheticEvent {
+final class TouchEvent extends SyntheticEvent {
+
+}
+
+final class MouseEvent extends SyntheticEvent {
 
   private[moorka] var _altKey: Boolean = false
 

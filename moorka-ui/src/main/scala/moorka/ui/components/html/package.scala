@@ -42,6 +42,8 @@ package object html {
 
   def a(xs: ElementEntry*) = new Element("a", xs)
 
+  def i(xs: ElementEntry*) = new Element("i", xs)
+
   def p(xs: ElementEntry*) = new Element("p", xs)
 
   def h1(xs: ElementEntry*) = new Element("h1", xs)
@@ -86,6 +88,8 @@ package object html {
 
   val `placeholder` = ElementAttributeName("placeholder")
 
+  val `classes` = ElementAttributeName("class")
+
   //---------------------------------------------------------------------------
   //
   //  HTML properties
@@ -116,6 +120,8 @@ package object html {
 
   val `click` = ElementEventName(ClickEventProcessor)
 
+  val `touchend` = ElementEventName(TouchendEventProcessor)
+
   val `submit` = ElementEventName(SubmitEventProcessor)
 
   //---------------------------------------------------------------------------
@@ -124,19 +130,21 @@ package object html {
   //
   //---------------------------------------------------------------------------
 
-  def useClassName(clsName: String, not: Boolean = false) = new BoundExtensionFactory[Boolean](
-    x => UseClassExtension(clsName, if (not) !x else x),
-    x => UseClassBoundExtension(
-      clsName,
-      if (not) Bind {
-        List(1,3,4) filter {
-          rr => rr % 2 > 0
-        }
-        !x()
-      }
-      else x
-    )
-  )
+  // todo fomkin: needs big refactoring
+  // we need something like
+  // "classes += "class-from-css" when state"
+  // "classes -= "class-from-css" when state"
+  def useClassName(clsName: String, not: Boolean = false)
+                  (implicit reaper: Reaper = Reaper.nice) = {
+    new BoundExtensionFactory[Boolean](
+          x => UseClassExtension(clsName, if (not) !x else x),
+          x => UseClassBoundExtension(
+            clsName,
+            if (not) x.map(!_)
+            else x
+          )
+        )
+  }
 
   val `show` = useClassName("hidden", not = true)
 

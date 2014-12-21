@@ -4,8 +4,8 @@ import moorka.rx._
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
-import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSExport
 
 /**
  * Render bac kend interface

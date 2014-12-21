@@ -2,14 +2,15 @@ package moorka.rx.binding
 
 import moorka.rx._
 
-import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 class ExpressionBinding[A](dependencies: Seq[Channel[_]])
                           (expression: => A)
+                          (implicit executor: ExecutionContext)
+
   extends Channel[A] with State[A] {
 
   private var value = expression

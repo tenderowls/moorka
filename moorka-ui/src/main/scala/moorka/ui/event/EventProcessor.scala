@@ -62,13 +62,13 @@ sealed trait EventProcessor[A <: SyntheticEvent ] {
 
     try {
       // Capturing phase
-      event._eventPhase = Capturing
-      collectParents(element, Nil).foreach { x =>
-        event._currentTarget = x
-        captures.get(x).foreach(_.emit(event))
-        if (event._propagationStopped)
-          throw PropagationStopped
-      }
+//      event._eventPhase = Capturing
+//      collectParents(element, Nil).foreach { x =>
+//        event._currentTarget = x
+//        captures.get(x).foreach(_.emit(event))
+//        if (event._propagationStopped)
+//          throw PropagationStopped
+//      }
       // At target
       event._eventPhase = AtTarget
       event._currentTarget = element
@@ -76,15 +76,15 @@ sealed trait EventProcessor[A <: SyntheticEvent ] {
       if (event._propagationStopped)
         throw PropagationStopped
       // Bubbling
-      event._eventPhase = Bubbling
-      event._bubbles = true
-      var ct = element.parent
-      while (ct != null) {
-        listeners.get(ct).foreach(_.emit(event))
-        if (event._propagationStopped)
-          throw PropagationStopped
-        ct = ct.parent
-      }
+//      event._eventPhase = Bubbling
+//      event._bubbles = true
+//      var ct = element.parent
+//      while (ct != null) {
+//        listeners.get(ct).foreach(_.emit(event))
+//        if (event._propagationStopped)
+//          throw PropagationStopped
+//        ct = ct.parent
+//      }
     }
     catch {
       case PropagationStopped =>
@@ -133,7 +133,6 @@ sealed trait MouseEventProcessor extends EventProcessor[MouseEvent] {
     event._clientY = x.clientY.asInstanceOf[Int]
     event._screenX = x.screenX.asInstanceOf[Int]
     event._screenY = x.screenY.asInstanceOf[Int]
-    
   }
 }
 
@@ -143,6 +142,11 @@ sealed trait FormEventProcessor extends EventProcessor[FormEvent] {
 
 object ClickEventProcessor extends MouseEventProcessor {
   val eventType: String = "click"
+}
+
+object TouchendEventProcessor extends EventProcessor[TouchEvent] {
+  val eventType: String = "touchend"
+  val event = new TouchEvent()
 }
 
 object DoubleClickEventProcessor extends MouseEventProcessor {
