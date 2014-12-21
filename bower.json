@@ -1,5 +1,5 @@
 {
-  "name": "moorka-render-backend",
+  "name": "moorka",
   "version": "0.2.0",
   "homepage": "https://github.com/tenderowls/moorka",
   "authors": [
@@ -15,7 +15,7 @@
     "fp"
   ],
   "ignore": [
-    "*", "!js/moorka.js", "js/moorka.css"
+    "*", "!js/moorka.js", "!css/moorka.css"
   ]
   "license": "Apache 2.0"
 }
