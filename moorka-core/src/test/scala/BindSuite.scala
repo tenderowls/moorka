@@ -1,5 +1,6 @@
 import moorka.rx._
 import utest._
+import utest.ExecutionContext.RunNow
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>

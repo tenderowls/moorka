@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/tenderowls/moorka.svg?branch=0.1.0)](https://travis-ci.org/tenderowls/moorka)
+[![Build Status](https://travis-ci.org/tenderowls/moorka.svg?branch=develop)](https://travis-ci.org/tenderowls/moorka)
 
 Moorka
 ==============
