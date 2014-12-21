@@ -15,7 +15,9 @@
     "fp"
   ],
   "ignore": [
-    "*", "!js/moorka.js", "!css/moorka.css"
-  ]
+    "*",
+    "!js/moorka.js",
+    "!css/moorka.css"
+  ],
   "license": "Apache 2.0"
 }
