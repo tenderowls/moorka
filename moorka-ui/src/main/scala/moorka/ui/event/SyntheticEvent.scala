@@ -38,7 +38,7 @@ final class FormEvent extends SyntheticEvent {
 
 }
 
-final class TouchEvent extends SyntheticEvent {
+class TouchEvent extends SyntheticEvent {
 
 }
 

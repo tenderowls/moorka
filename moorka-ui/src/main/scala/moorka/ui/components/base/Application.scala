@@ -14,8 +14,7 @@ abstract class Application extends js.JSApp {
 
   def main() = {
     RenderAPI ! js.Array(
-      "append_child",
-      "root",
+      "append_to_root",
       start().ref.id
     )
   }

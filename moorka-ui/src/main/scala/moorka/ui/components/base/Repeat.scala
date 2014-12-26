@@ -11,21 +11,21 @@ import scala.collection.mutable
 object Repeat {
 
   def apply[A](dataProvider: BufferView[A],
-               componentFactory: State[A] => Component[A]) = {
+               componentFactory: State[A] => ElementBase) = {
     new Repeat[A](dataProvider, componentFactory)
   }
 }
 
 class Repeat[A](dataProvider: BufferView[A],
-                factory: State[A] => Component[_])
+                factory: State[A] => ElementBase)
   extends ElementExtension {
   
   def start(element: ElementBase): Unit = {
     val ref = element.ref
-    val components = mutable.Buffer[Component[_]]()
+    val components = mutable.Buffer[ElementBase]()
     val states = mutable.Buffer[Var[A]]()
 
-    def createAndAppendComponent(x: A): Component[_] = {
+    def createAndAppendComponent(x: A): ElementBase = {
       // Create reactive state and state renderer
       val state = Var(x)
       val component = factory(state)
@@ -68,7 +68,6 @@ class Repeat[A](dataProvider: BufferView[A],
         case idx if idx < components.length =>
           ref.insertChild(c.ref, components(idx).ref)
         case _ =>
-          c.parent = element
           ref.appendChild(c.ref)
       }
     }

@@ -12,7 +12,7 @@ import scala.scalajs.js
  */
 object EventProcessor {
 
-  private[ui] val nativeElementIndex = new mutable.HashMap[String, EventTarget]()
+  private[ui] val nativeElementIndex = mutable.Map[String, EventTarget]()
 
   def registerElement(element: EventTarget) = {
     nativeElementIndex.put(element.ref.id, element)
@@ -23,7 +23,7 @@ object EventProcessor {
   }
 }
 
-sealed trait EventProcessor[A <: SyntheticEvent ] {
+trait EventProcessor[A <: SyntheticEvent ] {
 
   /**
    * Type of native event
@@ -34,9 +34,9 @@ sealed trait EventProcessor[A <: SyntheticEvent ] {
 
   val event: A
 
-  val listeners = new mutable.HashMap[EventTarget, Channel[A]]()
+  val listeners = mutable.Map[EventTarget, Channel[A]]()
 
-  val captures = new mutable.HashMap[EventTarget, Channel[A]]()
+  val captures = mutable.Map[EventTarget, Channel[A]]()
 
   def fillEvent(element: EventTarget, nativeEvent: js.Dynamic) = {
     event._target = element
@@ -62,13 +62,13 @@ sealed trait EventProcessor[A <: SyntheticEvent ] {
 
     try {
       // Capturing phase
-//      event._eventPhase = Capturing
-//      collectParents(element, Nil).foreach { x =>
-//        event._currentTarget = x
-//        captures.get(x).foreach(_.emit(event))
-//        if (event._propagationStopped)
-//          throw PropagationStopped
-//      }
+      event._eventPhase = Capturing
+      collectParents(element, Nil).foreach { x =>
+        event._currentTarget = x
+        captures.get(x).foreach(_.emit(event))
+        if (event._propagationStopped)
+          throw PropagationStopped
+      }
       // At target
       event._eventPhase = AtTarget
       event._currentTarget = element
@@ -76,15 +76,15 @@ sealed trait EventProcessor[A <: SyntheticEvent ] {
       if (event._propagationStopped)
         throw PropagationStopped
       // Bubbling
-//      event._eventPhase = Bubbling
-//      event._bubbles = true
-//      var ct = element.parent
-//      while (ct != null) {
-//        listeners.get(ct).foreach(_.emit(event))
-//        if (event._propagationStopped)
-//          throw PropagationStopped
-//        ct = ct.parent
-//      }
+      event._eventPhase = Bubbling
+      event._bubbles = true
+      var ct = element.parent
+      while (ct != null) {
+        listeners.get(ct).foreach(_.emit(event))
+        if (event._propagationStopped)
+          throw PropagationStopped
+        ct = ct.parent
+      }
     }
     catch {
       case PropagationStopped =>

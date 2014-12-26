@@ -24,6 +24,10 @@ final class ChannelOps[A](val self: Channel[A]) extends AnyVal {
     child
   }
 
+  def listen(f: => Any)(implicit reaper: Reaper = Reaper.nice): Channel[A] = {
+    subscribe(_ => f)
+  }
+
   def subscribe(f: A => Any)(implicit reaper: Reaper = Reaper.nice): Channel[A] = {
     val child = new Channel[A] {
       override def kill(): Unit = {
