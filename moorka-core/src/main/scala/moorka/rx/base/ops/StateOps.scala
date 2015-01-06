@@ -21,8 +21,7 @@ final class StateOps[A](val self: State[A]) extends AnyVal {
   def map[B](f: (A) => B)(implicit reaper: Reaper = Reaper.nice): State[B] = {
     val x = new Var[B](f(self())) {
       val rip = self subscribe { _ =>
-        value = f(self())
-        emit(value)
+        update(f(self()))
       }
       override def kill(): Unit = {
         rip.kill()
@@ -36,8 +35,7 @@ final class StateOps[A](val self: State[A]) extends AnyVal {
   def zip[B](another: State[B])(implicit reaper: Reaper = Reaper.nice): State[(A, B)] = {
     val x = new Var[(A, B)]((self(), another())) {
       def subscriber(x: Any): Unit = {
-        value = (self(), another())
-        emit(value)
+        update((self(), another()))
       }
       val rip = Seq(
         self subscribe subscriber,

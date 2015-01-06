@@ -18,19 +18,15 @@ package object html {
   //
   //---------------------------------------------------------------------------
 
-  implicit def _bound(node: State[ElementBase]): BoundComponentContainer = {
-    new BoundComponentContainer(node)
-  }
-
-  implicit def _sequence(seq: Seq[ElementBase]): ElementSequence = {
+  implicit def ToElementSequence(seq: Seq[ElementBase]): ElementSequence = {
     new ElementSequence(seq)
   }
 
-  implicit def _text(text: String): ElementPropertyExtension[String] = {
+  implicit def ToElementPropertyExtension(text: String): ElementPropertyExtension[String] = {
     `textContent` := text
   }
 
-  implicit def _reactiveText(text: State[String]): ElementBoundPropertyExtension[String] = {
+  implicit def ToElementBoundPropertyExtension(text: State[String]): ElementBoundPropertyExtension[String] = {
     `textContent` := text
   }
 

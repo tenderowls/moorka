@@ -16,9 +16,11 @@ class BoundComponentContainer(element: State[ElementBase]) extends ElementBase {
 
   val observer = element observe {
 
-    previous.parent = null
-    ref.removeChild(previous.ref)
-    previous.kill()
+    if (previous != null) {
+      previous.parent = null
+      ref.removeChild(previous.ref)
+      previous.kill()
+    } 
 
     // Swap it
     val current = element()
