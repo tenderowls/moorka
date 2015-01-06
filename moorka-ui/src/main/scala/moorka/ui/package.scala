@@ -1,7 +1,7 @@
 package moorka
 
 import moorka.rx.State
-import moorka.ui.components.html.BoundComponentContainer
+import moorka.ui.components.html.ElementSwitcher
 import moorka.ui.element.ElementBase
 
 import scala.language.implicitConversions
@@ -28,8 +28,8 @@ package object ui {
    */
   def block(f: => ElementBase): ElementBase = f
 
-  def switch(f: => State[ElementBase]): ElementBase = {
-    new BoundComponentContainer(f)
+  def switch(f: => State[ElementBase]): ElementSwitcher = {
+    new ElementSwitcher(f)
   }
   
   type Ref = render.Ref
