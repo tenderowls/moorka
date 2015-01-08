@@ -23,7 +23,7 @@ val utestSetting = Seq(
   scalaJSStage in Test := FastOptStage,
   persistLauncher in Test := false,
   testFrameworks += new TestFramework("utest.runner.Framework"),
-  libraryDependencies += "com.lihaoyi" %%%! "utest" % "0.2.5-M1" % "test"
+  libraryDependencies += "com.lihaoyi" %%% "utest" % "0.2.5-M3" % "test"
 )
 
 val publishSettings = bintraySettings ++ bintrayPublishSettings ++ Seq(
@@ -39,7 +39,7 @@ lazy val `moorka-core` = (project in file("moorka-core"))
   .settings(utestSetting:_*)
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-js" %%%! "scalajs-dom" % "0.7.0",
+      "org.scala-js" %%% "scalajs-dom" % "0.7.0",
       "org.scala-lang" % "scala-reflect" % currentScalaVersion
     )
   )

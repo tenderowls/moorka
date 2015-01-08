@@ -23,7 +23,8 @@ object Ref {
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class Ref(val id: String) extends Mortal {
+class 
+Ref(val id: String) extends Mortal {
 
   def kill(): Unit = {
     RenderAPI ! js.Array("kill_ref", id)
@@ -91,15 +92,16 @@ class Ref(val id: String) extends Mortal {
     promise.future
   }
 
-  def call(element: Ref, name: String, args: Any*): Future[Any] = {
+  def call[T >: Null](name: String, args: Any*): Future[T] = {
     val requestId = Math.random()
-    val promise = Promise[Any]()
+    val promise = Promise[T]()
     // todo this operation produce a lot of garbage 
     RenderAPI.onMessage until { x =>
       if (x(0) == "call_response" && x(1) == requestId) {
         x(2) match {
-          case "error" => promise.failure(new Exception("Can't get " + name + " from " + element.id))
-          case any => promise.success(any)
+          case null => promise.success(null)
+          case "error" => promise.failure(new Exception("Can't get " + name + " from " + id))
+          case any => promise.success(any.asInstanceOf[T])
         }
         false
       }
@@ -110,7 +112,30 @@ class Ref(val id: String) extends Mortal {
       case x: Ref => xs.push("$$:" + x.id)
       case any => xs.push(any)
     }
-    RenderAPI ! js.Array("call", element.id, name, requestId).concat(xs)
+    RenderAPI ! js.Array("call", id, name, requestId).concat(xs)
     promise.future
   }
+
+  def callNoResult(name: String, args: Any*): Future[Unit] = {
+    val requestId = Math.random()
+    val promise = Promise[Unit]()
+    RenderAPI.onMessage until { x =>
+      if (x(0) == "call_response" && x(1) == requestId) {
+        x(2) match {
+          case "error" => promise.failure(new Exception("Can't get " + name + " from " + id))
+          case _ => promise.success(())
+        }
+        false
+      }
+      else true
+    }
+    val xs = new js.Array[Any]
+    args.foreach {
+      case x: Ref => xs.push("$$:" + x.id)
+      case any => xs.push(any)
+    }
+    RenderAPI ! js.Array("call", id, name, requestId).concat(xs)
+    promise.future
+  }
+
 }
