@@ -16,6 +16,9 @@ object Channel {
  */
 trait Channel[A] extends Mortal {
 
+  // Hack for flatMap support
+  // private[base] var lastValue: Option[A] = None
+  
   @volatile private var dead: Boolean = false
   var children = List[Channel[A]]()
 

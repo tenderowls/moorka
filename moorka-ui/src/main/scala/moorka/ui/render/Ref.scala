@@ -74,15 +74,15 @@ Ref(val id: String) extends Mortal {
     RenderAPI ! js.Array("set", id, name, value)
   }
   
-  def get(name: String): Future[Any] = {
+  def get[T](name: String): Future[T] = {
     val requestId = Math.random()
-    val promise = Promise[Any]()
+    val promise = Promise[T]()
     // todo this operation produce a lot of garbage 
     RenderAPI.onMessage until { x =>
       if (x(0) == "get_response" && x(1) == requestId) {
         x(2) match {
           case "error" => promise.failure(new Exception("Can't get " + name + " from " + id))
-          case any => promise.success(any) 
+          case any => promise.success(any.asInstanceOf[T])
         }
         false
       }

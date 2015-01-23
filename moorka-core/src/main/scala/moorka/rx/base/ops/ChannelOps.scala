@@ -1,6 +1,7 @@
 package moorka.rx.base.ops
 
 import moorka.rx._
+
 import scala.language.existentials
 
 /**
@@ -81,6 +82,32 @@ final class ChannelOps[A](val self: Channel[A]) extends AnyVal {
       )
       override def kill(): Unit = {
         rip.foreach(_.kill())
+        super.kill()
+      }
+    }
+    reaper.mark(child)
+    child
+  }
+
+  def flatMap[B](f: (A) => Channel[B])(implicit reaper: Reaper = Reaper.nice): Channel[B] = {
+    val child = new Channel[B] {
+      self subscribe { x =>
+        f(x)
+        
+      }
+      
+    }
+    reaper.mark(child)
+    child
+  }
+  
+  def persist()(implicit reaper: Reaper = Reaper.nice): State[Option[A]] = {
+    val child = new Var[Option[A]](None) {
+      val rip = self subscribe { value =>
+        update(Some(value))
+      }
+      override def kill(): Unit = {
+        rip.kill()
         super.kill()
       }
     }

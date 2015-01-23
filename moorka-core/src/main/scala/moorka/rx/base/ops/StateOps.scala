@@ -3,6 +3,8 @@ package moorka.rx.base.ops
 import moorka.rx._
 import moorka.rx.death.Reaper
 
+import scala.concurrent.Future
+
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
@@ -16,6 +18,12 @@ final class StateOps[A](val self: State[A]) extends AnyVal {
   def observe(f: => Any)(implicit reaper: Reaper = Reaper.nice): Channel[A] = {
     val x = self.subscribe(_ => f)
     f; x
+  }
+
+  def flatMap[B](f: (A) => State[B])(implicit reaper: Reaper = Reaper.nice): State[B] = {
+    val x = f(self())
+    reaper.mark(x)
+    x
   }
 
   def map[B](f: (A) => B)(implicit reaper: Reaper = Reaper.nice): State[B] = {
