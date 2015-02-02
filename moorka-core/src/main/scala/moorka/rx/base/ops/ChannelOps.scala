@@ -7,7 +7,7 @@ import scala.language.existentials
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-final class ChannelOps[A](val self: Channel[A]) extends AnyVal {
+final class ChannelOps[+A](val self: Channel[A]) extends AnyVal {
 
   def until(f: A => Boolean)(implicit reaper: Reaper = Reaper.nice): Channel[A] = {
     val child = new Channel[A] {
@@ -15,9 +15,9 @@ final class ChannelOps[A](val self: Channel[A]) extends AnyVal {
         self.unlinkChild(this)
         super.kill()
       }
-      override def emit(x: A): Unit = {
+      override def emit[B >: A](x: B): Unit = {
         super.emit(x)
-        if (!f(x)) kill()
+        if (!f(x.asInstanceOf[A])) kill()
       }
     }
     self.linkChild(child)
@@ -35,9 +35,9 @@ final class ChannelOps[A](val self: Channel[A]) extends AnyVal {
         self.unlinkChild(this)
         super.kill()
       }
-      override def emit(x: A): Unit = {
+      override def emit[B >: A](x: B): Unit = {
         super.emit(x)
-        f(x)
+        f(x.asInstanceOf[A])
       }
     }
     self.linkChild(child)
@@ -51,8 +51,8 @@ final class ChannelOps[A](val self: Channel[A]) extends AnyVal {
         self.unlinkChild(this)
         super.kill()
       }
-      override def emit(x: A): Unit = {
-        if (f(x)) super.emit(x)
+      override def emit[B >: A](x: B): Unit = {
+        if (f(x.asInstanceOf[A])) super.emit(x)
       }
     }
     self.linkChild(child)
@@ -89,18 +89,6 @@ final class ChannelOps[A](val self: Channel[A]) extends AnyVal {
     child
   }
 
-  def flatMap[B](f: (A) => Channel[B])(implicit reaper: Reaper = Reaper.nice): Channel[B] = {
-    val child = new Channel[B] {
-      self subscribe { x =>
-        f(x)
-        
-      }
-      
-    }
-    reaper.mark(child)
-    child
-  }
-  
   def persist()(implicit reaper: Reaper = Reaper.nice): State[Option[A]] = {
     val child = new Var[Option[A]](None) {
       val rip = self subscribe { value =>

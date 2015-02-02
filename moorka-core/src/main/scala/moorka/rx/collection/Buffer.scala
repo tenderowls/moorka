@@ -28,7 +28,7 @@ class Buffer[A](private var buffer: mutable.Buffer[A]) extends BufferView[A] {
 
   val inserted = Channel[IndexedElement[A]]
 
-  val updated = Channel[IndexedElement[A]]
+  val updated = Channel[UpdatedIndexedElement[A]]
 
   val removed = Channel[IndexedElement[A]]
 
@@ -87,9 +87,10 @@ class Buffer[A](private var buffer: mutable.Buffer[A]) extends BufferView[A] {
 
   def update(idx: Int, e: A): Unit = {
     if (buffer(idx) != e) {
+      val prevE = buffer(idx)
       buffer(idx) = e
       _length() = buffer.length
-      updated.emit(IndexedElement(idx, e))
+      updated.emit(UpdatedIndexedElement(idx, e, prevE))
     }
   }
 

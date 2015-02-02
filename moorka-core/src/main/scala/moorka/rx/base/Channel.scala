@@ -1,6 +1,6 @@
 package moorka.rx.base
 
-import moorka.rx.{Mortal, Reaper}
+import moorka.rx._
 
 object Channel {
 
@@ -11,30 +11,28 @@ object Channel {
   }
 
 }
+
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-trait Channel[A] extends Mortal {
+trait Channel[+A] extends Mortal {
 
-  // Hack for flatMap support
-  // private[base] var lastValue: Option[A] = None
-  
   @volatile private var dead: Boolean = false
-  var children = List[Channel[A]]()
+  var children = List[Channel[Any]]()
 
-  def linkChild(child: Channel[A]): Unit = {
+  def linkChild(child: Channel[Any]): Unit = {
     this.synchronized {
       children ::= child
     }
   }
 
-  def unlinkChild(child: Channel[A]): Unit = {
+  def unlinkChild(child: Channel[Any]): Unit = {
     this.synchronized {
       children = children.filterNot(_ == child)
     }
   }
 
-  def emit(x: A): Unit = {
+  def emit[B >: A](x: B): Unit = {
     children.foreach(_.emit(x))
   }
 

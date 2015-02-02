@@ -1,7 +1,7 @@
 package moorka.rx.collection.ops
 
 import moorka.rx._
-import moorka.rx.collection.{BufferView, IndexedElement}
+import moorka.rx.collection.{UpdatedIndexedElement, BufferView, IndexedElement}
 
 import scala.collection.mutable
 
@@ -48,7 +48,7 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
   val added = Channel[A]
   val removed = Channel[IndexedElement[A]]
   val inserted = Channel[IndexedElement[A]]
-  val updated = Channel[IndexedElement[A]]
+  val updated = Channel[UpdatedIndexedElement[A]]
 
   private val _length = Var(buffer.length)
 

@@ -1,80 +1,53 @@
 package moorka.ui.components.base
 
 import moorka.rx._
-import moorka.ui.element._
+import moorka.ui.element.{ElementBase, ElementExtension}
 
-import scala.collection.mutable
+object Repeat {
+  def apply(buffer: BufferView[ElementBase]): Repeat = {
+    new Repeat(buffer)
+  }
+}
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-object Repeat {
+class Repeat(val buffer: BufferView[ElementBase]) extends ElementExtension {
 
-  def apply[A](dataProvider: BufferView[A],
-               componentFactory: State[A] => ElementBase) = {
-    new Repeat[A](dataProvider, componentFactory)
-  }
-}
-
-class Repeat[A](dataProvider: BufferView[A],
-                factory: State[A] => ElementBase)
-  extends ElementExtension {
-  
-  def start(element: ElementBase): Unit = {
-    val ref = element.ref
-    val components = mutable.Buffer[ElementBase]()
-    val states = mutable.Buffer[Var[A]]()
-
-    def createAndAppendComponent(x: A): ElementBase = {
-      // Create reactive state and state renderer
-      val state = Var(x)
-      val component = factory(state)
-      // Add theirs to internal cache
-      states += state
-      components += component
-      component
-    }
-
-    ref.appendChildren(
-      dataProvider.asSeq.map { x =>
-        val c = createAndAppendComponent(x)
-        c.parent = element
-        c.ref
+  def start(el: ElementBase): Unit = {
+    
+    el.ref.appendChildren {
+      buffer.asSeq.map { x =>
+        x.parent = el
+        x.ref
       }
-    )
-
-    dataProvider.added subscribe { x =>
-      val c = createAndAppendComponent(x)
-      c.parent = element
-      ref.appendChild(c.ref)
     }
-
-    dataProvider.removed subscribe { x =>
-      states.remove(x.idx)
-      val c = components.remove(x.idx)
-      ref.removeChild(c.ref)
-      c.parent = null
-      c.kill()
+    
+    buffer.added subscribe { x ⇒
+      x.parent = el
+      el.ref.appendChild(x.ref)
     }
-
-    dataProvider.inserted subscribe { x =>
-      val state = Var(x.e)
-      val c = factory(state)
-      states.insert(x.idx, state)
-      components.insert(x.idx, c)
-      c.parent = element
-      // Insert into DOM
+    
+    buffer.inserted subscribe { x ⇒
+      x.e.parent = el
       x.idx + 1 match {
-        case idx if idx < components.length =>
-          ref.insertChild(c.ref, components(idx).ref)
+        case idx if idx < buffer.length() =>
+          el.ref.insertChild(x.e.ref, buffer(idx).ref)
         case _ =>
-          ref.appendChild(c.ref)
+          el.ref.appendChild(x.e.ref)
       }
     }
-
-    dataProvider.updated subscribe { x =>
-      val state = states(x.idx)
-      state() = x.e
+    
+    buffer.removed subscribe { x ⇒
+      x.e.parent = null
+      el.ref.removeChild(x.e.ref)
+    }
+    
+    buffer.updated subscribe { x ⇒
+      x.prevE.parent = null
+      x.e.parent = el
+      el.ref.removeChild(x.prevE.ref)
+      el.ref.appendChild(x.e.ref)
     }
   }
 }

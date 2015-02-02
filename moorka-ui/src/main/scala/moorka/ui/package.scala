@@ -1,9 +1,11 @@
 package moorka
 
 import moorka.rx.State
+import moorka.ui.components.FutureElement
 import moorka.ui.components.html.ElementSwitcher
 import moorka.ui.element.ElementBase
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 
 /**
@@ -31,7 +33,7 @@ package object ui {
   def switch(f: => State[ElementBase]): ElementSwitcher = {
     new ElementSwitcher(f)
   }
-  
+
   type Ref = render.Ref
   type RefHolder = render.RefHolder
   type Component = components.base.Component
@@ -40,4 +42,9 @@ package object ui {
   val Ref = render.Ref
 
   implicit def FromComponentToElement(x: Component): ElementBase = x.el
+
+  implicit def ToFutureElement[T](x: Future[T])(implicit ev1: T => ElementBase,
+                                  ec: ExecutionContext): FutureElement = {
+    new FutureElement(x.map(ev1))
+  }
 }

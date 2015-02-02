@@ -22,7 +22,7 @@ trait BufferView[A] extends Mortal {
    * raise when reactive variable inside element change its
    * value
    */
-  val updated: Channel[IndexedElement[A]]
+  val updated: Channel[UpdatedIndexedElement[A]]
 
   /**
    * Element added into end of collection
@@ -86,3 +86,4 @@ trait BufferView[A] extends Mortal {
 }
 
 case class IndexedElement[A](idx: Int, e: A)
+case class UpdatedIndexedElement[A](idx: Int, e: A, prevE: A)

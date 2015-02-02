@@ -8,7 +8,7 @@ import scala.concurrent.Future
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-final class StateOps[A](val self: State[A]) extends AnyVal {
+final class StateOps[+A](val self: State[A]) extends AnyVal {
 
   /**
    * Same as [[ChannelOps.subscribe]] but calls f immediately

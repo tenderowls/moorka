@@ -8,8 +8,8 @@ import scala.collection.mutable
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-private[collection] class MappedBuffer[From, A](parent: BufferView[From],
-                                          mapFunction: From => A)
+private[collection] class MappedBuffer[From, A](parent: BufferView[From], 
+                                                mapFunction: From => A)
   extends BufferView[A] {
 
   val buffer = mutable.Buffer[Option[A]]()
@@ -22,7 +22,7 @@ private[collection] class MappedBuffer[From, A](parent: BufferView[From],
   val added = parent.added.map(mapFunction)
   val removed = parent.removed.map { x => x.copy(e = apply(x.idx)) }
   val inserted = parent.inserted.map { x => x.copy(e = mapFunction(x.e)) }
-  val updated = parent.updated.map { x => x.copy(e = mapFunction(x.e)) }
+  val updated = parent.updated.map { x ⇒ x.copy(e = mapFunction(x.e), prevE = this(x.idx)) }
 
   private val _length = Var(buffer.length)
 
