@@ -149,14 +149,15 @@ case class ElementBoundPropertyExtension[A](name: String, value: State[A])
 case class VarPropertyExtension[A](name: String, value: Var[A])
   extends ElementExtension {
 
-  var subscriptions: List[Channel[_]] = Nil
+  var subscriptions: List[Channel[Any]] = Nil
   var awaitForValue = false
 
   def listener(event: SyntheticEvent) = {
     awaitForValue = true
-    event.target.ref.get(name) onSuccess {
-      case x if awaitForValue =>
-        value() = x.asInstanceOf[A]
+    val f: Future[A] = event.target.ref.get(name) 
+    f onSuccess {
+      case x if awaitForValue => 
+        value() = x
     }
   }
 
