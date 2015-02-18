@@ -55,7 +55,7 @@ case class ElementPropertyName[A](name: String) {
 
   def =:= (x: Var[A]) = VarPropertyExtension(name, x)
 
-  def from(x: RefHolder): Future[A] = x.ref.get(name).map(_.asInstanceOf[A])
+  def from(x: RefHolder): Future[A] = x.ref.get(name)
 }
 
 class BoundExtensionFactory[A](static: (A => ElementExtension), bound: (State[A]) => BoundElementExtension)
@@ -114,7 +114,7 @@ case class UseClassExtension(className: String, trigger:Boolean) extends Element
 
 sealed trait BoundElementExtension extends ElementExtension {
 
-  protected var subscription: Channel[_] = null
+  protected var subscription: Channel[Any] = null
 
   override def kill(): Unit = {
     if (subscription != null)
@@ -150,14 +150,16 @@ case class VarPropertyExtension[A](name: String, value: Var[A])
   extends ElementExtension {
 
   var subscriptions: List[Channel[Any]] = Nil
-  var awaitForValue = false
-
+  var awaitForRead = false
+  var awaitForWrite = true
+  
   def listener(event: SyntheticEvent) = {
-    awaitForValue = true
+    awaitForRead = true
     val f: Future[A] = event.target.ref.get(name) 
     f onSuccess {
-      case x if awaitForValue => 
-        value() = x
+      case x if awaitForRead =>
+        awaitForWrite = false
+        value.update(x)
     }
   }
 
@@ -167,8 +169,13 @@ case class VarPropertyExtension[A](name: String, value: Var[A])
       ChangeEventProcessor.addListener(element, listener) ::
       InputEventProcessor.addListener(element, listener) ::
       value.observe {
-        awaitForValue = false
-        element.ref.set(name, value())
+        awaitForRead = false
+        if (awaitForWrite) {
+          element.ref.set(name, value())
+        }
+        else {
+          awaitForWrite = true
+        }
       } ::
       subscriptions
   }

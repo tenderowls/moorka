@@ -56,7 +56,7 @@ final class BufferOps[A](val self: BufferView[A]) extends AnyVal {
     )
     val state = new ExpressionBinding(channels)({
       var result = z
-      foreach (x => result = op(result, x))
+      asSeq foreach (x => result = op(result, x))
       result
     })
     reaper.mark(state)
@@ -65,13 +65,12 @@ final class BufferOps[A](val self: BufferView[A]) extends AnyVal {
 
   /**
    * Apply function `f` to all elements of collection
-   * @param f function to ally
+   * @param f function to aplly
    */
-  def foreach(f: A => Any): Unit = {
-    val elements = asSeq
-    for (e <- elements) {
-      f(e)
-    }
+  def foreach[B](f: (A) => Any)(implicit reaper: Reaper = Reaper.nice): Mortal = {
+    val mapped = new MappedBuffer[A, Any](self, f)
+    reaper.mark(mapped)
+    mapped
   }
 
   /**
