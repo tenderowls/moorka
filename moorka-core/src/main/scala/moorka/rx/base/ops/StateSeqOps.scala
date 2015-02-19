@@ -16,8 +16,8 @@ final class StateSeqOps[T](val self: State[Seq[T]]) extends AnyVal {
           for (i <- 0 until l - startIndex)
             buffer += s(startIndex + i)
         case l if l < buffer.length() =>
-          for (i <- 0 until buffer.length())
-            buffer.remove(buffer.length() - 1)
+          for (i <- 0 until buffer.length() - l)
+            buffer.remove(0)
         case _ =>
       }
       for (i <- 0 until s.length) {
