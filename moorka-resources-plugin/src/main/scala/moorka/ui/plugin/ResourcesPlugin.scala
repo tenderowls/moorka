@@ -78,11 +78,9 @@ object ResourcesPlugin extends AutoPlugin {
                output: File): Unit = {
       projectClassPath.map {
         f =>
-          println(f"Resources archive ${f.data.toPath}")
           val zi = new ZipInputStream(Files.newInputStream(f.data.toPath))
           var entry : ZipEntry = zi.getNextEntry
           while ( entry != null ) {
-            println(f"Resource name ${entry.getName}")
             (entry.getName match {
               case x if x.endsWith(".css") && css => true
               case x if x.endsWith(".js") && js => true
@@ -90,7 +88,6 @@ object ResourcesPlugin extends AutoPlugin {
               case _ => false
             }) match {
               case true =>
-                println(f"Resource name ${entry.getName}")
                 var data: Array[Byte] = null
                 if ( entry.getSize >= 0 ) {
                   data = new Array[Byte](entry.getSize.toInt)
