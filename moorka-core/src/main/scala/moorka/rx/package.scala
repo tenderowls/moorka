@@ -1,6 +1,5 @@
  package moorka
 
-import moorka.rx.base.ops.{StateSeqOps, StateOptionOps, ChannelOps, StateOps}
 import moorka.rx.collection.ops.BufferOps
 
 import scala.language.implicitConversions
@@ -10,15 +9,20 @@ import scala.language.implicitConversions
  */
 package object rx {
 
-  val Bind = binding.BindingMacro
-  val Var = base.Var
-
   type Channel[A] = base.Channel[A]
-  type State[A] = base.State[A]
+  @deprecated("Use Rx instead State", "0.4.0")
+  type State[A] = base.Rx[A]
   type Var[A] = base.Var[A]
+  type Lazy[A] = base.Lazy[A]
+  type Rx[A] = base.Rx[A]
 
   val Buffer = collection.Buffer
   val Channel = base.Channel
+  val Var = base.Var
+  val Val = base.Val
+  val Dummy = base.Dummy
+  val Lazy = base.Lazy
+
   val Reaper = death.Reaper
 
   type Buffer[A] = collection.Buffer[A]
@@ -27,10 +31,6 @@ package object rx {
   type Mortal = death.Mortal
   type Reaper = death.Reaper
 
-  implicit def ToChannelOps[A](x: Channel[A]): ChannelOps[A] = new ChannelOps(x)
+  implicit def toRx[T](x: T): Rx[T] = Val(x)
   implicit def ToBufferOps[A](x: BufferView[A]): BufferOps[A] = new BufferOps(x)
-
-  implicit def ToStateOps[A](x: State[A]): StateOps[A] = new StateOps(x)
-  implicit def ToStateOptionOps[A](x: State[Option[A]]): StateOptionOps[A] = new StateOptionOps(x)
-  implicit def ToStateSeqOps[A](x: State[Seq[A]]): StateSeqOps[A] = new StateSeqOps(x)
 }

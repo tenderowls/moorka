@@ -12,8 +12,6 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
                                       filterFunction: (A) => Boolean)
   extends BufferView[A] {
 
-  type RxExtractor = (A) => State[Any]
-
   val buffer = mutable.Buffer[A]()
   val origBuffer = mutable.Buffer[A]()
 
@@ -52,11 +50,13 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
 
   private val _length = Var(buffer.length)
 
-  val length: State[Int] = _length
+  val rxLength: Rx[Int] = _length
+
+  def length = _length.x
 
   // Copy collection to internal buffer
   // filtered with `filterFunction`
-  for (i ← 0 until parent.length()) {
+  for (i ← 0 until parent.length) {
     val e = parent(i)
     origBuffer += e
     if (filterFunction(e)) {
@@ -65,7 +65,7 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
     }
   }
 
-  parent.added subscribe { e =>
+  parent.added foreach { e =>
     origBuffer += e
     if (filterFunction(e)) {
       buffer += e
@@ -74,7 +74,7 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
     }
   }
 
-  parent.removed subscribe { x =>
+  parent.removed foreach { x =>
     origBuffer.remove(x.idx, 1)
     if (filterFunction(x.e)) {
       val idx = buffer.indexOf(x.e)
@@ -84,12 +84,12 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
     }
   }
 
-  parent.inserted subscribe { x =>
+  parent.inserted foreach { x =>
     origBuffer.insert(x.idx, x.e)
     refreshElement(x.e)
   }
 
-  parent.updated subscribe { x =>
+  parent.updated foreach { x =>
     origBuffer(x.idx) = x.e
     refreshElement(x.e)
   }

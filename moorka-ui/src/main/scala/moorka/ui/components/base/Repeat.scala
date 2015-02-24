@@ -31,7 +31,7 @@ class Repeat(val buffer: BufferView[ElementBase]) extends ElementExtension {
     buffer.inserted subscribe { x ⇒
       x.e.parent = el
       x.idx + 1 match {
-        case idx if idx < buffer.length() =>
+        case idx if idx < buffer.rxLength() =>
           el.ref.insertChild(x.e.ref, buffer(idx).ref)
         case _ =>
           el.ref.appendChild(x.e.ref)
