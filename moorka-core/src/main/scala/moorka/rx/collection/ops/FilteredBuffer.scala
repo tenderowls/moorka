@@ -56,7 +56,8 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
 
   // Copy collection to internal buffer
   // filtered with `filterFunction`
-  parent foreach { e =>
+  for (i ← 0 until parent.length()) {
+    val e = parent(i)
     origBuffer += e
     if (filterFunction(e)) {
       buffer += e

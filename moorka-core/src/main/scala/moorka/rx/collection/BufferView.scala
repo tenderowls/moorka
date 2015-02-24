@@ -81,7 +81,10 @@ trait BufferView[A] extends Mortal {
     val values =
       for (x <- 0 until length())
       yield apply(x).toString
-    s"Collection(${values.reduce(_ + "," + _)})"
+    val s = if (values.length > 0)
+      values.reduce(_ + "," + _)
+    else ""
+    s"Collection($s)"
   }
 }
 
