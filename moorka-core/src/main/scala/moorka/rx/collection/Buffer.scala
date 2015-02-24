@@ -34,7 +34,9 @@ class Buffer[A](private var buffer: mutable.Buffer[A]) extends BufferView[A] {
 
   private val _length = Var(buffer.length)
 
-  val length: State[Int] = _length
+  val rxLength: Rx[Int] = _length
+
+  def length: Int = _length.x
 
   def apply(x: Int) = buffer(x)
 
@@ -101,7 +103,7 @@ class Buffer[A](private var buffer: mutable.Buffer[A]) extends BufferView[A] {
 
   def updateAll(f: A => A) = {
     val elements = this.asSeq
-    for (i <- 0 until length()) {
+    for (i <- 0 until _length.x) {
       val e = elements(i)
       update(i, f(e))
     }

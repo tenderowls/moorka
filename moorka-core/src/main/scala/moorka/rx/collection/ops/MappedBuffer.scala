@@ -14,7 +14,7 @@ private[collection] class MappedBuffer[From, A](parent: BufferView[From],
 
   val buffer = mutable.Buffer[Option[A]]()
 
-  0 until parent.length() foreach {
+  0 until parent.length foreach {
     i => buffer += None
   }
 
@@ -26,21 +26,23 @@ private[collection] class MappedBuffer[From, A](parent: BufferView[From],
 
   private val _length = Var(buffer.length)
 
-  val length: State[Int] = _length
+  val rxLength: Rx[Int] = _length
 
-  added.subscribe { x =>
+  def length: Int = _length.x
+
+  added foreach { x =>
     buffer += Some(x)
     _length() = buffer.length
   }
-  removed.subscribe {  x =>
+  removed foreach { x =>
     buffer.remove(x.idx)
     _length() = buffer.length
   }
-  inserted.subscribe { x =>
+  inserted foreach { x =>
     buffer.insert(x.idx, Some(x.e))
     _length() = buffer.length
   }
-  updated.subscribe { x =>
+  updated foreach { x =>
     buffer(x.idx) = Some(x.e)
   }
 
@@ -55,7 +57,7 @@ private[collection] class MappedBuffer[From, A](parent: BufferView[From],
   }
 
   def indexOf(e: A): Int = {
-    for (i <- 0 until length()) {
+    for (i <- 0 until _length.x) {
       if (apply(i) == e)
         return i
     }

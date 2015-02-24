@@ -22,27 +22,32 @@ trait BufferView[A] extends Mortal {
    * raise when reactive variable inside element change its
    * value
    */
-  val updated: Channel[UpdatedIndexedElement[A]]
+  val updated: Rx[UpdatedIndexedElement[A]]
 
   /**
    * Element added into end of collection
    */
-  val added: Channel[A]
+  val added: Rx[A]
 
   /**
    * Element removed
    */
-  val removed: Channel[IndexedElement[A]]
+  val removed: Rx[IndexedElement[A]]
 
   /**
    * Element inserted into `idx`. Collection shifted to right
    */
-  val inserted: Channel[IndexedElement[A]]
+  val inserted: Rx[IndexedElement[A]]
 
   /**
    * Length of collection
    */
-  val length: State[Int]
+  val rxLength: Rx[Int]
+
+  /**
+   * Length of collection
+   */
+  @inline def length: Int
 
   //---------------------------------------------------------------------------
   //
@@ -79,7 +84,7 @@ trait BufferView[A] extends Mortal {
   override def toString = {
     // Force elements (for non-strict collection)
     val values =
-      for (x <- 0 until length())
+      for (x <- 0 until length)
       yield apply(x).toString
     val s = if (values.length > 0)
       values.reduce(_ + "," + _)

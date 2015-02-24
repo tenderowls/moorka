@@ -1,7 +1,6 @@
 package moorka.rx.collection.ops
 
 import moorka.rx._
-import moorka.rx.binding.ExpressionBinding
 import moorka.rx.collection.BufferView
 
 import scala.concurrent.ExecutionContext
@@ -47,19 +46,23 @@ final class BufferOps[A](val self: BufferView[A]) extends AnyVal {
    * going left to right.
    */
   def foldLeft[B](z: B)(op: (B, A) => B)
-                 (implicit executor: ExecutionContext, reaper: Reaper = Reaper.nice): State[B] = {
+                 (implicit executor: ExecutionContext): Rx[B] = {
+    val state = Var(z)
     val channels = Seq(
       self.added,
       self.removed,
       self.inserted,
       self.updated
-    )
-    val state = new ExpressionBinding(channels)({
-      var result = z
-      asSeq foreach (x => result = op(result, x))
-      result
-    })
-    reaper.mark(state)
+    ) 
+    channels foreach { ch ⇒
+      state pull {
+        ch map { _ =>
+          var result = z
+          asSeq foreach (x => result = op(result, x))
+          result
+        }
+      }
+    }
     state
   }
 
@@ -80,7 +83,7 @@ final class BufferOps[A](val self: BufferView[A]) extends AnyVal {
    */
   def count(f: (A) => Boolean): Int = {
     var count = 0
-    for (i <- 0 until self.length()) {
+    for (i <- 0 until self.length) {
       val e = self(i)
       if (f(e)) count += 1
     }
@@ -91,7 +94,7 @@ final class BufferOps[A](val self: BufferView[A]) extends AnyVal {
    * Converts to standard scala immutable sequence
    */
   def asSeq: Seq[A] = {
-    for (i <- 0 until self.length())
+    for (i <- 0 until self.length)
     yield self(i)
   }
 }

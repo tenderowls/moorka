@@ -10,7 +10,7 @@ object BufferSuite extends TestSuite {
       "must emit `added` when +=" - {
         val collection = Buffer[Int]()
         var calls = 0
-        collection.added.subscribe( x => calls += 1)
+        collection.added.foreach( x => calls += 1)
         collection += 1
         assert(calls == 1)
         assert(collection(0) == 1)
@@ -19,20 +19,20 @@ object BufferSuite extends TestSuite {
       "check remove -= action" - {
         var calls = 0
         val collection = Buffer(1, 2, 3, 4, 5)
-        collection.removed subscribe { x =>
+        collection.removed foreach { x =>
           assert(x.idx == 3)
           calls += 1
         }
         collection -= 4
         assert(calls == 1)
-        assert(collection.length() == 4)
+        assert(collection.length == 4)
         assert(collection(3) == 5)
       }
 
       "check update element action" - {
         var calls = 0
         val collection = Buffer(1, 2, 3, 4, 5)
-        collection.updated subscribe { x =>
+        collection.updated foreach { x =>
           assert(x.idx == 3)
           calls += 1
         }
@@ -44,13 +44,13 @@ object BufferSuite extends TestSuite {
       "check insert element action" - {
         var calls = 0
         val collection = Buffer(1, 2, 3, 4, 5)
-        collection.inserted subscribe { x =>
+        collection.inserted foreach { x =>
           assert(x.idx == 2)
           calls += 1
         }
         collection.insert(2, 10)
         assert(calls == 1)
-        assert(collection.length() == 6)
+        assert(collection.length == 6)
         assert(collection(2) == 10)
         assert(collection(3) == 3)
       }
@@ -111,7 +111,7 @@ object BufferSuite extends TestSuite {
         val filtered = collection.filter(_.startsWith("J"))
         assert(filtered.toString == Buffer("John", "Jane").toString)
         collection += "Jade"
-        assert(filtered.length() == 3)
+        assert(filtered.length == 3)
       }
     }
   }
