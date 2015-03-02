@@ -1,10 +1,12 @@
- package moorka
+package moorka
 
 import moorka.rx.collection.ops.BufferOps
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
+import scala.util.Try
 
-/**
+ /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 package object rx {
@@ -31,6 +33,11 @@ package object rx {
   type Mortal = death.Mortal
   type Reaper = death.Reaper
 
-  implicit def toRx[T](x: T): Rx[T] = Val(x)
+  implicit def ToRx[T](x: T): Rx[T] = Val(x)
   implicit def ToBufferOps[A](x: BufferView[A]): BufferOps[A] = new BufferOps(x)
+  implicit class FutureOps[A](val self: Future[A]) extends AnyVal {
+    def toRx(implicit executor: ExecutionContext): Rx[Try[A]] = {
+      new base.RxFuture(self)
+    }
+  }
 }

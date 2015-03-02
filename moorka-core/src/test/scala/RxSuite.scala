@@ -1,6 +1,11 @@
 import moorka.rx._
 import utest._
 
+import scala.concurrent.Promise
+import scala.util.Success
+
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
@@ -53,7 +58,6 @@ object RxSuite extends TestSuite {
         ch.pull(1)
         ch.pull(2)
         ch.pull(3)
-        println(s"O_o $ch")
         assert(calls == 1)
       }
       "until() should kill after f returns false" - {
@@ -69,6 +73,7 @@ object RxSuite extends TestSuite {
         assert(calls == 2)
       }
     }
+    
     "check flatMap behavior" - {
       "zip two channels" - {
         val state1 = Channel[String]()
@@ -137,10 +142,10 @@ object RxSuite extends TestSuite {
         val vy = Var(Lazy(0))
         val click = Channel[Lazy[Int]]()
         val res = Channel[Lazy[Int]]()
-        res pull {
-          vx flatMap { x ⇒
-            vy flatMap { y ⇒
-              click map { z ⇒
+        res <<= {
+          vx >>= { x ⇒
+            vy >>= { y ⇒
+              click >>= { z ⇒
                 Lazy {
                   evalCalls += 1
                   x() + y() + z()
@@ -191,6 +196,18 @@ object RxSuite extends TestSuite {
       ch.pull(0)
       ch.pull(1)
       ch.pull(2)
+      assert(calls == 1)
+    }
+    
+    "check future conversion" - {
+      var calls = 0
+      val p = Promise[Int]()
+      val rx = p.future.toRx
+      rx foreach { x ⇒
+        calls += 1
+        assert(x == Success(10))
+      }
+      p.success(10)
       assert(calls == 1)
     }
   }

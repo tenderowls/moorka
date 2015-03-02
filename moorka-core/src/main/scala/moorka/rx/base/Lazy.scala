@@ -3,7 +3,8 @@ package moorka.rx.base
 object Lazy {
   def apply[T](f: ⇒ T): Lazy[T] = {
     new Lazy[T] {
-      def apply() = f
+      lazy val x = f
+      def apply() = x
     }
   }
 }
