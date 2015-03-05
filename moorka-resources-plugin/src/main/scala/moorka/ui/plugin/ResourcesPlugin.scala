@@ -99,7 +99,7 @@ object ResourcesPlugin extends AutoPlugin {
                     out.write(read)
                     read = zi.read()
                   }
-                  data = out.getBytes
+                  data = out.toByteArray
                 }
 
                 def doResourceCopy(resourceFile: File) {
@@ -109,8 +109,9 @@ object ResourcesPlugin extends AutoPlugin {
 
                 val resName = if (entry.getName.lastIndexOf("/")>= 0) entry.getName.substring(entry.getName.lastIndexOf("/"))
                   else entry.getName
-
-                new File(output, resName) match {
+                    
+                 val file = new File(output, resName)
+                 file match {
                   case resourceFile if resourceFile.exists()=> {
                      resolveStrategy match {
                       case ResolveStrategy.Rewrite => {
@@ -124,7 +125,9 @@ object ResourcesPlugin extends AutoPlugin {
                       }
                     }
                   }
-                  case resourceFile => doResourceCopy(resourceFile)
+                  case resourceFile =>
+                    resourceFile.createNewFile()
+                    doResourceCopy(resourceFile)
                 }
               case false =>
             }
