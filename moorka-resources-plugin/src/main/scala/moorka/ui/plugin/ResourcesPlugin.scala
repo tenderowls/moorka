@@ -76,6 +76,7 @@ object ResourcesPlugin extends AutoPlugin {
                artifactGroup: Option[Seq[String]],
                resolveStrategy: ResolveStrategy,
                output: File): Unit = {
+      if ( !output.exists() ) output.mkdirs()
       projectClassPath.map {
         f =>
           val zi = new ZipInputStream(Files.newInputStream(f.data.toPath))
