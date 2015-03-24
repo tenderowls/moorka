@@ -3,6 +3,7 @@ package moorka.ui.plugin
 import java.io.ByteArrayInputStream
 import java.nio.file.Files
 import java.util.zip.{ZipEntry, ZipInputStream}
+import scala.collection.mutable.Queue
 
 import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream
 import moorka.ui.plugin.ResourcesPlugin.ResolveStrategy.{FireException, Rewrite}
@@ -49,13 +50,16 @@ object ResourcesPlugin extends AutoPlugin {
       inConfig(Test)(collectResourcesSettings)
 
   private def collectTaskResources(key:TaskKey[Unit]): Def.Initialize[Task[Unit]] = Def.task {
-    CollectResourcesTask((collectJsResources in collectResources).value,
+    CollectResourcesTask(
+      (collectJsResources in collectResources).value,
       (collectCssResources in collectResources).value,
       (collectBinaryResources in collectResources).value,
-      (externalDependencyClasspath in collectResources).value,
-      (collectArtifactGroups in collectResources).value,
       (conflictsResolveStrategy in collectResources).value,
-      (collectOutputPath in collectResources).value)
+      (collectOutputPath in collectResources).value,
+      (externalDependencyClasspath in collectResources).value,
+      (internalDependencyClasspath in collectResources).value,
+      (resourceDirectories in collectResources).value
+    )
   }
 
   class ResolveException(cause: String) extends Exception(cause)
@@ -67,76 +71,149 @@ object ResourcesPlugin extends AutoPlugin {
     case object FireException extends ResolveStrategy
   }
 
-  object CollectResourcesTask {
+  object CollectResourcesTask{
+    def apply(collectJs: Boolean,
+              collectCss: Boolean,
+              collectBinary: Boolean,
+              resolveStrategy: ResolveStrategy,
+              outputDirectory: File,
+              externalDependencies: Seq[Attributed[File]],
+              internalDependencides: Seq[Attributed[File]],
+              resourceDirectories: Seq[File]): Unit = {
+      val task = new CollectResourcesTask(
+        collectJs,
+        collectCss,
+        collectBinary,
+        resolveStrategy,
+        outputDirectory
+      )
+      task.collectExternalResources(externalDependencies)
+      task.collectInternalResources(internalDependencides)
+      task.collectDirectoryResources(resourceDirectories)
+    }
+  }
+
+  class CollectResourcesTask(collectJs: Boolean,
+                             collectCss: Boolean,
+                             collectBinary: Boolean,
+                             resolveStrategy: ResolveStrategy,
+                             outputDirectory: File) {
     val binaryExtensions: Seq[String] = Seq("png", "jpeg", "jpg", "svg")
 
     private def isImage( resource: String ) = !binaryExtensions.filter( e => resource.endsWith(e) ).isEmpty
 
-    def apply(js: Boolean, css: Boolean, binary: Boolean, projectClassPath: Seq[Attributed[File]],
-               artifactGroup: Option[Seq[String]],
-               resolveStrategy: ResolveStrategy,
-               output: File): Unit = {
-      if ( !output.exists() ) output.mkdirs()
-      projectClassPath.map {
-        f =>
-          val zi = new ZipInputStream(Files.newInputStream(f.data.toPath))
-          var entry : ZipEntry = zi.getNextEntry
-          while ( entry != null ) {
-            (entry.getName match {
-              case x if x.endsWith(".css") && css => true
-              case x if x.endsWith(".js") && js => true
-              case x if isImage(x) && binary => true
-              case _ => false
-            }) match {
-              case true =>
-                var data: Array[Byte] = null
-                if ( entry.getSize >= 0 ) {
-                  data = new Array[Byte](entry.getSize.toInt)
-                  zi.read(data)
-                } else {
-                  val out = new ByteOutputStream()
-                  var read = zi.read()
-                  while ( read != -1 ) {
-                    out.write(read)
-                    read = zi.read()
-                  }
-                  data = out.toByteArray
-                }
+    private def shouldCollect(fileName: String) = {
+      (collectJs && fileName.endsWith(".css")) ||
+        (collectCss && fileName.endsWith(".js") && collectCss) ||
+        (collectBinary && isImage(fileName))
+    }
 
-                def doResourceCopy(resourceFile: File) {
-                  FileUtil.copy(new ByteArrayInputStream(data), resourceFile, null)
-                  println(f"Resource ${resourceFile.getAbsolutePath} has been collected")
-                }
+    private def readZipData(zi: ZipInputStream, entry: ZipEntry) = {
+      var data: Array[Byte] = null
+      if(entry.getSize >= 0) {
+        data = new Array[Byte](entry.getSize.toInt)
+        zi.read(data)
+      } else {
+        val out = new ByteOutputStream()
+        var read = zi.read()
+        while(read != -1) {
+          out.write(read)
+          read = zi.read()
+        }
+        data = out.toByteArray
+      }
+      data
+    }
 
-                val resName = if (entry.getName.lastIndexOf("/")>= 0) entry.getName.substring(entry.getName.lastIndexOf("/"))
-                  else entry.getName
-                    
-                 val file = new File(output, resName)
-                 file match {
-                  case resourceFile if resourceFile.exists()=> {
-                     resolveStrategy match {
-                      case ResolveStrategy.Rewrite => {
-                        doResourceCopy(resourceFile)
-                      }
-                      case ResolveStrategy.FireException => {
-                        throw new ResolveException(f"resource conflict: $output")
-                      }
-                      case ResolveStrategy.Discard => {
-                        println(f"Ignoring conflict file: ${resourceFile.getAbsolutePath}")
-                      }
-                    }
-                  }
-                  case resourceFile =>
-                    resourceFile.createNewFile()
-                    doResourceCopy(resourceFile)
-                }
-              case false =>
-            }
+    private def getFileName(name: String) = {
+      val separatorPos = name.lastIndexOf('/')
+      if(separatorPos >= 0) name.substring(separatorPos) else name
+    }
 
-            entry = zi.getNextEntry
-          }
+    private def writeFileData(data: Array[Byte], resourceFile: File) {
+      FileUtil.copy(new ByteArrayInputStream(data), resourceFile, null)
+      println(f"Resource ${resourceFile.getAbsolutePath} has been collected")
+    }
+
+    private def writeFile(data: Array[Byte], fileName: String) = {
+      val file = new File(outputDirectory, fileName)
+      if(file.exists) {
+        resolveStrategy match {
+          case ResolveStrategy.Rewrite =>
+            writeFileData(data, file)
+          case ResolveStrategy.FireException =>
+            throw new ResolveException(s"Resource conflict: ${file}")
+          case ResolveStrategy.Discard =>
+            println(s"Ignoring conflict file: ${file.getAbsolutePath}")
+        }
+      } else {
+        writeFileData(data, file)
       }
     }
-  }
 
+    private def copyFile(source: File, fileName: String) = {
+      var file = new File(outputDirectory, fileName)
+      if(file.exists) {
+        resolveStrategy match {
+          case ResolveStrategy.Rewrite =>
+            println(s"Rewriting file ${file.getName} with ${source}")
+            FileUtil.copy(source, file, null)
+          case ResolveStrategy.FireException =>
+            throw new ResolveException(s"Resource conflict ${file}")
+          case ResolveStrategy.Discard =>
+            println(s"Ignoring conflict file: ${source.getAbsolutePath}")
+        }
+      } else {
+        println(s"Resource ${file} has been collected")
+        FileUtil.copy(source, file, null)
+      }
+    }
+
+    private def collectDirectoryResources(entry: File) = {
+      val q = new Queue[File]
+      q.enqueue(entry)
+      while(!q.isEmpty) {
+        val e = q.dequeue()
+        if(e.isDirectory) {
+          e.listFiles foreach { q.enqueue(_) }
+        } else {
+          val fileName = getFileName(e.getName)
+          if(shouldCollect(fileName)) {
+            copyFile(e, fileName)
+          }
+        }
+      }
+    }
+
+    private def ensureOutputDirectory() = {
+      if(!outputDirectory.exists)
+        outputDirectory.mkdirs()
+    }
+
+    def collectExternalResources(projectClassPath: Seq[Attributed[File]]): Unit = {
+      ensureOutputDirectory()
+      projectClassPath foreach { f =>
+        val zi = new ZipInputStream(Files.newInputStream(f.data.toPath))
+        var entry : ZipEntry = zi.getNextEntry
+        while ( entry != null ) {
+          val fileName = getFileName(entry.getName)
+          if(shouldCollect(fileName)) {
+            var data = readZipData(zi, entry)
+            writeFile(data, fileName)
+          }
+          entry = zi.getNextEntry
+        }
+      }
+    }
+
+    def collectInternalResources(paths: Seq[Attributed[File]]): Unit = {
+      ensureOutputDirectory()
+      paths foreach { f => collectDirectoryResources(f.data) }
+    }
+
+    def collectDirectoryResources(directories: Seq[File]): Unit = {
+      ensureOutputDirectory()
+      directories foreach { d => collectDirectoryResources(d) }
+    }
+  }
 }
