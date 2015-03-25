@@ -2,7 +2,7 @@ import sbt._
 import sbt.Keys._
 import bintray.Keys._
 
-val currentScalaVersion = "2.11.5"
+val currentScalaVersion = "2.11.6"
 crossScalaVersions  := Seq("2.11.5", "2.10.4")
 val moorkaVersion = "0.4.0-SNAPSHOT"
 
@@ -24,7 +24,7 @@ val utestSetting = Seq(
   scalaJSStage in Test := FastOptStage,
   persistLauncher in Test := false,
   testFrameworks += new TestFramework("utest.runner.Framework"),
-  libraryDependencies += "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
+  libraryDependencies += "com.lihaoyi" %%% "utest" % "0.3.1" % "test"
 )
 
 val publishSettings = moorkaVersion.endsWith("SNAPSHOT") match {

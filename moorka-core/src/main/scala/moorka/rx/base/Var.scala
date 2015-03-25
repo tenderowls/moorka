@@ -12,6 +12,29 @@ final case class Var[A](private[rx] var x: A) extends Source[A] {
     super.update(v)
   }
 
+  def mod(f: A ⇒ Rx[A]): Var[A] = {
+    // If you have any idea how 
+    // to made it pretty tell me please
+    // aleksey.fomkin@gmail.com
+    def updateCMod(drop: Boolean): Unit = {
+      import moorka.rx.ToRxOps
+      def checkDrop(fx: Rx[A]): Rx[A] = {
+        if (drop) fx drop 1 else fx
+      }
+      val rx = f(x) match {
+        case fx: Var[A] ⇒ checkDrop(fx)
+        case fx: StatefulBinding[_, A] ⇒ checkDrop(fx)
+        case fx ⇒ fx
+      } 
+      rx once { v ⇒
+        x = v
+        updateCMod(drop = true)
+      }
+    }
+    updateCMod(drop = false)
+    this
+  }
+  
 //  @deprecated("Use foreach() instead subscribe(). Note that foreach calls `f` immediately", "0.4.0")
 //  override def subscribe[U](f: (A) => U): Rx[Unit] = drop(1).foreach(f)
 

@@ -5,6 +5,6 @@ resolvers += Resolver.url(
 
 addSbtPlugin("me.lessis" % "bintray-sbt" % "0.1.2")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.0")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.2")
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full)
