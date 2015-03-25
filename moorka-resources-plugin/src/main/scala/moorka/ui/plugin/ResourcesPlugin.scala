@@ -164,7 +164,7 @@ object ResourcesPlugin extends AutoPlugin {
         resolveStrategy match {
           case ResolveStrategy.Rewrite =>
             println(s"Rewriting file ${file.getName} with ${source}")
-            FileUtil.copy(source, file, null)
+            FileUtil.copy(source, file, null, true)
           case ResolveStrategy.FireException =>
             throw new ResolveException(s"Resource conflict ${file}")
           case ResolveStrategy.Discard =>
