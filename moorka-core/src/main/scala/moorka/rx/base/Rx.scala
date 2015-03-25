@@ -68,6 +68,41 @@ sealed trait Rx[+A] extends Mortal {
     }
   }
 
+  def take(num: Int): Rx[Seq[A]] = {
+    val channel = Channel[Seq[A]]()
+    val seq = collection.mutable.Buffer[A]()
+    foreach { value ⇒
+      seq += value
+      if (seq.length == num) {
+        channel.update(Seq(seq:_*))
+        seq.remove(0, seq.length)
+      }
+    }
+    channel
+  }
+
+  // TODO this code doesn't work
+  def fold[B](z: B)(op: (B, A) => B): Rx[B] = {
+    val rx = Var(z)
+    rx pull {
+      flatMap { a =>
+        rx map { b =>
+          op(b, a)
+        }
+      }
+    }
+    rx
+  }
+
+  def or[B](b: Rx[B]): Rx[Either[A, B]] = {
+    val rx = Channel[Either[A, B]]()
+    val left: Rx[Either[A, B]] = map(x ⇒ Left(x))
+    val right: Rx[Either[A, B]] = b.map(x ⇒ Right(x))
+    rx.pull(left)
+    rx.pull(right)
+    rx
+  }
+
   @deprecated("Use foreach() instead subscribe()", "0.4.0")
   def subscribe[U](f: A ⇒ U): Rx[Unit] = foreach(f)
 
