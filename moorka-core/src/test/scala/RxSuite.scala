@@ -165,7 +165,8 @@ object RxSuite extends TestSuite {
         assert(evalCalls == 1)
       }
     }
-
+    
+    // todo check withFilter
     "check for-comprehension" - {
       var calls = 0
       val vx = Var(2)
@@ -210,5 +211,8 @@ object RxSuite extends TestSuite {
       p.success(10)
       assert(calls == 1)
     }
+    
+    // todo check fold
+    // todo check take
   }
 }
