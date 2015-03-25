@@ -50,16 +50,45 @@ object ResourcesPlugin extends AutoPlugin {
       inConfig(Test)(collectResourcesSettings)
 
   private def collectTaskResources(key:TaskKey[Unit]): Def.Initialize[Task[Unit]] = Def.task {
-    CollectResourcesTask(
+    val task = new CollectResourcesTask(
       (collectJsResources in collectResources).value,
       (collectCssResources in collectResources).value,
       (collectBinaryResources in collectResources).value,
       (conflictsResolveStrategy in collectResources).value,
-      (collectOutputPath in collectResources).value,
-      (externalDependencyClasspath in collectResources).value,
-      (internalDependencyClasspath in collectResources).value,
-      (resourceDirectories in collectResources).value
-    )
+      (collectOutputPath in collectResources).value)
+    task.collectExternalResources((externalDependencyClasspath in collectResources).value)
+    //// Next line causes weird and shitty error. Do not uncomment
+    //task.collectInternalResources((internalDependencyClasspath in collectResources).value)
+    task.collectDirectoryResources((resourceDirectories in collectResources).value)
+
+    // Next three lines and corresponding functions really look like a pile of GOVNOKOD
+    // But an idea is follows: list project dependencies, get resources from deps directories and collect it
+    // TODO: Of course, it works. But it MUST be rewritten ASAP.
+    val deps = uniqueBuildDeps((buildDependencies in collectResources).value)
+    val resDirs = deps flatMap { d => depResources(d) }
+    task.collectDirectoryResources(resDirs)
+  }
+
+  private def uniqueBuildDeps(defs: BuildDependencies): Seq[File] = {
+    val deps = defs.classpath.keys
+    deps.map(_.build.toString).toList.distinct.map(s => new File(new URI(s)))
+  }
+
+  private def depResources(d: File): Seq[File] = {
+    var l = List[File]()
+    val q = new Queue[File]()
+    q.enqueue(d)
+    while(!q.isEmpty) {
+      val e = q.dequeue()
+      if(e.isDirectory) {
+        if(e.getName == "resources") {
+          l = e :: l
+        } else {
+          e.listFiles foreach { f => q.enqueue(f) }
+        }
+      }
+    }
+    l
   }
 
   class ResolveException(cause: String) extends Exception(cause)
@@ -69,28 +98,6 @@ object ResourcesPlugin extends AutoPlugin {
     case object Rewrite extends ResolveStrategy
     case object Discard extends ResolveStrategy
     case object FireException extends ResolveStrategy
-  }
-
-  object CollectResourcesTask{
-    def apply(collectJs: Boolean,
-              collectCss: Boolean,
-              collectBinary: Boolean,
-              resolveStrategy: ResolveStrategy,
-              outputDirectory: File,
-              externalDependencies: Seq[Attributed[File]],
-              internalDependencides: Seq[Attributed[File]],
-              resourceDirectories: Seq[File]): Unit = {
-      val task = new CollectResourcesTask(
-        collectJs,
-        collectCss,
-        collectBinary,
-        resolveStrategy,
-        outputDirectory
-      )
-      task.collectExternalResources(externalDependencies)
-      task.collectInternalResources(internalDependencides)
-      task.collectDirectoryResources(resourceDirectories)
-    }
   }
 
   class CollectResourcesTask(collectJs: Boolean,
@@ -161,10 +168,10 @@ object ResourcesPlugin extends AutoPlugin {
           case ResolveStrategy.FireException =>
             throw new ResolveException(s"Resource conflict ${file}")
           case ResolveStrategy.Discard =>
-            println(s"Ignoring conflict file: ${source.getAbsolutePath}")
+            println(s"Ignoring conflict file: ${source}")
         }
       } else {
-        println(s"Resource ${file} has been collected")
+        println(s"Resource ${source} has been collected")
         FileUtil.copy(source, file, null)
       }
     }
