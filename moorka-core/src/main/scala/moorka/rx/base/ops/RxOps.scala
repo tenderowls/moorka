@@ -54,17 +54,12 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal{
     channel
   }
 
-  // TODO this code doesn't work
   def fold[B](z: B)(op: (B, A) => B): Rx[B] = {
-    val rx = Var(z)
-    rx pull {
-      rx >>= { b =>
-        self >>= { a =>
-          Val(op(b, a))
-        }
+    Var(z) mod { b =>
+      self >>= { a =>
+        Val(op(b, a))
       }
     }
-    rx
   }
 
   def or[B](b: Rx[B]): Rx[Either[A, B]] = {

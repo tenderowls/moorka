@@ -5,6 +5,7 @@ import scala.concurrent.Promise
 import scala.util.Success
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+//import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -154,12 +155,13 @@ object RxSuite extends TestSuite {
             }
           }
         }
-        res foreach { x ⇒
+        val tmp = res foreach { x ⇒
           calls += 1
           assert(x() == 6)
         }
         vy() = Lazy(2)
         vx() = Lazy(2)
+        System.gc()
         click.pull(Lazy(2))
         assert(calls == 1)
         assert(evalCalls == 1)
@@ -194,12 +196,47 @@ object RxSuite extends TestSuite {
         calls += 1
         assert(x == 2)
       }
+      System.gc()
       ch.pull(0)
       ch.pull(1)
       ch.pull(2)
       assert(calls == 1)
     }
-    
+
+    "check take()" - {
+      val x = Channel[Int]()
+      val res = x.take(3) foreach { x =>
+        assert(x == Seq(1,2,3))
+      }
+      System.gc()
+      x.pull(1)
+      x.pull(2)
+      x.pull(3)
+      x.pull(4)
+    }
+
+    "check fold() on Var" - {
+      val x = Var("I")
+      val res = x.fold("")(_ + " " + _)
+      System.gc()
+      x.pull("am")
+      x.pull("cow")
+      res.foreach { x =>
+        assert(x == " I am cow")
+      }
+    }
+
+    "check fold() on Channel" - {
+      val x = Channel[String]()
+      val res = x.fold("")(_ + " " + _)
+      x.pull("I")
+      x.pull("am")
+      x.pull("cow")
+      res.foreach { x =>
+        assert(x == " I am cow")
+      }
+    }
+
     "check future conversion" - {
       var calls = 0
       val p = Promise[Int]()
@@ -212,7 +249,6 @@ object RxSuite extends TestSuite {
       assert(calls == 1)
     }
     
-    // todo check fold
-    // todo check take
+    // todo check GC behaviour
   }
 }

@@ -23,7 +23,7 @@ val utestSetting = Seq(
   scalaJSStage in Test := FastOptStage,
   persistLauncher in Test := false,
   testFrameworks += new TestFramework("utest.runner.Framework"),
-  libraryDependencies += "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
+  libraryDependencies += "com.lihaoyi" %%% "utest" % "0.3.1" % "test"
 )
 
 val publishSettings = moorkaVersion.endsWith("SNAPSHOT") match {
