@@ -57,7 +57,7 @@ lazy val `moorka-core` = (project in file("moorka-core"))
     )
   )
 
-lazy val `moorka-ui` = (project in file("moorka-ui"))
+/*lazy val `moorka-ui` = (project in file("moorka-ui"))
   .enablePlugins(ScalaJSPlugin)
   .settings(publishSettings:_*)
   .settings(commonSettings:_*)
@@ -65,6 +65,7 @@ lazy val `moorka-ui` = (project in file("moorka-ui"))
     scalaVersion := currentScalaVersion
   )
   .dependsOn(`moorka-core`)
+*/
 
 lazy val root = (project in file("."))
   .settings(dontPublish:_*)
@@ -72,7 +73,7 @@ lazy val root = (project in file("."))
     scalaVersion := currentScalaVersion
   )
   .aggregate(
-    `moorka-ui`,
+    //`moorka-ui`,
     `moorka-core`
   )
 
