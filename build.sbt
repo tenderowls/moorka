@@ -2,8 +2,7 @@ import sbt._
 import sbt.Keys._
 import bintray.Keys._
 
-val currentScalaVersion = "2.11.5"
-crossScalaVersions  := Seq("2.11.5", "2.10.4")
+val currentScalaVersion = "2.11.6"
 val moorkaVersion = "0.4.0-SNAPSHOT"
 
 scalaVersion := currentScalaVersion
@@ -45,14 +44,6 @@ val publishSettings = moorkaVersion.endsWith("SNAPSHOT") match {
   )
 }
 
-lazy val `moorka-resources-plugin` = (project in file("moorka-resources-plugin"))
-  .settings(publishSettings:_*)
-  .settings(commonSettings:_*)
-  .settings(
-    scalaVersion := "2.10.4",
-    sbtPlugin := true
-  )
-
 lazy val `moorka-core` = (project in file("moorka-core"))
   .enablePlugins(ScalaJSPlugin)
   .settings(publishSettings:_*)
@@ -81,7 +72,6 @@ lazy val root = (project in file("."))
     scalaVersion := currentScalaVersion
   )
   .aggregate(
-    `moorka-resources-plugin`,
     `moorka-ui`,
     `moorka-core`
   )
