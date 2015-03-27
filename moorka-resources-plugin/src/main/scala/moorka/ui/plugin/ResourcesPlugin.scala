@@ -50,28 +50,41 @@ object ResourcesPlugin extends AutoPlugin {
       inConfig(Test)(collectResourcesSettings)
 
   private def collectTaskResources(key:TaskKey[Unit]): Def.Initialize[Task[Unit]] = Def.task {
+    val log = (streams in collectResources).value.log
     val task = new CollectResourcesTask(
       (collectJsResources in collectResources).value,
       (collectCssResources in collectResources).value,
       (collectBinaryResources in collectResources).value,
       (conflictsResolveStrategy in collectResources).value,
-      (collectOutputPath in collectResources).value)
+      (collectOutputPath in collectResources).value,
+      log)
+    log.info("Collecting external resources")
     task.collectExternalResources((externalDependencyClasspath in collectResources).value)
-    //// Next line causes weird and shitty error. Do not uncomment
-    //task.collectInternalResources((internalDependencyClasspath in collectResources).value)
-    task.collectDirectoryResources((resourceDirectories in collectResources).value)
 
+    log.info("Collecting dependend project resources")
+    // Next line causes weird and shitty error. Do not uncomment
+    //task.collectInternalResources((internalDependencyClasspath in collectResources).value)
     // Next three lines and corresponding functions really look like a pile of GOVNOKOD
     // But an idea is follows: list project dependencies, get resources from deps directories and collect it
     // TODO: Of course, it works. But it MUST be rewritten ASAP.
     val deps = uniqueBuildDeps((buildDependencies in collectResources).value)
     val resDirs = deps flatMap { d => depResources(d) }
     task.collectDirectoryResources(resDirs)
+
+    log.info("Collecting internal resources")
+    task.collectDirectoryResources((resourceDirectories in collectResources).value)
+
+
   }
 
   private def uniqueBuildDeps(defs: BuildDependencies): Seq[File] = {
-    val deps = defs.classpath.keys
-    deps.map(_.build.toString).toList.distinct.map(s => new File(new URI(s)))
+    val deps = defs.classpath.keys.map(_.build.toString)
+    val set = scala.collection.mutable.Set[String]()
+    deps foreach { p =>
+      if(!set.contains(p))
+        set.add(p)
+    }
+    set.toList.map(s => new File(new URI(s)))
   }
 
   private def depResources(d: File): Seq[File] = {
@@ -104,7 +117,8 @@ object ResourcesPlugin extends AutoPlugin {
                              collectCss: Boolean,
                              collectBinary: Boolean,
                              resolveStrategy: ResolveStrategy,
-                             outputDirectory: File) {
+                             outputDirectory: File,
+                             log: Logger){
     val binaryExtensions: Seq[String] = Seq("png", "jpeg", "jpg", "svg")
 
     private def isImage( resource: String ) = !binaryExtensions.filter( e => resource.endsWith(e) ).isEmpty
@@ -127,7 +141,8 @@ object ResourcesPlugin extends AutoPlugin {
           out.write(read)
           read = zi.read()
         }
-        data = out.toByteArray
+        data = new Array[Byte](out.getCount)
+        System.arraycopy(out.getBytes, 0, data, 0, out.getCount)
       }
       data
     }
@@ -139,7 +154,7 @@ object ResourcesPlugin extends AutoPlugin {
 
     private def writeFileData(data: Array[Byte], resourceFile: File) {
       FileUtil.copy(new ByteArrayInputStream(data), resourceFile, null)
-      println(f"Resource ${resourceFile.getAbsolutePath} has been collected")
+
     }
 
     private def writeFile(data: Array[Byte], fileName: String) = {
@@ -147,14 +162,16 @@ object ResourcesPlugin extends AutoPlugin {
       if(file.exists) {
         resolveStrategy match {
           case ResolveStrategy.Rewrite =>
+            log.debug(f"Overwriting resource ${fileName}")
             writeFileData(data, file)
           case ResolveStrategy.FireException =>
             throw new ResolveException(s"Resource conflict: ${file}")
           case ResolveStrategy.Discard =>
-            println(s"Ignoring conflict file: ${file.getAbsolutePath}")
+            log.debug(s"Ignoring conflict file: ${file.getAbsolutePath}")
         }
       } else {
         writeFileData(data, file)
+        log.debug(f"Resource ${fileName} has been collected")
       }
     }
 
@@ -163,16 +180,16 @@ object ResourcesPlugin extends AutoPlugin {
       if(file.exists) {
         resolveStrategy match {
           case ResolveStrategy.Rewrite =>
-            println(s"Rewriting file ${file.getName} with ${source}")
-            FileUtil.copy(source, file, null)
+            log.debug(s"Overwriting file ${file.getName} with ${source}")
+            FileUtil.copy(source, file, null, true)
           case ResolveStrategy.FireException =>
             throw new ResolveException(s"Resource conflict ${file}")
           case ResolveStrategy.Discard =>
-            println(s"Ignoring conflict file: ${source}")
+            log.debug(s"Ignoring conflict file: ${source}")
         }
       } else {
-        println(s"Resource ${source} has been collected")
-        FileUtil.copy(source, file, null)
+        FileUtil.copy(source, file, null, true)
+        log.debug(s"Resource ${source} has been collected")
       }
     }
 
@@ -182,6 +199,7 @@ object ResourcesPlugin extends AutoPlugin {
       while(!q.isEmpty) {
         val e = q.dequeue()
         if(e.isDirectory) {
+          log.debug(s"Collecting resources from directory ${e}")
           e.listFiles foreach { q.enqueue(_) }
         } else {
           val fileName = getFileName(e.getName)
@@ -194,6 +212,7 @@ object ResourcesPlugin extends AutoPlugin {
 
     private def ensureOutputDirectory() = {
       if(!outputDirectory.exists)
+        log.debug(s"Creating output directory ${outputDirectory}")
         outputDirectory.mkdirs()
     }
 
