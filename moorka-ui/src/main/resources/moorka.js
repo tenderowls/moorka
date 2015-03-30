@@ -3,17 +3,26 @@ function Moorka() {
   function RenderBackendImpl() {
 
     var self = this;
-
-    var entities = { "root": document.body };
+    var entities = {};
+    var root = document.body;
 
     function element(refId) {
       return entities[refId];
     }
 
+    function createRef(factoryId) {
+      if (factoryId == "localStorage") {
+        return localStorage
+      }
+      else {
+        return document.createElement(factoryId)
+      }
+    }
+    
     function copyEvent(e) {
       var copy = {};
-      copy.type = e.type
-      copy.target = e.target.id
+      copy.type = e.type;
+      copy.target = e.target.id;
       switch (e.constructor) {
         case MouseEvent: {
           copy.altKey = e.altKey;
@@ -30,7 +39,7 @@ function Moorka() {
       return copy;
     }
 
-    this.send = null
+    this.send = null;
 
     this.receive = function (ops) {
       var l = ops.length;
@@ -40,13 +49,17 @@ function Moorka() {
           case "create_ref" :
             var factoryId = op[1];
             var refId = op[2];
-            var el = document.createElement(factoryId);
+            var el = createRef(factoryId);
             el.id = refId;
             entities[refId] = el;
             break;
           case "kill_ref":
             console.log(op[0], op[1]);
             delete entities[op[1]];
+            break;
+          case "append_to_root":
+            var newChildId = op[1];
+            root.appendChild(element(newChildId));
             break;
           case "append_child" :
             // (to, element)
@@ -93,6 +106,10 @@ function Moorka() {
             var elementId = op[1];
             element(elementId).setAttribute(op[2], op[3]);
             break;
+          case "remove_attribute" :
+            var elementId = op[1];
+            element(elementId).removeAttribute(op[2]);
+            break;
           case "class_add" :
             var elementId = op[1];
             element(elementId).classList.add(op[2]);
@@ -131,7 +148,9 @@ function Moorka() {
             else {
               result = el[funcName]()
             }
-            self.send(["get_response", op[3], result])
+            if (typeof result == "undefined")
+              result = "_"
+            self.send(["call_response", op[3], result])
         }
       }
     };
@@ -158,7 +177,7 @@ function Moorka() {
         }
       });
       http.addEventListener("load", function() {
-       cb(http.responseText)
+        cb(http.responseText)
       });
       http.addEventListener("error", function() {
         console.error("Can't load " + path);
@@ -166,22 +185,27 @@ function Moorka() {
       http.send();
   }
 
-  this.application = function(main, script) {
+  this.application = function(main, script, cb) {
     loadScript(script, function(scriptText) {
       eval(scriptText);
       var renderBackend = new RenderBackendImpl();
       renderBackend.send = renderBackendApi().defaultMode(renderBackend.receive);
       renderBackend.send(["start"]);
       eval(main + "().main()");
+      if (cb) {
+        cb();
+      }
     });
   };
 
-  this.workerApplication = function (main, script) {
+  this.workerApplication = function (main, script, cb) {
     loadScript(script, function(scriptText) {
       var workerScript = [
+        "var t = (new Date()).getTime();",
         scriptText,
         "\n renderBackendApi().workerMode();\n",
-        main + "().main();"
+        main + "().main();",
+        "console.log('[MOORKA] Worker start time: '+((new Date()).getTime()-t).toString()+'ms');"
       ];
       var blob = new Blob(workerScript, { "type": "application/javascript" });
       var worker = new Worker(URL.createObjectURL(blob));
@@ -193,6 +217,10 @@ function Moorka() {
         renderBackend.receive(x.data);
       };
       worker.postMessage(["start"]);
+      if (cb) {
+        cb();
+      }
     });
   }
 }
+
