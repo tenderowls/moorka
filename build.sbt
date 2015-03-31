@@ -3,7 +3,7 @@ import sbt.Keys._
 import bintray.Keys._
 
 val currentScalaVersion = "2.11.6"
-val moorkaVersion = "0.4.0-SNAPSHOT"
+val moorkaVersion = "0.5.0-SNAPSHOT"
 
 scalaVersion := currentScalaVersion
 
@@ -22,9 +22,11 @@ val commonSettings = Seq(
 val utestSetting = Seq(
   scalaJSStage in Test := FastOptStage,
   persistLauncher in Test := false,
-  testFrameworks += new TestFramework("utest.runner.Framework"),
-  libraryDependencies += "com.lihaoyi" %%% "utest" % "0.3.1" % "test"
+  testFrameworks += new TestFramework("utest.runner.Framework")
 )
+
+val utestSettingsJS = utestSetting :+ (libraryDependencies += "com.lihaoyi" %%% "utest" % "0.3.1" % "test")
+val utestSettingsJVM = utestSetting :+ (libraryDependencies += "com.lihaoyi" %% "utest" % "0.3.1" % "test")
 
 val publishSettings = moorkaVersion.endsWith("SNAPSHOT") match {
   case true => Seq(
@@ -44,18 +46,19 @@ val publishSettings = moorkaVersion.endsWith("SNAPSHOT") match {
   )
 }
 
-lazy val `moorka-core` = (project in file("moorka-core"))
-  .enablePlugins(ScalaJSPlugin)
+lazy val core = crossProject
+  .crossType(CrossType.Pure)
+  .jsSettings(utestSettingsJS:_*)
+  .jvmSettings(utestSettingsJVM:_*)
   .settings(publishSettings:_*)
   .settings(commonSettings:_*)
-  .settings(utestSetting:_*)
   .settings(
-    scalaVersion := currentScalaVersion,
-    libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "0.7.0",
-      "org.scala-lang" % "scala-reflect" % currentScalaVersion
-    )
+    normalizedName := "moorka-core",
+    scalaVersion := currentScalaVersion
   )
+
+lazy val coreJS = core.js
+lazy val coreJVM = core.jvm
 
 /*lazy val `moorka-ui` = (project in file("moorka-ui"))
   .enablePlugins(ScalaJSPlugin)
@@ -74,6 +77,6 @@ lazy val root = (project in file("."))
   )
   .aggregate(
     //`moorka-ui`,
-    `moorka-core`
+    coreJS, coreJVM
   )
 
