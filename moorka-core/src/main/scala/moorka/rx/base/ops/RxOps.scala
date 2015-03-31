@@ -14,12 +14,6 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal{
     }
   }
 
-  def map[B](f: A ⇒ B): Rx[B] = {
-    self >>= { x ⇒
-      Val(f(x))
-    }    
-  }
-
   def zip[B](wth: Rx[B]): Rx[(A, B)] = {
     self >>= { a ⇒
       wth >>= { b ⇒
@@ -71,6 +65,17 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal{
     rx
   }
 
+  def collect[B](pf: PartialFunction[A, B]): Rx[B] = {
+    self >>= { x ⇒
+      if (pf.isDefinedAt(x)) {
+        Val(pf(x))
+      }
+      else {
+        Dummy
+      }
+    }
+  }
+  
 //  @deprecated("Use foreach() instead subscribe()", "0.4.0")
 //  def subscribe[U](f: A ⇒ U): Rx[Unit] = self.foreach(f)
 //

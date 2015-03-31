@@ -4,8 +4,7 @@ import utest._
 import scala.concurrent.Promise
 import scala.util.Success
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
-//import scala.concurrent.ExecutionContext.Implicits.global
+import utest.ExecutionContext.RunNow
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -42,6 +41,21 @@ object RxSuite extends TestSuite {
         ch.filter(_ > 0) foreach { x ⇒
           calls += 1
           assert(x == 1)
+        }
+        ch.pull(0)
+        ch.pull(1)
+        assert(calls == 1)
+      }
+      
+      "collect() should drop values not processed by `f`" - {
+        var calls = 0
+        val ch = Channel[Int]()
+        ch.collect {
+          case x if x > 0 ⇒ 
+            x.toString 
+        } foreach { x ⇒
+          calls += 1
+          assert(x == "1")
         }
         ch.pull(0)
         ch.pull(1)
@@ -187,6 +201,16 @@ object RxSuite extends TestSuite {
         }
       }
       assert(calls == 1)
+    }
+
+    "check for-comprehensions with filter" - {
+      val a = Channel[Int]()
+      val b = for (x ← a if x > 10) yield x + 1
+      val handler = b foreach { x =>
+        assert(x == 12)
+      }
+      a.pull(10)
+      a.pull(11)
     }
     
     "check drop()" - {

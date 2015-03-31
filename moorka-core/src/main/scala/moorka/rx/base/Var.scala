@@ -1,6 +1,6 @@
 package moorka.rx.base
 
-import moorka.rx.base.bindings.StatefulBinding
+import moorka.rx.base.bindings.{Binding, StatefulBinding}
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -17,9 +17,13 @@ final case class Var[A](private[rx] var x: A) extends Source[A] {
     // to made it pretty tell me please
     // aleksey.fomkin@gmail.com
     def updateCMod(drop: Boolean): Unit = {
-      import moorka.rx.ToRxOps
-      def checkDrop(fx: Rx[A]): Rx[A] = {
-        if (drop) fx drop 1 else fx
+      def checkDrop(fx: Source[A]): Rx[A] = {
+        if (drop) {
+          new Binding[A, A](fx, x ⇒ Val(x)) 
+        }
+        else {
+          fx
+        }
       }
       val rx = f(x) match {
         case fx: Var[A] ⇒ checkDrop(fx)

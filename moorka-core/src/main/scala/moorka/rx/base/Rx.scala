@@ -43,7 +43,18 @@ trait Rx[+A] extends Mortal {
     else Dummy
   }
 
+  /**
+   * Creates new binding applying `f` to values.
+   * @return
+   */
   @inline def filter(f: A ⇒ Boolean): Rx[A] = withFilter(f)
+
+  /**
+   * Creates new binding applying `f` to values 
+   */
+  def map[B](f: A ⇒ B): Rx[B] = flatMap { x ⇒
+    Val(f(x))
+  }
 }
 
 final case class Val[+A](x: A) extends Rx[A] {
