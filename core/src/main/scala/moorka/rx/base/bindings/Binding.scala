@@ -15,8 +15,7 @@ private[rx] class Binding[From, To](parent: Source[From],
     upstreams.foreach(_.kill())
     upstreams = Nil
     // Pull value from upstream
-    val upstream = lambda(x)
-    pull(upstream)
+    pull(lambda(x))
   }
 
   val ref = WeakReference(this)

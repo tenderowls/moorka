@@ -10,7 +10,7 @@ object BufferSuite extends TestSuite {
       "must emit `added` when +=" - {
         val collection = Buffer[Int]()
         var calls = 0
-        collection.added.foreach( x => calls += 1)
+        val alive = collection.added.foreach( x => calls += 1)
         collection += 1
         assert(calls == 1)
         assert(collection(0) == 1)
@@ -19,7 +19,7 @@ object BufferSuite extends TestSuite {
       "check remove -= action" - {
         var calls = 0
         val collection = Buffer(1, 2, 3, 4, 5)
-        collection.removed foreach { x =>
+        val alive = collection.removed foreach { x =>
           assert(x.idx == 3)
           calls += 1
         }
@@ -32,7 +32,7 @@ object BufferSuite extends TestSuite {
       "check update element action" - {
         var calls = 0
         val collection = Buffer(1, 2, 3, 4, 5)
-        collection.updated foreach { x =>
+        val alive = collection.updated foreach { x =>
           assert(x.idx == 3)
           calls += 1
         }
@@ -44,7 +44,7 @@ object BufferSuite extends TestSuite {
       "check insert element action" - {
         var calls = 0
         val collection = Buffer(1, 2, 3, 4, 5)
-        collection.inserted foreach { x =>
+        val alive = collection.inserted foreach { x =>
           assert(x.idx == 2)
           calls += 1
         }

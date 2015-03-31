@@ -1,6 +1,6 @@
 package moorka.rx.base.bindings
 
-import moorka.rx.base.{Rx, Source}
+import moorka.rx.base.{StatefulSource, Rx, Source}
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -8,7 +8,8 @@ import moorka.rx.base.{Rx, Source}
 private[rx] class StatefulBinding[From, To](initialValue: Option[From],
                                             parent: Source[From],
                                             lambda: From ⇒ Rx[To])
-  extends Binding[From, To](parent, lambda) {
+  extends Binding[From, To](parent, lambda) 
+  with StatefulSource[To] {
 
   var state: Option[To] = None
 

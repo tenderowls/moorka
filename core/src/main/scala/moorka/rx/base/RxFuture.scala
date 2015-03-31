@@ -16,7 +16,6 @@ final class RxFuture[A](future: Future[A])
     st.update(Some(x))
   }
 
-
   def flatMap[B](f: (Try[A]) => Rx[B]): Rx[B] = {
     st flatMap {
       case Some(x) ⇒ f(x)
@@ -24,7 +23,9 @@ final class RxFuture[A](future: Future[A])
     }
   }
 
-  override def kill(): Unit = {
+  def alive = st.alive 
+  
+  def kill(): Unit = {
     st.kill()
   }
 }

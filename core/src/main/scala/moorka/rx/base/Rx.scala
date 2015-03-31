@@ -7,6 +7,8 @@ import moorka.rx.death.Mortal
  */
 trait Rx[+A] extends Mortal {
 
+  def alive: Boolean 
+  
   @inline def >>=[B](f: A ⇒ Rx[B]): Rx[B] = flatMap(f)
 
   /**
@@ -62,6 +64,8 @@ final case class Val[+A](x: A) extends Rx[A] {
   def flatMap[B](f: (A) => Rx[B]): Rx[B] = f(x)
 
   def kill(): Unit = ()
+
+  def alive: Boolean = true
 }
 
 case object Dummy extends Rx[Nothing] {
@@ -69,6 +73,8 @@ case object Dummy extends Rx[Nothing] {
   def flatMap[B](f: Nothing ⇒ Rx[B]): Rx[B] = Dummy
 
   def kill() = ()
+
+  def alive: Boolean = false
 }
 
 case object Killer extends Rx[Nothing] {
@@ -76,4 +82,6 @@ case object Killer extends Rx[Nothing] {
   def flatMap[B](f: Nothing ⇒ Rx[B]): Rx[B] = Dummy
 
   def kill() = ()
+
+  def alive: Boolean = false
 }

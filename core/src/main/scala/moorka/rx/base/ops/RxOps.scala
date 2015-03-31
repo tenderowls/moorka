@@ -49,7 +49,7 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal{
   }
 
   def fold[B](z: B)(op: (B, A) => B): Rx[B] = {
-    Var(z) mod { b =>
+    Var.withDefaultMod(z) { b =>
       self >>= { a =>
         Val(op(b, a))
       }
