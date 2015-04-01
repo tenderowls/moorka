@@ -71,6 +71,7 @@ object BufferSuite extends TestSuite {
       "when new element added into parent collection" - {
         val collection = Buffer(1, 2, 3)
         val mapped = collection.map(mapFunction)
+        System.gc()
         collection += 4
         assert(mapped(3) == "four")
       }
@@ -78,6 +79,7 @@ object BufferSuite extends TestSuite {
       "when element removed from parent collection" - {
         val collection = Buffer(1, 2, 3)
         val mapped = collection.map(mapFunction)
+        System.gc()
         collection -= 2
         assert(mapped(0) == "one")
         assert(mapped(1) == "three")
@@ -86,6 +88,7 @@ object BufferSuite extends TestSuite {
       "when new element inserted into parent collection" - {
         val collection = Buffer(1, 3)
         val mapped = collection.map(mapFunction)
+        System.gc()
         //println(collection)
         //println(mapped)
         collection.insert(1, 2)
@@ -99,6 +102,7 @@ object BufferSuite extends TestSuite {
       "when element updated in parent collection" - {
         val collection = Buffer(1, 2)
         val mapped = collection.map(mapFunction)
+        System.gc()
         collection(0) = 2
         assert(mapped(0) == "two")
       }
@@ -109,6 +113,7 @@ object BufferSuite extends TestSuite {
       "updated when changes of parent collection satisfy to filter" - {
         val collection = Buffer("John", "Tom", "Jane")
         val filtered = collection.filter(_.startsWith("J"))
+        System.gc()
         assert(filtered.toString == Buffer("John", "Jane").toString)
         collection += "Jade"
         assert(filtered.length == 3)

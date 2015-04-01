@@ -14,7 +14,8 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
 
   val buffer = mutable.Buffer[A]()
   val origBuffer = mutable.Buffer[A]()
-
+  var handlers = List.empty[Rx[_]]
+  
   def refreshBuffer(): Unit = {
     buffer.remove(0, buffer.length)
     for (e <- origBuffer) {
@@ -31,13 +32,13 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
       if (origBuffer.indexOf(x) < 0 || !filterFunction(x)) {
         val e = buffer(idx)
         buffer.remove(idx, 1)
-        removed.emit(IndexedElement(idx, e))
+        removed.update(IndexedElement(idx, e))
       }
     }
     else {
       if (filterFunction(x)) {
         refreshBuffer()
-        inserted.emit(IndexedElement(buffer.indexOf(x), x))
+        inserted.update(IndexedElement(buffer.indexOf(x), x))
       }
     }
   }
@@ -65,37 +66,38 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
     }
   }
 
-  parent.added foreach { e =>
+  handlers ::= parent.added foreach { e =>
     origBuffer += e
     if (filterFunction(e)) {
       buffer += e
       _length() = buffer.length
-      added.emit(e)
+      added.update(e)
     }
   }
 
-  parent.removed foreach { x =>
+  handlers ::= parent.removed foreach { x =>
     origBuffer.remove(x.idx, 1)
     if (filterFunction(x.e)) {
       val idx = buffer.indexOf(x.e)
       buffer.remove(idx, 1)
       _length() = buffer.length
-      removed.emit(IndexedElement(idx, x.e))
+      removed.update(IndexedElement(idx, x.e))
     }
   }
 
-  parent.inserted foreach { x =>
+  handlers ::= parent.inserted foreach { x =>
     origBuffer.insert(x.idx, x.e)
     refreshElement(x.e)
   }
 
-  parent.updated foreach { x =>
+  handlers ::= parent.updated foreach { x =>
     origBuffer(x.idx) = x.e
     refreshElement(x.e)
   }
 
   override def kill(): Unit = {
     super.kill()
+    handlers.foreach(_.kill())
   }
 
   def indexOf(e: A) = buffer.indexOf(e)

@@ -13,6 +13,7 @@ private[collection] class MappedBuffer[From, A](parent: BufferView[From],
   extends BufferView[A] {
 
   val buffer = mutable.Buffer[Option[A]]()
+  var handlers = List.empty[Rx[_]]
 
   0 until parent.length foreach {
     i => buffer += None
@@ -30,19 +31,19 @@ private[collection] class MappedBuffer[From, A](parent: BufferView[From],
 
   def length: Int = _length.x
 
-  added foreach { x =>
+  handlers ::= added foreach { x =>
     buffer += Some(x)
     _length() = buffer.length
   }
-  removed foreach { x =>
+  handlers ::= removed foreach { x =>
     buffer.remove(x.idx)
     _length() = buffer.length
   }
-  inserted foreach { x =>
+  handlers ::= inserted foreach { x =>
     buffer.insert(x.idx, Some(x.e))
     _length() = buffer.length
   }
-  updated foreach { x =>
+  handlers ::= updated foreach { x =>
     buffer(x.idx) = Some(x.e)
   }
 
@@ -62,5 +63,10 @@ private[collection] class MappedBuffer[From, A](parent: BufferView[From],
         return i
     }
     -1
+  }
+
+  override def kill(): Unit = {
+    super.kill()
+    handlers.foreach(_.kill())
   }
 }
