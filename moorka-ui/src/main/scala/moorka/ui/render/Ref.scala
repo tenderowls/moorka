@@ -1,9 +1,10 @@
 package moorka.ui.render
 
-import moorka.rx.Mortal
+import moorka.rx._
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
 import scala.scalajs.js
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 object Ref {
 
@@ -73,69 +74,50 @@ Ref(val id: String) extends Mortal {
   def set(name: String, value: Any) = {
     RenderAPI ! js.Array("set", id, name, value)
   }
-  
+
   def get[T](name: String): Future[T] = {
     val requestId = Math.random()
-    val promise = Promise[T]()
-    // todo this operation produce a lot of garbage 
-    RenderAPI.onMessage until { x =>
-      if (x(0) == "get_response" && x(1) == requestId) {
-        x(2) match {
-          case "error" => promise.failure(new Exception("Can't get " + name + " from " + id))
-          case any => promise.success(any.asInstanceOf[T])
-        }
-        false
+    RenderAPI ? js.Array("get", id, name, requestId) flatMap {
+      case "error" ⇒ Future.failed {
+        new Exception("Internal error")
       }
-      else true
+      case x => Future.successful {
+        x.asInstanceOf[T]
+      }
     }
-    RenderAPI ! js.Array("get", id, name, requestId)
-    promise.future
   }
 
   def call[T >: Null](name: String, args: Any*): Future[T] = {
     val requestId = Math.random()
-    val promise = Promise[T]()
-    // todo this operation produce a lot of garbage 
-    RenderAPI.onMessage until { x =>
-      if (x(0) == "call_response" && x(1) == requestId) {
-        x(2) match {
-          case null => promise.success(null)
-          case "error" => promise.failure(new Exception("Can't get " + name + " from " + id))
-          case any => promise.success(any.asInstanceOf[T])
-        }
-        false
-      }
-      else true
-    }
     val xs = new js.Array[Any]
     args.foreach {
       case x: Ref => xs.push("$$:" + x.id)
       case any => xs.push(any)
     }
-    RenderAPI ! js.Array("call", id, name, requestId).concat(xs)
-    promise.future
+    RenderAPI ? js.Array("call", id, name, requestId).concat(xs) flatMap {
+      case null ⇒ Future.successful(null)
+      case "error" ⇒ Future.failed {
+        new Exception("Internal error")
+      }
+      case x => Future.successful {
+        x.asInstanceOf[T]
+      }
+    }
   }
 
   def callNoResult(name: String, args: Any*): Future[Unit] = {
     val requestId = Math.random()
-    val promise = Promise[Unit]()
-    RenderAPI.onMessage until { x =>
-      if (x(0) == "call_response" && x(1) == requestId) {
-        x(2) match {
-          case "error" => promise.failure(new Exception("Can't get " + name + " from " + id))
-          case _ => promise.success(())
-        }
-        false
-      }
-      else true
-    }
     val xs = new js.Array[Any]
     args.foreach {
       case x: Ref => xs.push("$$:" + x.id)
       case any => xs.push(any)
     }
-    RenderAPI ! js.Array("call", id, name, requestId).concat(xs)
-    promise.future
+    RenderAPI ? js.Array("call", id, name, requestId).concat(xs)  flatMap {
+      case "error" ⇒ Future.failed {
+        new Exception("Internal error")
+      }
+      case x => Future.successful(())
+    }
   }
 
 }

@@ -307,6 +307,8 @@ object RxSuite extends TestSuite {
       }
     }
 
+    // todo
+    
     "check future conversion" - {
       var calls = 0
       val p = Promise[Int]()

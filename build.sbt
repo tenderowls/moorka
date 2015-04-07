@@ -60,15 +60,15 @@ lazy val core = crossProject
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
 
-/*lazy val `moorka-ui` = (project in file("moorka-ui"))
+lazy val ui = (project in file("moorka-ui"))
   .enablePlugins(ScalaJSPlugin)
   .settings(publishSettings:_*)
   .settings(commonSettings:_*)
   .settings(
+    normalizedName := "moorka-ui",
     scalaVersion := currentScalaVersion
   )
-  .dependsOn(`moorka-core`)
-*/
+  .dependsOn(coreJS)
 
 lazy val root = (project in file("."))
   .settings(dontPublish:_*)
@@ -76,7 +76,7 @@ lazy val root = (project in file("."))
     scalaVersion := currentScalaVersion
   )
   .aggregate(
-    //`moorka-ui`,
+    ui,
     coreJS, coreJVM
   )
 

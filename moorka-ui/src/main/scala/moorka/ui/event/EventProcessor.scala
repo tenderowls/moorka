@@ -65,14 +65,14 @@ trait EventProcessor[A <: SyntheticEvent ] {
       event._eventPhase = Capturing
       collectParents(element, Nil).foreach { x =>
         event._currentTarget = x
-        captures.get(x).foreach(_.emit(event))
+        captures.get(x).foreach(_.pull(event))
         if (event._propagationStopped)
           throw PropagationStopped
       }
       // At target
       event._eventPhase = AtTarget
       event._currentTarget = element
-      listeners.get(element).foreach(_.emit(event))
+      listeners.get(element).foreach(_.pull(event))
       if (event._propagationStopped)
         throw PropagationStopped
       // Bubbling
@@ -80,7 +80,7 @@ trait EventProcessor[A <: SyntheticEvent ] {
       event._bubbles = true
       var ct = element.parent
       while (ct != null) {
-        listeners.get(ct).foreach(_.emit(event))
+        listeners.get(ct).foreach(_.pull(event))
         if (event._propagationStopped)
           throw PropagationStopped
         ct = ct.parent
@@ -101,15 +101,15 @@ trait EventProcessor[A <: SyntheticEvent ] {
     }
   }
 
-  def addListener(element: EventTarget, listener: (A) => Unit): Channel[A] = {
-    listeners.getOrElseUpdate(element, Channel[A]).subscribe(listener)
+  def addListener(element: EventTarget, listener: (A) => Unit): Rx[Unit] = {
+    listeners.getOrElseUpdate(element, Channel[A]()).foreach(listener)
   }
 
-  def addCapture(element: EventTarget, capture: (A) => Unit): Channel[A] = {
-    captures.getOrElseUpdate(element, Channel[A]).subscribe(capture)
+  def addCapture(element: EventTarget, capture: (A) => Unit): Rx[Unit] = {
+    captures.getOrElseUpdate(element, Channel[A]()).foreach(capture)
   }
 
-  RenderAPI.onMessage subscribe { x =>
+  private val onMessageListener = RenderAPI.onMessage foreach { x =>
     if (x(0) == "event") {
       val e = x(1).asInstanceOf[js.Dynamic]
       if (e.`type`.asInstanceOf[String] == eventType) {

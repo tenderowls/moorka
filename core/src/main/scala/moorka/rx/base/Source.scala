@@ -2,7 +2,6 @@ package moorka.rx.base
 
 import moorka.rx.base.bindings.Binding
 
-import scala.collection.mutable
 import scala.ref.WeakReference
 
 /**

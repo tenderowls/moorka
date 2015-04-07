@@ -38,7 +38,7 @@ final case class Var[A](private[rx] var x: A)
           case modX ⇒ modX
         }
         rx once { v ⇒
-          x = v
+          update(v)
           cleanupUpstreams()
           listenMod(ignoreStatefulBehavior = true)
         }
@@ -53,9 +53,10 @@ final case class Var[A](private[rx] var x: A)
     addUpstream {
       f(x) once { v ⇒
         cleanupUpstreams()
-        x = v
+        update(v)
       }
     }
+    cleanupUpstreams()
   }
 
   //  @deprecated("Use foreach() instead subscribe(). Note that foreach calls `f` immediately", "0.4.0")

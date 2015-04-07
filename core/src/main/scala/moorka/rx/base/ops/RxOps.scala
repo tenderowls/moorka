@@ -75,10 +75,4 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal{
       }
     }
   }
-  
-//  @deprecated("Use foreach() instead subscribe()", "0.4.0")
-//  def subscribe[U](f: A ⇒ U): Rx[Unit] = self.foreach(f)
-//
-//  @deprecated("Use foreach() instead observe()", "0.4.0")
-//  def observe[U](f: ⇒ U): Rx[Unit] = self.foreach(_ ⇒ f)
 }

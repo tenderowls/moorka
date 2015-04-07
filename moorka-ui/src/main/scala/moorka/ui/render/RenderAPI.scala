@@ -2,7 +2,7 @@ package moorka.ui.render
 
 import moorka.rx._
 
-import scala.concurrent.Future
+import scala.concurrent.{Promise, Future}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
@@ -32,7 +32,7 @@ object RenderAPI {
   @JSExport def workerMode() = {
     postMessage = js.Dynamic.global.postMessage.asInstanceOf[WorkerCallback]
     js.Dynamic.global.updateDynamic("onmessage")( { x: Any =>
-      _onMessage.emit(x.asInstanceOf[js.Dynamic].data.asInstanceOf[Message])
+      _onMessage.pull(x.asInstanceOf[js.Dynamic].data.asInstanceOf[Message])
     }: WorkerCallback)
   }
 
@@ -42,7 +42,7 @@ object RenderAPI {
   @JSExport def defaultMode(incoming:WorkerCallback): js.Function1[Message, _] = {
     postMessage = incoming
     (message: Message) => Future {
-      _onMessage.emit(message)
+      _onMessage.pull(message)
     }
   }
 
@@ -57,6 +57,31 @@ object RenderAPI {
       }
     }
   }
+
+  def ?(msg: Message) = {
+    val p = Promise[Any]()
+    val pair = (msg(3).toString, p)
+    println(s"promise ${msg(3).toString} added")
+    promises = promises + pair
+    this ! msg
+    p.future
+  }
+
+  private var promises = Map.empty[Any, Promise[Any]]
+  
+  private val messageListener = _onMessage foreach { ops ⇒
+    val second = ops(1)
+    if (second != null) {
+      val s = second.toString
+      promises.get(s) match {
+        case Some(promise) ⇒
+          println(s"promise found $s")
+          promise.success(ops(2))
+          promises -= s
+        case None ⇒
+      }
+    }
+  }  
 
   val onMessage: Channel[Message] = _onMessage
 }

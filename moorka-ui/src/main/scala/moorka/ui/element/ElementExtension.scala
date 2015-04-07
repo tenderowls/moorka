@@ -17,7 +17,7 @@ case class ElementAttributeName(name: String) {
 
   def :=(x: String) = ElementAttributeExtension(name, x)
 
-  def :=(x: State[String]) = ElementBoundAttributeExtension(name, x)
+  def :=(x: Rx[String]) = ElementBoundAttributeExtension(name, x)
 }
 
 case class ElementEventName[EventType <: SyntheticEvent](processor: EventProcessor[EventType]) {
@@ -51,17 +51,17 @@ case class ElementPropertyName[A](name: String) {
 
   def :=(x: A) = ElementPropertyExtension(name, x)
 
-  def :=(x: State[A]) = ElementBoundPropertyExtension(name, x)
+  def :=(x: Rx[A]) = ElementBoundPropertyExtension(name, x)
 
   def =:= (x: Var[A]) = VarPropertyExtension(name, x)
 
   def from(x: RefHolder): Future[A] = x.ref.get(name)
 }
 
-class BoundExtensionFactory[A](static: (A => ElementExtension), bound: (State[A]) => BoundElementExtension)
+class BoundExtensionFactory[A](static: (A => ElementExtension), bound: (Rx[A]) => BoundElementExtension)
   extends StaticExtensionFactory[A](static) {
 
-  def :=(x: State[A]) = bound(x)
+  def :=(x: Rx[A]) = bound(x)
 }
 
 class StaticExtensionFactory[A](static: (A => ElementExtension)) {
@@ -80,7 +80,7 @@ case class SyntheticEventExtension[EventType <: SyntheticEvent](processor: Event
                                                                 useCapture: Boolean)
   extends ElementExtension {
 
-  var slot:Option[Channel[EventType]] = None
+  var slot:Option[Rx[_]] = None
 
   def start(element: ElementBase): Unit = {
     slot = useCapture match {
@@ -114,7 +114,7 @@ case class UseClassExtension(className: String, trigger:Boolean) extends Element
 
 sealed trait BoundElementExtension extends ElementExtension {
 
-  protected var subscription: Channel[Any] = null
+  protected var subscription: Rx[Any] = null
 
   override def kill(): Unit = {
     if (subscription != null)
@@ -122,26 +122,24 @@ sealed trait BoundElementExtension extends ElementExtension {
   }
 }
 
-case class UseClassBoundExtension(className: String, trigger:State[Boolean])
+case class UseClassBoundExtension(className: String, trigger:Rx[Boolean])
   extends ElementExtension with BoundElementExtension {
 
   def start(element: ElementBase): Unit = {
-    subscription = trigger observe {
-      trigger() match {
-        case true => element.ref.classAdd(className)
-        case false => element.ref.classRemove(className)
-      }
+    subscription = trigger foreach {
+      case true => element.ref.classAdd(className)
+      case false => element.ref.classRemove(className)
     }
   }
 }
 
-case class ElementBoundPropertyExtension[A](name: String, value: State[A])
+case class ElementBoundPropertyExtension[A](name: String, value: Rx[A])
   extends ElementExtension with BoundElementExtension {
 
   def start(element: ElementBase): Unit = {
-    
-    subscription = value observe {
-      element.ref.set(name, value())
+    subscription = value foreach { x ⇒
+      println(s"$name, $x")
+      element.ref.set(name, x)
     }
   }
 }
@@ -149,13 +147,13 @@ case class ElementBoundPropertyExtension[A](name: String, value: State[A])
 case class VarPropertyExtension[A](name: String, value: Var[A])
   extends ElementExtension {
 
-  var subscriptions: List[Channel[Any]] = Nil
+  var subscriptions: List[Rx[Any]] = Nil
   var awaitForRead = false
   var awaitForWrite = true
-  
+
   def listener(event: SyntheticEvent) = {
     awaitForRead = true
-    val f: Future[A] = event.target.ref.get(name) 
+    val f: Future[A] = event.target.ref.get(name)
     f onSuccess {
       case x if awaitForRead =>
         awaitForWrite = false
@@ -168,10 +166,10 @@ case class VarPropertyExtension[A](name: String, value: Var[A])
     subscriptions =
       ChangeEventProcessor.addListener(element, listener) ::
       InputEventProcessor.addListener(element, listener) ::
-      value.observe {
+      value.foreach { x ⇒
         awaitForRead = false
         if (awaitForWrite) {
-          element.ref.set(name, value())
+          element.ref.set(name, x)
         }
         else {
           awaitForWrite = true
@@ -186,13 +184,13 @@ case class VarPropertyExtension[A](name: String, value: Var[A])
   }
 }
 
-case class ElementBoundAttributeExtension(name: String, value: State[String])
+case class ElementBoundAttributeExtension(name: String, value: Rx[String])
   extends ElementExtension
   with BoundElementExtension {
 
   def start(element: ElementBase): Unit = {
-    subscription = value observe {
-      element.ref.updateAttribute(name, value())
+    subscription = value foreach { x ⇒
+      element.ref.updateAttribute(name, x)
     }
   }
 }

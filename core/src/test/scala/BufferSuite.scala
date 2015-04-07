@@ -29,6 +29,8 @@ object BufferSuite extends TestSuite {
         assert(collection(3) == 5)
       }
 
+      // todo check remove with function
+      
       "check update element action" - {
         var calls = 0
         val collection = Buffer(1, 2, 3, 4, 5)
