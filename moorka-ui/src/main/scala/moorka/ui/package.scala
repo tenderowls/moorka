@@ -1,6 +1,6 @@
 package moorka
 
-import moorka.rx.State
+import moorka.rx._
 import moorka.ui.components.FutureElement
 import moorka.ui.components.html.ElementSwitcher
 import moorka.ui.element.ElementBase
@@ -30,7 +30,7 @@ package object ui {
    */
   def block(f: => ElementBase): ElementBase = f
 
-  def switch(f: => State[ElementBase]): ElementSwitcher = {
+  def switch(f: => Rx[ElementBase]): ElementSwitcher = {
     new ElementSwitcher(f)
   }
 

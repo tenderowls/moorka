@@ -11,14 +11,16 @@ import scala.collection.mutable
 object DataRepeat {
 
   def apply[A](dataProvider: BufferView[A],
-               componentFactory: State[A] => ElementBase) = {
+               componentFactory: Rx[A] => ElementBase) = {
     new DataRepeat[A](dataProvider, componentFactory)
   }
 }
 
 class DataRepeat[A](dataProvider: BufferView[A],
-                factory: State[A] => ElementBase)
+                factory: Rx[A] => ElementBase)
   extends ElementExtension {
+  
+  var subscribtions = List.empty[Rx[Any]]
   
   def start(element: ElementBase): Unit = {
     val ref = element.ref
@@ -43,13 +45,13 @@ class DataRepeat[A](dataProvider: BufferView[A],
       }
     )
 
-    dataProvider.added subscribe { x =>
+    subscribtions ::= dataProvider.added foreach { x =>
       val c = createAndAppendComponent(x)
       c.parent = element
       ref.appendChild(c.ref)
     }
 
-    dataProvider.removed subscribe { x =>
+    subscribtions ::= dataProvider.removed foreach { x =>
       states.remove(x.idx)
       val c = components.remove(x.idx)
       ref.removeChild(c.ref)
@@ -57,7 +59,7 @@ class DataRepeat[A](dataProvider: BufferView[A],
       c.kill()
     }
 
-    dataProvider.inserted subscribe { x =>
+    subscribtions ::= dataProvider.inserted foreach { x =>
       val state = Var(x.e)
       val c = factory(state)
       states.insert(x.idx, state)
@@ -72,9 +74,16 @@ class DataRepeat[A](dataProvider: BufferView[A],
       }
     }
 
-    dataProvider.updated subscribe { x =>
+    subscribtions ::= dataProvider.updated foreach { x =>
       val state = states(x.idx)
       state() = x.e
+    }
+  }
+
+  override def kill(): Unit = {
+    super.kill()
+    subscribtions foreach {
+      _.kill()
     }
   }
 }

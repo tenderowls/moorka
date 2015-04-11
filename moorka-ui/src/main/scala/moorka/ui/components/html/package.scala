@@ -26,7 +26,7 @@ package object html {
     `textContent` := text
   }
 
-  implicit def ToElementBoundPropertyExtension(text: State[String]): ElementBoundPropertyExtension[String] = {
+  implicit def ToElementBoundPropertyExtension(text: Rx[String]): ElementBoundPropertyExtension[String] = {
     `textContent` := text
   }
 
