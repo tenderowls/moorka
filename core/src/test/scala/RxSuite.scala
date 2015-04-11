@@ -219,7 +219,6 @@ object RxSuite extends TestSuite {
       }
     }
     
-    // todo check withFilter
     "check for-comprehension" - {
       var calls = 0
       val vx = Var(2)
@@ -293,6 +292,7 @@ object RxSuite extends TestSuite {
       res.foreach { x =>
         assert(x == " I am cow")
       }
+      ()
     }
 
     "check fold() on Channel" - {
@@ -305,10 +305,40 @@ object RxSuite extends TestSuite {
       res.foreach { x =>
         assert(x == " I am cow")
       }
+      ()
     }
 
-    // todo
-    
+    "check switch" - {
+      val a = Channel[Int]()
+      val b = a switch {
+        case x if x % 15 == 0 ⇒ Left("FizzBuzz")
+        case x if x % 3 == 0 ⇒ Left("Fizz")
+        case x if x % 5 == 0 ⇒ Left("Buzz")
+        case x ⇒ Right(x)
+      }
+      val alive1 = b._1 foreach { x ⇒
+        assert(x == "Fizz")
+      }
+      val alive2 = b._2 foreach { x ⇒
+        assert(x == 2)
+      }
+      a.pull(3)
+      a.pull(2)
+    }
+
+    "check partition" - {
+      val a = Channel[Int]()
+      val b = a.partition(_ > 10)
+      val alive1 = b._1 foreach { x ⇒
+        assert(x == 11)
+      }
+      val alive2 = b._2 foreach { x ⇒
+        assert(x == 2)
+      }
+      a.pull(11)
+      a.pull(2)
+    }
+
     "check future conversion" - {
       var calls = 0
       val p = Promise[Int]()

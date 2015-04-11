@@ -75,4 +75,38 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal{
       }
     }
   }
+  
+  def switch[L, R](f: A ⇒ Either[L, R]): (Rx[L], Rx[R]) = {
+    val left = Channel[L]()
+    val right = Channel[R]()
+    val switcher = self map f
+    left.pull {
+      new RxOps(switcher) collect {
+        case Left(x) ⇒ x
+      }
+    }
+    right.pull {
+      new RxOps(switcher) collect {
+        case Right(x) ⇒ x
+      }
+    }
+    (left, right)
+  }
+  
+  def partition(f: A ⇒ Boolean): (Rx[A], Rx[A]) = {
+    val left = Channel[A]()
+    val right = Channel[A]()
+    val switcher = zip(self.map(f))
+    left.pull {
+      new RxOps(switcher) collect {
+        case (x, true) ⇒ x
+      }
+    }
+    right.pull {
+      new RxOps(switcher) collect {
+        case (x, false) ⇒ x
+      }
+    }
+    (left, right)
+  }
 }
