@@ -14,10 +14,10 @@ object Var {
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-final case class Var[A](private[rx] var x: A) 
+final case class Var[A](private[rx] var x: A)
   extends Source[A] with StatefulSource[A] {
 
-  override def update(v: A) = {
+  override private[rx] def update(v: A) = {
     x = v
     super.update(v)
   }
@@ -83,7 +83,7 @@ private object VarHelper {
 
   final class Mod[A](f: A ⇒ Rx[A], killF: Mod[A] ⇒ Unit)
     extends (A => Rx[A]) with Mortal {
-    
+
     @inline def apply(x: A) = f(x)
 
     def kill() = killF(this)

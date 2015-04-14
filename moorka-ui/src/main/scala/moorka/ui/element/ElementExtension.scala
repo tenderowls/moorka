@@ -157,7 +157,7 @@ case class VarPropertyExtension[A](name: String, value: Var[A])
     f onSuccess {
       case x if awaitForRead =>
         awaitForWrite = false
-        value.update(x)
+        value.modOnce(_ ⇒ x)
     }
   }
 

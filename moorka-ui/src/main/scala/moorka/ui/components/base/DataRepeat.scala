@@ -76,7 +76,7 @@ class DataRepeat[A](dataProvider: BufferView[A],
 
     subscribtions ::= dataProvider.updated foreach { x =>
       val state = states(x.idx)
-      state() = x.e
+      state.modOnce(_ ⇒ x.e)
     }
   }
 

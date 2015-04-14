@@ -23,12 +23,12 @@ object Channel {
   def apply[T]() = new Channel[T]()
 }
 
-sealed class Signal extends Channel[Unit] {
+class Signal extends Channel[Unit] {
 
   def fire(): Unit = update(())
 }
 
-sealed class Channel[A]() extends Source[A] {
+class Channel[A]() extends Source[A] {
 
   def flatMap[B](f: (A) => Rx[B]): Rx[B] = new Binding(this, f)
 }
