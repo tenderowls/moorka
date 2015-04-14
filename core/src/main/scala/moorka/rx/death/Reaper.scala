@@ -8,6 +8,7 @@ object Reaper {
    */
   val nice = new Reaper {
     def sweep(): Unit = {}
+
     def mark(mortal: Mortal): Unit = {}
   }
 
@@ -28,6 +29,12 @@ object Reaper {
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 trait Reaper {
+
+  def mark(mortals: Mortal*): Unit = {
+    for (x ← mortals) {
+      mark(x)
+    }
+  }
 
   def mark(mortal: Mortal): Unit
 

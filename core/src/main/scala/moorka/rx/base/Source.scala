@@ -83,6 +83,10 @@ trait Source[A] extends Rx[A] {
       }
   }
 
+  def pullOnce(rx: Rx[A]) = rx once { data ⇒
+    update(data)
+  }
+
   def flatMap[B](f: A ⇒ Rx[B]): Rx[B]
 
   def kill() = {

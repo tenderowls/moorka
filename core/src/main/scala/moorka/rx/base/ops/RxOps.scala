@@ -1,11 +1,14 @@
 package moorka.rx.base.ops
 
 import moorka.rx.base._
+import moorka.rx.death.Reaper
+
+import scala.concurrent._
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-final class RxOps[A](val self: Rx[A]) extends AnyVal{
+final class RxOps[A](val self: Rx[A]) extends AnyVal {
 
   def until(f: A ⇒ Boolean): Rx[Unit] = {
     self >>= { x ⇒
@@ -41,7 +44,7 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal{
     self foreach { value ⇒
       seq += value
       if (seq.length == num) {
-        channel.update(Seq(seq:_*))
+        channel.update(Seq(seq: _*))
         seq.remove(0, seq.length)
       }
     }
@@ -75,7 +78,13 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal{
       }
     }
   }
-  
+
+  def stateful: Rx[Option[A]] = {
+    val state = Var[Option[A]](None)
+    state.pull(self.map(Some(_)))
+    state
+  }
+
   def switch[L, R](f: A ⇒ Either[L, R]): (Rx[L], Rx[R]) = {
     val left = Channel[L]()
     val right = Channel[R]()
@@ -92,7 +101,7 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal{
     }
     (left, right)
   }
-  
+
   def partition(f: A ⇒ Boolean): (Rx[A], Rx[A]) = {
     val left = Channel[A]()
     val right = Channel[A]()
@@ -109,4 +118,8 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal{
     }
     (left, right)
   }
+
+  def toFuture: Future[A] = new FutureRx(self)
+
+  def mark(implicit reaper: Reaper) = reaper.mark(self)
 }
