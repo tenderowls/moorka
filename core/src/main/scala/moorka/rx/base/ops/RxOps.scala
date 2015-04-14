@@ -121,5 +121,8 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
 
   def toFuture: Future[A] = new FutureRx(self)
 
-  def mark(implicit reaper: Reaper) = reaper.mark(self)
+  def mark()(implicit reaper: Reaper) = {
+    reaper.mark(self)
+    self
+  }
 }

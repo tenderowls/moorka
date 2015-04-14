@@ -10,7 +10,7 @@ import scala.ref.WeakReference
 trait Source[A] extends Rx[A] {
 
   private var _alive = true
-  
+
   def alive = _alive
 
   /**
@@ -61,11 +61,6 @@ trait Source[A] extends Rx[A] {
 
   private[rx] def detachBinding(ref: WeakReference[Binding[A, _]]) = {
     bindings = bindings.filter(_ != ref)
-  }
-
-  @deprecated("Use pull() instead emit()", "0.4.0")
-  def emit(v: A): Unit = {
-    update(v)
   }
 
   @inline def <<=(rx: Rx[A]) = pull(rx)
