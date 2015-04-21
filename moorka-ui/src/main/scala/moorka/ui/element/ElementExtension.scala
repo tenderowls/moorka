@@ -150,16 +150,20 @@ case class VarPropertyExtension[A](name: String, value: Var[A])
   extends ElementExtension {
 
   var subscriptions: List[Channel[Any]] = Nil
-  var awaitForRead = false
+  var awaitForRead = true
   var awaitForWrite = true
-  
+
   def listener(event: SyntheticEvent) = {
-    awaitForRead = true
-    val f: Future[A] = event.target.ref.get(name) 
+    val f: Future[A] = event.target.ref.get(name)
     f onSuccess {
-      case x if awaitForRead =>
-        awaitForWrite = false
-        value.update(x)
+      case x if x != value() =>
+        if (awaitForRead) {
+          awaitForWrite = false
+          value.update(x)
+        }
+        else {
+          awaitForRead = true
+        }
     }
   }
 
@@ -169,9 +173,9 @@ case class VarPropertyExtension[A](name: String, value: Var[A])
       ChangeEventProcessor.addListener(element, listener) ::
       InputEventProcessor.addListener(element, listener) ::
       value.observe {
-        awaitForRead = false
         if (awaitForWrite) {
           element.ref.set(name, value())
+          awaitForRead = false
         }
         else {
           awaitForWrite = true

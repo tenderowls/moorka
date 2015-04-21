@@ -3,7 +3,7 @@ import sbt.Keys._
 import bintray.Keys._
 
 val currentScalaVersion = "2.11.6"
-val moorkaVersion = "0.4.0"
+val moorkaVersion = "0.4.1"
 
 scalaVersion := currentScalaVersion
 
