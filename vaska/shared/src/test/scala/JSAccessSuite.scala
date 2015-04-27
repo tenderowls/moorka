@@ -16,9 +16,16 @@ object JSAccessSuite extends TestSuite {
     
     def receive(msg: Any*) = {
       val reqId = msg(0).asInstanceOf[Int]
-      val isSuccess = msg(1).asInstanceOf[Boolean]
-      val res = msg(2)
-      resolvePromise(reqId, isSuccess, res)
+      if (reqId == -1) {
+        val callbackId = msg(1).asInstanceOf[String]
+        val arg = msg(2)
+        fireCallback(callbackId, arg)
+      }
+      else {
+        val isSuccess = msg(1).asInstanceOf[Boolean]
+        val res = msg(2)
+        resolvePromise(reqId, isSuccess, res)
+      }
     }
 
     def send(args: Seq[Any]): Unit = {

@@ -2,6 +2,7 @@ var Vaska = (function (global) {
   'use strict';
 
   var LinkPrefix = '@link:',
+    SourceMappingPattern = '//# sourceMappingURL=',
     ArrayPrefix = '@arr:',
     ObjPrefix = '@obj:',
     UnitResult = "@unit",
@@ -16,7 +17,9 @@ var Vaska = (function (global) {
     return new Promise(function (resolve, reject) {
       var http = new XMLHttpRequest();
       http.open('GET', url, true);
-      http.addEventListener('load', resolve);
+      http.addEventListener('load', function() {
+        resolve(http.response);
+      });
       http.addEventListener('error', reject);
       http.addEventListener('progress', function (oEvent) {
         if (progressCb) {
@@ -27,56 +30,51 @@ var Vaska = (function (global) {
     });
   }
 
-  function Vaska(postMessage, plugins) {
+  function Vaska(postMessage, testEnv) {
     var self = this,
       initialize = null,
       lastLinkId = 0,
-      weakLinks = null,
-      links = new Map();
-    if (global.WeakMap !== undefined) {
-      weakLinks = new WeakMap();
-    } else {
-      // TODO print warning when scala.js will be updated to 0.6.3
-      weakLinks = new Map();
-    }
-    links.set('plugins', plugins);
+      tmpLinks = new Map(),
+      tmpLinksIndex = new Map(),
+      links = new Map(),
+      linksIndex = new Map();
 
-    function createLink(obj) {
-      var id = lastLinkId;
+    links.set('global', global);
+    links.set('testEnv', testEnv);
+    linksIndex.set(global, 'global')
+    linksIndex.set(testEnv, 'testEnv');
+
+    function createTmpLink(obj) {
+      var id = lastLinkId.toString();
       lastLinkId += 1;
-      weakLinks.set(obj, id.toString());
+      tmpLinks.set(id, obj);
+      tmpLinksIndex.set(obj, id);
       return id;
     }
 
-    function findWeakLink(id) {
-      var keysIter = weakLinks.keys(),
-        valuesIter = weakLinks.values();
-      while (!keysIter.done) {
-        if (valuesIter.value === id) {
-          return keysIter.value;
-        }
-        keysIter = keysIter.next();
-        valuesIter = valuesIter.next();
+    function getLink(id) {
+      var tmpLink = tmpLinks.get(id);
+      if (tmpLink !== undefined) {
+        return tmpLink;
       }
-      return;
+      return links.get(id);
     }
-
+    
     function unpackArgs(args) {
       var l = args.length,
         i = 0,
         arg = null,
         id = null,
-        weakLink = null;
+        tpe = null;
       for (i = 0; i < l; i += 1) {
         arg = args[i];
-        if (typeof arg === "string" && arg.indexOf(LinkPrefix) === 0) {
+        tpe = typeof arg;
+        if (tpe === 'string' && arg.indexOf(LinkPrefix) === 0) {
           id = arg.substring(LinkPrefix.length);
-          weakLink = findWeakLink(id);
-          if (weakLink !== undefined) {
-            args[i] = weakLink;
-          } else {
-            args[i] = links.get(id);
-          }
+          args[i] = getLink(id);
+        }
+        else if (tpe === 'object' && arg instanceof Array) {
+          unpackArgs(arg)
         }
       }
       return args;
@@ -84,9 +82,9 @@ var Vaska = (function (global) {
 
     function packResult(arg) {
       if (typeof arg === 'object') {
-        var id = weakLinks.get(arg);
+        var id = tmpLinksIndex.get(arg) || linksIndex.get(arg);
         if (id === undefined) {
-          id = createLink(arg);
+          id = createTmpLink(arg);
         }
         if (arg instanceof Array) {
           return ArrayPrefix + id;
@@ -96,10 +94,79 @@ var Vaska = (function (global) {
       return arg;
     }
 
-    function createHook(reqId, success) {
-      return function VaskaHook(res) {
-        postMessage([reqId, success, packResult(res)]);
+    function createHook(reqId, success, cb) {
+      return function hook(res) {
+        cb([reqId, success, packResult(res)]);
       };
+    }
+
+    function receiveCall(reqId, args, cb) {
+      var obj = args[0],
+        res = null,
+        err = null,
+        name = null,
+        callArgs = null,
+        hasHooks = false,
+        arg = null,
+        i = 0;
+      if (!obj) {
+        cb([reqId, false, LinkNotFound]);
+        return;
+      }
+      name = args[1];
+      callArgs = args.slice(2);
+      for (i = 0; i < callArgs.length; i += 1) {
+        arg = callArgs[i];
+        if (arg === HookSuccess) {
+          callArgs[i] = createHook(reqId, true, cb);
+          hasHooks = true;
+        } else if (arg === HookFailure) {
+          callArgs[i] = createHook(reqId, false, cb);
+          hasHooks = true;
+        }
+      }
+      try {
+        if (hasHooks) {
+          obj[name].apply(obj, callArgs);
+        } else {
+          res = packResult(obj[name].apply(obj, callArgs));
+          if (res === undefined) {
+            res = UnitResult;
+          }
+          cb([reqId, true, res]);
+        }
+      } catch (exception) {
+        err = obj + '.' + name + '(' + callArgs + ') call failure';
+        cb([reqId, false, err]);
+      }
+    }
+
+    function receiveSave(reqId, args, cb) {
+      var obj = args[0],
+        newId = args[1];
+      if (obj) {
+        links.set(newId, obj);
+        linksIndex.set(obj, newId);
+        cb([reqId, true, packResult(obj)]);
+      } else {
+        cb([reqId, false, LinkNotFound]);
+      }
+    }
+
+    function receiveCallAndSaveAs(reqId, args, cb) {
+      var newId = args[2],
+        id = null,
+        err = null;
+      args = args.slice(0,2).concat(args.slice(3))
+      receiveCall(reqId, args, function (callRes) {
+        callRes = callRes[2]
+        if (callRes.indexOf(ObjPrefix) !== -1) {
+          id = callRes.substring(ObjPrefix.length);
+          receiveSave(reqId, [getLink(id), newId], cb);
+        }
+        err = args[1] + ' returns ' + (typeof callRes);
+        cb([reqId, false, err]);
+      });
     }
 
     this.checkLinkExists = function (id) {
@@ -117,34 +184,37 @@ var Vaska = (function (global) {
     this.receive = function (data) {
       var reqId = data[0],
         method = data[1],
-        args = unpackArgs(data.slice(2));
+        rawArgs = data.slice(2),
+        args = unpackArgs(rawArgs.concat()),
+        tmp = null;
       switch (method) {
         // Misc
       case 'init':
         initialize(self);
         postMessage([reqId, true, UnitResult]);
         break;
+      case 'registerCallback':
+        (function VaskaRegisterCallback() {
+          var callbackId = args[0];
+          function callback(arg) {
+            postMessage([-1, callbackId, packResult(arg)]);
+          }
+          links.set(callbackId, callback);
+          linksIndex.set(callback, callbackId);
+          postMessage([reqId, true, ObjPrefix + callbackId]);
+        })();
+        break;
       // Link methods
       case 'save':
-        (function VaskaReceiveSave() {
-          var obj = args[0],
-            newId = args[1];
-          if (obj) {
-            links.set(newId, obj);
-            postMessage([reqId, true, packResult(obj)]);
-          } else {
-            postMessage([reqId, false, LinkNotFound]);
-          }
-        })();
+        receiveSave(reqId, args, postMessage);
         break;
       case 'free':
         (function VaskaReceiveFree() {
           var obj = args[0],
-            id = null;
+            id = rawArgs[0].replace(LinkPrefix, '');
           if (obj) {
-            id = weakLinks.get(obj);
             links.delete(id);
-            weakLinks.delete(obj);
+            tmpLinks.delete(id);
             postMessage([reqId, true, UnitResult]);
           } else {
             postMessage([reqId, false, LinkNotFound]);
@@ -186,52 +256,21 @@ var Vaska = (function (global) {
         })();
         break;
       case 'call':
-        (function VaskaReceiveCall() {
-          var obj = args[0],
-            res = null,
-            err = null,
-            name = null,
-            callArgs = null,
-            hasHooks = false,
-            arg = null,
-            i = 0;
-          if (!obj) {
-            postMessage([reqId, false, LinkNotFound]);
-            return;
-          }
-          name = args[1];
-          callArgs = args.slice(2);
-          for (i = 0; i < callArgs.length; i += 1) {
-            arg = callArgs[i];
-            if (arg === HookSuccess) {
-              callArgs[i] = createHook(reqId, true);
-              hasHooks = true;
-            } else if (arg === HookFailure) {
-              callArgs[i] = createHook(reqId, false);
-              hasHooks = true;
-            }
-          }
-          try {
-            if (hasHooks) {
-              obj[name].apply(obj, callArgs);
-            } else {
-              res = packResult(obj[name].apply(obj, callArgs));
-              if (res === undefined) {
-                res = UnitResult;
-              }
-              postMessage([reqId, true, res]);
-            }
-          } catch (exception) {
-            err = obj + '.' + name + '(' + callArgs + ') call failure';
-            postMessage([reqId, false, err]);
-            throw exception;
-          }
-        })();
+        receiveCall(reqId, args, postMessage);
+        break;
+      case 'callAndSaveAs':
+        receiveCallAndSaveAs(reqId, args, postMessage);
         break;
       }
     };
   }
 
+  function replaceSourceMappingURL(code, sourceMappingURL) {
+    var i = code.lastIndexOf(SourceMappingPattern),
+      newTail = SourceMappingPattern + sourceMappingURL + '\n';
+    return code.substring(0, i) + newTail;
+  }
+  
   return {
 
     /**
@@ -247,12 +286,11 @@ var Vaska = (function (global) {
           tag.addEventListener('load', function () {
             var scope = {},
               jsAccess = new vaska.NativeJSAccess(scope),
-              application = new global[mainClass](),
               vaskaObj = new Vaska(scope.onmessage);
             scope.postMessage = function (data) {
               vaskaObj.receive(data);
             };
-            application.start(jsAccess);
+            eval(mainClass)().main(jsAccess);
             resolve(vaskaObj);
           });
           document.body.appendChild(tag);
@@ -266,26 +304,47 @@ var Vaska = (function (global) {
      */
     worker: function (mainClass, scriptUrl) {
       return new Promise(function (resolve, reject) {
-        loadScript(scriptUrl).then(function (workerCode) {
-          var workerBlob = null,
-            launcherBlob = null,
-            worker = null,
-            vaska = null;
-          workerBlob = new Blob([workerCode], JSMimeType);
-          launcherBlob = new Blob([
-            'importScripts("' + URL.createObjectURL(workerBlob) + '");',
-            'var jsAccess = new vaska.NativeJSAccess();',
-            'var application = new ' + mainClass + '();',
-            'application.start(jsAccess);'
-          ], JSMimeType);
-          // Run launcher in WebWorker
-          worker = new Worker(URL.createObjectURL(launcherBlob));
-          vaska = new Vaska(worker.postMessage);
-          worker.addEventListener('message', vaska.receive);
-          vaska.initialized.then(function () {
-            resolve(vaska);
-          });
-        }).catch(reject);
+        loadScript(scriptUrl + '.map').then(function (mapCode) {
+          var sourceMappingBlob = new Blob([mapCode]),
+            sourceMappingURL = URL.createObjectURL(sourceMappingBlob);
+             
+          loadScript(scriptUrl).then(function (workerCode) {
+            var workerBlob = null,
+              launcherBlob = null,
+              worker = null,
+              vaska = null;
+              
+            // Change source map
+            workerCode = replaceSourceMappingURL(workerCode, sourceMappingURL);
+
+            workerBlob = new Blob([workerCode], JSMimeType);
+            launcherBlob = new Blob([
+              'importScripts("' + URL.createObjectURL(workerBlob) + '");',
+              'var jsAccess = new vaska.NativeJSAccess(this);',
+              '' + mainClass + '().main(jsAccess);'
+            ], JSMimeType);
+
+            // Run launcher in WebWorker
+            worker = new Worker(URL.createObjectURL(launcherBlob));
+            vaska = new Vaska(function(data) {
+              var res = data[2];
+              if (res instanceof ArrayBuffer || res instanceof Blob) {
+                // Use worker transferable
+                worker.postMessage(data, [res]);
+              } else {
+                worker.postMessage(data);
+              }
+            });
+            
+            worker.addEventListener('message', function(event) {
+              vaska.receive(event.data);
+            });
+            
+            vaska.initialized.then(function () {
+              resolve(vaska);
+            });
+          }).catch(reject);
+        });
       });
     },
 
@@ -304,8 +363,8 @@ var Vaska = (function (global) {
       });
     },
 
-    create: function (postMessage, plugins) {
-      return new Vaska(postMessage, plugins);
+    create: function (postMessage, testEnv) {
+      return new Vaska(postMessage, testEnv);
     }
   };
 }(this));

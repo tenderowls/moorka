@@ -12,21 +12,24 @@ import scala.util.{Failure, Success, Try}
  */
 object JSAccessIntegrationTest extends TestSuite {
 
-  def createEnv(plugins: js.Dynamic): (js.Dynamic, JSObj) = {
+  def createEnv(testEnv: js.Object): (js.Dynamic, JSObj) = {
     val g = js.Dynamic.global
     val scope = js.Dynamic.literal()
     val jsAccess = new NativeJSAccess(scope)
-    val vaska = g.Vaska.create(scope.onmessage, plugins)
+    val vaska = g.Vaska.create({ x: js.Any ⇒
+      val event = js.Dynamic.literal(data = x)
+      scope.onmessage(event)
+    }, testEnv)
     scope.postMessage = { data: js.Any ⇒ vaska.receive(data) }
-    (vaska, jsAccess.obj("plugins"))
+    (vaska, jsAccess.obj("testEnv"))
   }
 
-  def createRootObject(plugins: js.Dynamic): JSObj = {
-    createEnv(plugins)._2
+  def createRootObject(testEnv: js.Object): JSObj = {
+    createEnv(testEnv)._2
   }
-  
+
   val tests = TestSuite {
-    
+
     "Check get" - {
       val o = createRootObject {
         js.Dynamic.literal(
@@ -37,8 +40,7 @@ object JSAccessIntegrationTest extends TestSuite {
       for {
         width ← o.get[Float]("width")
         height ← o.get[Float]("height")
-      }
-      yield {
+      } yield {
         assert(width + height == 300f)
       }
     }
@@ -102,16 +104,15 @@ object JSAccessIntegrationTest extends TestSuite {
 
     "Check save" - {
       val scope = js.Dynamic.literal(
-        fun = { (x: Int) ⇒ js.Array[Int](x, x+1) }
+        fun = { (x: Int) ⇒ js.Array[Int](x, x + 1) }
       )
       val env = createEnv(scope)
       for {
         arr ← env._2.call[JSArray]("fun", 10)
-          _ ← arr.save()
-         i0 ← arr[Int](0)
-         i1 ← arr[Int](1)
-      }
-      yield {
+        _ ← arr.save()
+        i0 ← arr[Int](0)
+        i1 ← arr[Int](1)
+      } yield {
         assert(env._1.checkLinkSaved(arr.id).asInstanceOf[Boolean])
         assert(i0 == 10)
         assert(i1 == 11)
@@ -120,7 +121,7 @@ object JSAccessIntegrationTest extends TestSuite {
 
     "Check saveAs" - {
       val scope = js.Dynamic.literal(
-        fun = { (x: Int) ⇒ js.Array[Int](x, x+1) }
+        fun = { (x: Int) ⇒ js.Array[Int](x, x + 1) }
       )
       val env = createEnv(scope)
       for {
@@ -128,17 +129,16 @@ object JSAccessIntegrationTest extends TestSuite {
         arr ← arr.saveAs("cow")
         i0 ← arr[Int](0)
         i1 ← arr[Int](1)
+      } yield {
+        assert(env._1.checkLinkSaved("cow").asInstanceOf[Boolean])
+        assert(i0 == 10)
+        assert(i1 == 11)
       }
-        yield {
-          assert(env._1.checkLinkSaved("cow").asInstanceOf[Boolean])
-          assert(i0 == 10)
-          assert(i1 == 11)
-        }
     }
 
     "Check free" - {
       val scope = js.Dynamic.literal(
-        fun = { (x: Int) ⇒ js.Array[Int](x, x+1) }
+        fun = { (x: Int) ⇒ js.Array[Int](x, x + 1) }
       )
       val env = createEnv(scope)
       for {
@@ -147,12 +147,37 @@ object JSAccessIntegrationTest extends TestSuite {
         i0 ← arr[Int](0)
         i1 ← arr[Int](1)
         _ ← arr.free()
-      }
-      yield {
+      } yield {
         assert(!env._1.checkLinkSaved(arr.id).asInstanceOf[Boolean])
         assert(i0 == 10)
         assert(i1 == 11)
       }
     }
+
+    "Check callback" - {
+      var cb: js.Function1[Int, Any] = null
+      val scope = js.Dynamic.literal(
+        onFun = { (x: js.Function1[Int, Any]) ⇒
+          cb = x
+        }
+      )
+      val root = createRootObject(scope)
+      val access = root.jsAccess
+      var i = 0
+      for {
+        jsCb ← access.registerCallback { x: Int ⇒
+          i += x
+        }
+        _ ← root.call[Unit]("onFun", jsCb)
+      } yield {
+        cb(2)
+        cb(3)
+        assert(i == 5)
+      }
+    }
+    
+    // todo check send array
+    // todo check object in hook
+    // todo check object in callback
   }
 }

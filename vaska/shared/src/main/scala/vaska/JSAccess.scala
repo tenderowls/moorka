@@ -5,7 +5,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 object JSAccess {
 
   final class JSSideException(message: String) extends Exception(message)
-  
+
   val LinkPrefix = "@link:"
   val ArrayPrefix = "@arr:"
   val ObjPrefix = "@obj:"
@@ -16,7 +16,8 @@ object JSAccess {
  * Provide access to remote page with JavaScript engine 
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-trait JSAccess { self ⇒
+trait JSAccess {
+  self ⇒
 
   import JSAccess._
 
@@ -27,11 +28,15 @@ trait JSAccess { self ⇒
    */
   protected var lastReqId = 0
 
+  protected var lastCallbackId = 0
+
   /**
    * List of promises of requests. Resolves by
    * income messages 
    */
   protected var promises = Map.empty[Int, Promise[Any]]
+
+  protected var callbacks = Map.empty[String, Any ⇒ Unit]
 
   /**
    * Abstract method sends message to remote page 
@@ -78,8 +83,9 @@ trait JSAccess { self ⇒
 
   def platformDependentUnpack(value: Any) = value
 
-  def packArgs(args: Seq[Any]) = args collect {
+  def packArgs(args: Seq[Any]): Seq[Any] = args collect {
     case anyLink: JSLink ⇒ LinkPrefix + anyLink.id
+    case xs: Seq[Any] ⇒ platformDependentPack(packArgs(xs))
     case hook: Hook ⇒ hook.requestString
     case otherwise ⇒ platformDependentPack(otherwise)
   }
@@ -112,5 +118,17 @@ trait JSAccess { self ⇒
         promises -= reqId
       case None ⇒
     }
+  }
+
+  def fireCallback(callbackId: String, arg: Any) = {
+    callbacks(callbackId)(unpackArg(arg))
+  }
+
+  def registerCallback[T](f: T ⇒ Unit): Future[JSObj] = {
+    lastCallbackId += 1
+    val callbackId = s"^cb$lastCallbackId"
+    val pair = (callbackId, f.asInstanceOf[Any ⇒ Unit])
+    callbacks += pair
+    request("registerCallback", callbackId)
   }
 }
