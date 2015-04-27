@@ -14,13 +14,20 @@ trait JSLink {
   val jsAccess: JSAccess
 
   val id: String
-  
+
   /**
    * Tell page to save reference to the link to avoid
    * garbage collection 
    */
-  def save(): Future[Unit] = {
+  def save(): Future[this.type] = {
     jsAccess.request("save", this, id)
+  }
+
+  /**
+   * Tell page to save reference to the link with new id
+   */
+  def saveAs(newId: String): Future[this.type] = {
+    jsAccess.request("save", this, newId)
   }
 
   /**

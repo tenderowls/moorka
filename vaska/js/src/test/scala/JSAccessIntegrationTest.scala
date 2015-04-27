@@ -118,6 +118,24 @@ object JSAccessIntegrationTest extends TestSuite {
       }
     }
 
+    "Check saveAs" - {
+      val scope = js.Dynamic.literal(
+        fun = { (x: Int) ⇒ js.Array[Int](x, x+1) }
+      )
+      val env = createEnv(scope)
+      for {
+        arr ← env._2.call[JSArray]("fun", 10)
+        arr ← arr.saveAs("cow")
+        i0 ← arr[Int](0)
+        i1 ← arr[Int](1)
+      }
+        yield {
+          assert(env._1.checkLinkSaved("cow").asInstanceOf[Boolean])
+          assert(i0 == 10)
+          assert(i1 == 11)
+        }
+    }
+
     "Check free" - {
       val scope = js.Dynamic.literal(
         fun = { (x: Int) ⇒ js.Array[Int](x, x+1) }

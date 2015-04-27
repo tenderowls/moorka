@@ -111,7 +111,7 @@ var Vaska = (function() {
       var method = data[1];
       var args = unpackArgs(data.slice(2));
       switch (method) {
-        // Mist
+        // Misc
         case 'init':
           initialized(self);
           postMessage([reqId, true, UnitResult])
@@ -120,9 +120,10 @@ var Vaska = (function() {
         case 'save':
           (function VaskaReceiveSave() {
             var obj = args[0];
+            var newId = args[1];
             if (obj) {
-              links.set(weakLinks.get(obj), obj);
-              postMessage([reqId, true, UnitResult]);
+              links.set(newId, obj);
+              postMessage([reqId, true, packResult(obj)]);
             }
             else postMessage([reqId, false, LinkNotFound]);
           })();
