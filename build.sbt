@@ -91,6 +91,7 @@ lazy val ui = (project in file("moorka-ui"))
     scalaVersion := currentScalaVersion
   )
   .dependsOn(coreJS)
+  .dependsOn(vaskaJS)
 
 lazy val root = (project in file("."))
   .settings(dontPublish:_*)

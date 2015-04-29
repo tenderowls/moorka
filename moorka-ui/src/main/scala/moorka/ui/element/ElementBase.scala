@@ -2,7 +2,7 @@ package moorka.ui.element
 
 import moorka.rx._
 import moorka.ui.event.{EventProcessor, EventTarget}
-import moorka.ui.Ref
+import vaska.JSObj
 
 /**
  * DOM element representation
@@ -12,7 +12,7 @@ trait ElementBase extends ElementEntry with Mortal with EventTarget {
 
   private[moorka] var parent: EventTarget = null
 
-  val ref: Ref
+  val ref: JSObj
 
   implicit val reaper = Reaper()
 
@@ -21,17 +21,17 @@ trait ElementBase extends ElementEntry with Mortal with EventTarget {
   def fillSeq(children: Seq[ElementEntry]): Unit = {
     children.foreach {
       case e: ElementBase =>
-        e.mark()
+        reaper.mark(e)
         e.parent = this
-        ref.appendChild(e.ref)
+        ref.call[JSObj]("appendChild", e.ref)
       case sequence: ElementSequence =>
         sequence.value.foreach { x =>
           x.parent = this
-          x.mark()
+          reaper.mark(x)
         }
-        ref.appendChildren(sequence.value.map(_.ref))
+        ref.call[Unit]("appendChildren", sequence.value.map(_.ref))
       case processor: ElementExtension =>
-        processor.mark()
+        reaper.mark(processor)
         processor.start(this)
     }
 
@@ -41,7 +41,7 @@ trait ElementBase extends ElementEntry with Mortal with EventTarget {
   def kill(): Unit = {
     EventProcessor.deregisterElement(this)
     reaper.sweep()
-    ref.kill()
+    ref.free()
   }
 }
 

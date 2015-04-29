@@ -2,7 +2,6 @@ package moorka.ui.components
 
 import moorka.rx._
 import moorka.ui.element._
-import moorka.ui.event._
 
 import scala.language.implicitConversions
 
@@ -1123,17 +1122,17 @@ package object html {
   //---------------------------------------------------------------------------
 
   object on {
-    val `change` = ElementEventName(InputEventProcessor)
+    val `change` = ElementEventName("input")
 
-    val `input` = ElementEventName(ChangeEventProcessor)
+    val `input` = ElementEventName("change")
 
-    val `double-click` = ElementEventName(DoubleClickEventProcessor)
+    val `double-click` = ElementEventName("dblclick")
 
-    val `click` = ElementEventName(ClickEventProcessor)
+    val `click` = ElementEventName("click")
 
-    val `touchend` = ElementEventName(TouchendEventProcessor)
+    val `touchend` = ElementEventName("touchend")
 
-    val `submit` = ElementEventName(SubmitEventProcessor)
+    val `submit` = ElementEventName("submit")
   }
 
   //---------------------------------------------------------------------------
