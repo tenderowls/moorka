@@ -1,8 +1,8 @@
 package moorka.rx
 
-import moorka.rx._
 import moorka.rx.base.Source
 import moorka.rx.base.bindings.StatefulBinding
+import scala.language.postfixOps
 
 /**
  * State/Chanel API from moorka < 0.4.0 
@@ -15,21 +15,7 @@ package object legacy {
   implicit final class RxLegacyOps[A](val self: Rx[A]) extends AnyVal {
 
     def subscribe(f: A ⇒ Unit)(implicit reaper: Reaper = Reaper.nice): Rx[Unit] = {
-      self match {
-        case x: Var[A] ⇒
-          val us = x.drop(1).foreach(f).mark()
-          x.addUpstream(us)
-          us
-        case x: StatefulBinding[_, A] ⇒
-          val us = x.drop(1).foreach(f).mark()
-          x.addUpstream(us)
-          us
-        case x: Source[A] ⇒
-          val us = x.foreach(f).mark()
-          x.addUpstream(us)
-          us
-        case _ ⇒ throw new RxOperationException("This Rx is not source")
-      }
+      self foreach f mark
     }
 
     def listen(f: ⇒ Unit)(implicit reaper: Reaper = Reaper.nice) = {
@@ -40,7 +26,6 @@ package object legacy {
       self match {
         case x: Source[A] ⇒
           val us = x.foreach(_ ⇒ f).mark()
-          x.addUpstream(us)
           us
         case _ ⇒ throw new RxOperationException("This Rx is not source")
       }

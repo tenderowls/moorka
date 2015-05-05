@@ -14,14 +14,66 @@ object RxSuite extends TestSuite {
   val tests = TestSuite {
 
     "check kill behavior" - {
-      val emitter = Var(10)
-      var calls = 0
-      val cb = emitter foreach { _ ⇒
-        calls += 1
+      "check simple kill" - {
+        val emitter = Var(10)
+        var calls = 0
+        val cb = emitter foreach { _ ⇒
+          calls += 1
+        }
+        cb.kill()
+        emitter.pull(1)
+        assert(calls == 1)
       }
-      cb.kill()
-      emitter.pull(1)
-      assert(calls == 1)
+      "check binding initialized inside flatMap would be killed" - {
+        import scala.collection.mutable
+
+        var lst = mutable.Buffer.empty[Rx[_]]
+        var gCalls = 0
+        var lCalls = 0
+
+        val a = Var(0)
+        val b = Var(1)
+        val c = Var(2)
+
+        val g = a flatMap { a ⇒
+          val binding = b flatMap { b ⇒
+            val binding = c map { c ⇒
+              lCalls += 1
+              a + b + c
+            }
+            lst += binding
+            binding
+          }
+          lst += binding
+          binding
+        }
+        lst += g
+
+        g foreach { _ ⇒
+          gCalls += 1
+        }
+
+        a.pull(1)
+        b.pull(10)
+        c.pull(4)
+        b.pull(3)
+
+        val aliveCount = lst.count(_.alive)
+        val lstLength = lst.length
+
+        assert(lstLength == 7)
+        assert(aliveCount == 3)
+        assert(lCalls == 5)
+        assert(gCalls == 5)
+      }
+      "check binding created outside of flatMap wouldn't be killed" - {
+        val a = Var(0)
+        val b = Var(1)
+        val g = a.map(_+1)
+        b.flatMap(_ ⇒ g)
+        b.pull(10)
+        assert(g.alive)
+      }
     }
 
     "check standard combinators" - {
@@ -31,7 +83,7 @@ object RxSuite extends TestSuite {
         val result = emitter.map(_.toString)
         System.gc()
         var calls = 0
-        val alive = result foreach { x ⇒
+        result foreach { x ⇒
           assert(x == "42")
           calls += 1
         }
@@ -42,7 +94,7 @@ object RxSuite extends TestSuite {
         var calls = 0
         val ch = Channel[Int]()
         System.gc()
-        val alive = ch filter(_ > 0) foreach { x ⇒
+        ch filter(_ > 0) foreach { x ⇒
           calls += 1
           assert(x == 1)
         }
@@ -57,7 +109,7 @@ object RxSuite extends TestSuite {
       "collect() should drop values not processed by `f`" - {
         var calls = 0
         val ch = Channel[Int]()
-        val alive = ch.collect {
+        ch.collect {
           case x if x > 0 ⇒ 
             x.toString 
         } foreach { x ⇒
@@ -77,7 +129,7 @@ object RxSuite extends TestSuite {
         var calls = 0
         val ch = base.Channel[Int]()
         System.gc()
-        val alive = ch once { x ⇒
+        ch once { x ⇒
           calls += 1
         }
         System.gc()
@@ -93,7 +145,7 @@ object RxSuite extends TestSuite {
         var calls = 0
         val ch = Channel[Int]()
         System.gc()
-        val alive = ch until { x ⇒
+        ch until { x ⇒
           calls += 1
           x < 2
         }
@@ -115,7 +167,7 @@ object RxSuite extends TestSuite {
         val zipped = state1 zip state2
         System.gc()
         var calls = 0
-        val alive = zipped foreach { x =>
+        zipped foreach { x =>
           calls += 1
           calls match {
             case 1 => assert(x.toString() == "(Cat,1)")
@@ -139,7 +191,7 @@ object RxSuite extends TestSuite {
         System.gc()
         var calls = 0
         System.gc()
-        val alive = zipped foreach { x =>
+        zipped foreach { x =>
           calls += 1
           calls match {
             case 1 => assert(x.toString() == "(Cat,1)")
@@ -165,7 +217,7 @@ object RxSuite extends TestSuite {
         val ch3 = Channel[String]()
         System.gc()
         var calls = 0
-        val alive = ch1 flatMap { v1 ⇒
+        ch1 flatMap { v1 ⇒
           ch2 flatMap { v2 ⇒
             ch3 map { v3 ⇒
               calls += 1
@@ -205,7 +257,7 @@ object RxSuite extends TestSuite {
           }
         }
         System.gc()
-        val tmp = res foreach { x ⇒
+        res foreach { x ⇒
           calls += 1
           assert(x() == 6)
         }
@@ -224,7 +276,7 @@ object RxSuite extends TestSuite {
       val vx = Var(2)
       val vy = Var(2)
       val res = Channel[Int]()
-      val alive = res foreach { x ⇒
+      res foreach { x ⇒
         calls += 1
         assert(x == 4)
       }
@@ -245,7 +297,7 @@ object RxSuite extends TestSuite {
       val a = Channel[Int]()
       val b = for (x ← a if x > 10) yield x + 1
       System.gc()
-      val alive = b foreach { x =>
+      b foreach { x =>
         assert(x == 12)
       }
       System.gc()
@@ -257,7 +309,7 @@ object RxSuite extends TestSuite {
       var calls = 0
       val ch = Channel[Int]()
       System.gc()
-      val alive = ch drop 2 foreach { x ⇒
+      ch drop 2 foreach { x ⇒
         calls += 1
         assert(x == 2)
       }
@@ -273,7 +325,7 @@ object RxSuite extends TestSuite {
     "check take()" - {
       val x = Channel[Int]()
       System.gc()
-      val res = x.take(3) foreach { x =>
+      x.take(3) foreach { x =>
         assert(x == Seq(1,2,3))
       }
       System.gc()
@@ -316,10 +368,10 @@ object RxSuite extends TestSuite {
         case x if x % 5 == 0 ⇒ Left("Buzz")
         case x ⇒ Right(x)
       }
-      val alive1 = b._1 foreach { x ⇒
+      b._1 foreach { x ⇒
         assert(x == "Fizz")
       }
-      val alive2 = b._2 foreach { x ⇒
+      b._2 foreach { x ⇒
         assert(x == 2)
       }
       a.pull(3)
@@ -329,10 +381,10 @@ object RxSuite extends TestSuite {
     "check partition" - {
       val a = Channel[Int]()
       val b = a.partition(_ > 10)
-      val alive1 = b._1 foreach { x ⇒
+      b._1 foreach { x ⇒
         assert(x == 11)
       }
-      val alive2 = b._2 foreach { x ⇒
+      b._2 foreach { x ⇒
         assert(x == 2)
       }
       a.pull(11)
@@ -343,7 +395,7 @@ object RxSuite extends TestSuite {
       var calls = 0
       val p = Promise[Int]()
       val rx = p.future.toRx
-      val alive = rx foreach { x ⇒
+      rx foreach { x ⇒
         calls += 1
         assert(x == Success(10))
       }
