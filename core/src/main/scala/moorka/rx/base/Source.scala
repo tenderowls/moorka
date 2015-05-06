@@ -2,8 +2,6 @@ package moorka.rx.base
 
 import moorka.rx.base.bindings.Binding
 
-import scala.ref.WeakReference
-
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
@@ -18,7 +16,7 @@ trait Source[A] extends Rx[A] {
    * all bindings will get a new value
    * @see [[flatMap]]
    */
-  private[rx] var bindings = List.empty[WeakReference[Binding[A, _]]]
+  private[rx] var bindings = List.empty[Binding[A, _]]
 
   /**
    * List of values this source depends on.
@@ -36,31 +34,25 @@ trait Source[A] extends Rx[A] {
     upstreams ::= x
   }
 
+  private[rx] def killUpstreams() = {
+    upstreams.foreach(_.kill())
+    upstreams = Nil
+  }
+
   /**
    * Broadcast `v` to bindings. Removes bindings dropped by GC.
    * @param v new value
    */
   private[rx] def update(v: A): Unit = {
-    bindings foreach { x ⇒
-      x.get match {
-        case Some(f) ⇒ f.run(v)
-        case None ⇒
-      }
-    }
-    bindings = bindings filter { x ⇒
-      x.get match {
-        case Some(_) ⇒ true
-        case None ⇒ false
-      }
-    }
+    bindings.foreach(_.run(v))
   }
 
-  private[rx] def attachBinding(ref: WeakReference[Binding[A, _]]) = {
-    bindings ::= ref
+  private[rx] def attachBinding(b: Binding[A, _]) = {
+    bindings ::= b
   }
 
-  private[rx] def detachBinding(ref: WeakReference[Binding[A, _]]) = {
-    bindings = bindings.filter(_ != ref)
+  private[rx] def detachBinding(b: Binding[A, _]) = {
+    bindings = bindings.filter(_ != b)
   }
 
   @inline def <<=(rx: Rx[A]) = pull(rx)
@@ -87,8 +79,7 @@ trait Source[A] extends Rx[A] {
   def kill() = {
     _alive = false
     bindings = Nil
-    upstreams.foreach(_.kill())
-    upstreams = Nil
+    killUpstreams()
   }
 }
 
