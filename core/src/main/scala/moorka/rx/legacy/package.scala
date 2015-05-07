@@ -1,7 +1,7 @@
 package moorka.rx
 
-import moorka.rx.base.Source
-import moorka.rx.base.bindings.StatefulBinding
+import moorka.rx.base.{Killer, Source}
+import moorka.rx.base.bindings.{Binding, StatefulBinding}
 import scala.language.postfixOps
 
 /**
@@ -15,7 +15,16 @@ package object legacy {
   implicit final class RxLegacyOps[A](val self: Rx[A]) extends AnyVal {
 
     def subscribe(f: A ⇒ Unit)(implicit reaper: Reaper = Reaper.nice): Rx[Unit] = {
-      self foreach f mark
+      self match {
+        case x: Var[A] ⇒
+          x.drop(1).foreach(f) mark
+        case x: StatefulBinding[_, A] ⇒
+          x.drop(1).foreach(f) mark
+        case x: Source[A] ⇒
+          x.foreach(f) mark
+        case _ ⇒ 
+          throw new RxOperationException("This Rx is not source")
+      }
     }
 
     def listen(f: ⇒ Unit)(implicit reaper: Reaper = Reaper.nice) = {
@@ -25,8 +34,17 @@ package object legacy {
     def observe(f: ⇒ Unit)(implicit reaper: Reaper = Reaper.nice) = {
       self match {
         case x: Source[A] ⇒
-          val us = x.foreach(_ ⇒ f).mark()
-          us
+          x.foreach(_ ⇒ f).mark()
+        case _ ⇒ throw new RxOperationException("This Rx is not source")
+      }
+    }
+
+    def legacyUntil(f: A ⇒ Boolean): Rx[Unit] = {
+      self match {
+        case x: Source[A] ⇒
+          new Binding(x, f andThen { condition ⇒
+            if (condition) Dummy else Killer
+          })
         case _ ⇒ throw new RxOperationException("This Rx is not source")
       }
     }

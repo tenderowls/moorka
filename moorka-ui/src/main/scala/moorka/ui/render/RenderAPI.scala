@@ -75,7 +75,6 @@ object RenderAPI {
       val s = second.toString
       promises.get(s) match {
         case Some(promise) ⇒
-          println(s"promise found $s")
           promise.success(ops(2))
           promises -= s
         case None ⇒

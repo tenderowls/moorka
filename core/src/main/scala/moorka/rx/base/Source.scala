@@ -7,7 +7,7 @@ import moorka.rx.base.bindings.Binding
  */
 trait Source[A] extends Rx[A] {
 
-  private var _alive = true
+  private[rx] var _alive = true
 
   def alive = _alive
 
@@ -44,7 +44,9 @@ trait Source[A] extends Rx[A] {
    * @param v new value
    */
   private[rx] def update(v: A): Unit = {
-    bindings.foreach(_.run(v))
+    if (_alive) {
+      bindings.foreach(_.run(v))
+    }
   }
 
   private[rx] def attachBinding(b: Binding[A, _]) = {

@@ -30,5 +30,12 @@ class Signal extends Channel[Unit] {
 
 class Channel[A]() extends Source[A] {
 
-  def flatMap[B](f: (A) => Rx[B]): Rx[B] = new Binding(this, f)
+  def flatMap[B](f: (A) => Rx[B]): Rx[B] = {
+    if (_alive) {
+      new Binding(this, f)
+    }
+    else {
+      Dummy
+    }
+  }
 }

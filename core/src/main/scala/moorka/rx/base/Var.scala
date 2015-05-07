@@ -18,8 +18,10 @@ final case class Var[A](private[rx] var x: A)
   extends Source[A] with StatefulSource[A] {
 
   override private[rx] def update(v: A) = {
-    x = v
-    super.update(v)
+    if (_alive && x != v) {
+      x = v
+      super.update(v)
+    }
   }
 
   private var mods = List.empty[VarHelper.Mod[A]]
@@ -63,7 +65,12 @@ final case class Var[A](private[rx] var x: A)
   //  override def subscribe[U](f: (A) => U): Rx[Unit] = drop(1).foreach(f)
 
   override def flatMap[B](f: (A) => Rx[B]): Rx[B] = {
-    new StatefulBinding(Some(x), this, f)
+    if (_alive) {
+      new StatefulBinding(Some(x), this, f)
+    }
+    else {
+      f(x)
+    }
   }
 
   override def once[U](f: (A) => U): Rx[Unit] = {
