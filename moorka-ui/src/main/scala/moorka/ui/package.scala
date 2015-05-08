@@ -41,10 +41,7 @@ package object ui {
   val RenderAPI = render.RenderAPI
   val Ref = render.Ref
 
-  implicit def FromComponentToElement(x: Component): ElementBase = x.el
-
-  implicit def ToFutureElement[T](x: Future[T])(implicit ev1: T => ElementBase,
-                                  ec: ExecutionContext): FutureElement = {
-    new FutureElement(x.map(ev1))
+  implicit def ToFutureElement[T <: ElementBase](x: Future[T])(implicit ec: ExecutionContext): FutureElement = {
+    new FutureElement(x)
   }
 }

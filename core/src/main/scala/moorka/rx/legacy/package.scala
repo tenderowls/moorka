@@ -1,5 +1,6 @@
 package moorka.rx
 
+import moorka.rx._
 import moorka.rx.base.{Killer, Source}
 import moorka.rx.base.bindings.{Binding, StatefulBinding}
 import scala.language.postfixOps
