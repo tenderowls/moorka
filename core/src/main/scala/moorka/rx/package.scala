@@ -2,6 +2,7 @@ package moorka
 
 import moorka.rx.base.ops.{RxSeqOps, RxOps}
 import moorka.rx.collection.ops.BufferOps
+import moorka.rx.death.Reaper
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
@@ -42,6 +43,13 @@ package object rx {
 
   implicit def ToRxSeqOps[A](x: Rx[Seq[A]]): RxSeqOps[A] = new RxSeqOps[A](x)
 
+  implicit class MortalOps[T <: Mortal](val self: T) extends AnyVal {
+    def mark()(implicit reaper: Reaper): T = {
+      reaper.mark(self)
+      self
+    }
+  }
+  
   implicit class FutureOps[A](val self: Future[A]) extends AnyVal {
     def toRx(implicit executor: ExecutionContext): Rx[Try[A]] = {
       new base.RxFuture(self)

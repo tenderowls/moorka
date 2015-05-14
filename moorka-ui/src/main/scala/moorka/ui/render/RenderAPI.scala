@@ -61,7 +61,6 @@ object RenderAPI {
   def ?(msg: Message) = {
     val p = Promise[Any]()
     val pair = (msg(3).toString, p)
-    println(s"promise ${msg(3).toString} added")
     promises = promises + pair
     this ! msg
     p.future

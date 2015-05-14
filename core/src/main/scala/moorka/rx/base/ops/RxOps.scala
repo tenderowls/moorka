@@ -1,7 +1,6 @@
 package moorka.rx.base.ops
 
 import moorka.rx.base._
-import moorka.rx.death.Reaper
 
 import scala.concurrent._
 
@@ -120,9 +119,4 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
   }
 
   def toFuture: Future[A] = new FutureRx(self)
-
-  def mark()(implicit reaper: Reaper) = {
-    reaper.mark(self)
-    self
-  }
 }
