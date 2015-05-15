@@ -1,4 +1,5 @@
 import moorka.rx._
+import moorka.rx.base.Killer
 import utest._
 
 import scala.concurrent.Promise
@@ -69,7 +70,7 @@ object RxSuite extends TestSuite {
       "check binding created outside of flatMap wouldn't be killed" - {
         val a = Var(0)
         val b = Var(1)
-        val g = a.map(_+1)
+        val g = a.map(_ + 1)
         b.flatMap(_ ⇒ g)
         b.pull(10)
         assert(g.alive)
@@ -94,7 +95,7 @@ object RxSuite extends TestSuite {
         var calls = 0
         val ch = Channel[Int]()
         System.gc()
-        ch filter(_ > 0) foreach { x ⇒
+        ch filter (_ > 0) foreach { x ⇒
           calls += 1
           assert(x == 1)
         }
@@ -105,13 +106,13 @@ object RxSuite extends TestSuite {
         System.gc()
         assert(calls == 1)
       }
-      
+
       "collect() should drop values not processed by `f`" - {
         var calls = 0
         val ch = Channel[Int]()
         ch.collect {
-          case x if x > 0 ⇒ 
-            x.toString 
+          case x if x > 0 ⇒
+            x.toString
         } foreach { x ⇒
           calls += 1
           assert(x == "1")
@@ -159,7 +160,7 @@ object RxSuite extends TestSuite {
         assert(calls == 2)
       }
     }
-    
+
     "check flatMap behavior" - {
       "zip two channels" - {
         val state1 = Channel[String]()
@@ -270,7 +271,7 @@ object RxSuite extends TestSuite {
         assert(evalCalls == 1)
       }
     }
-    
+
     "check for-comprehension" - {
       var calls = 0
       val vx = Var(2)
@@ -304,7 +305,7 @@ object RxSuite extends TestSuite {
       a.pull(10)
       a.pull(11)
     }
-    
+
     "check drop()" - {
       var calls = 0
       val ch = Channel[Int]()
@@ -326,7 +327,7 @@ object RxSuite extends TestSuite {
       val x = Channel[Int]()
       System.gc()
       x.take(3) foreach { x =>
-        assert(x == Seq(1,2,3))
+        assert(x == Seq(1, 2, 3))
       }
       System.gc()
       x.pull(1)
@@ -402,6 +403,52 @@ object RxSuite extends TestSuite {
       System.gc()
       p.success(10)
       assert(calls == 1)
+    }
+
+    def complexWithModBehavior() = {
+      val promise = Promise[Boolean]()
+      val dependency = Var[String]("AIdle")
+      lazy val collectDependency = {
+        dependency collect {
+          case x if x startsWith "AProgress" ⇒ "BProgress"
+          case "ASuccess" ⇒ "BSuccess"
+        }
+      }
+      val res = Var.withMod("BIdle") {
+        case "BIdle" =>
+          promise.future.toRx.flatMap {
+            case Success(true) ⇒ collectDependency
+            case _ ⇒ Val("BFailure")
+          }
+        case "BProgress" ⇒ collectDependency
+        case "BSuccess" ⇒ Killer
+        case "BFailure" ⇒ Killer
+      }
+      (promise, dependency, res)
+    }
+
+    "check complex withMod behavior 1" - {
+      val (promise, dependency, res) = complexWithModBehavior()
+      promise.success(true)
+      dependency.pull("AProgress 10")
+      dependency.pull("AProgress 12")
+      dependency.pull("AProgress 24")
+      dependency.pull("AProgress 100")
+      dependency.pull("ASuccess")
+
+      res once { x ⇒
+        assert(x == "BSuccess")
+        assert(!res.alive)
+      }
+    }
+
+    "check complex withMod behavior 2" - {
+      val (promise, dependency, res) = complexWithModBehavior()
+      promise.success(false)
+      res once { x ⇒
+        assert(x == "BFailure")
+        assert(!res.alive)
+      }
     }
   }
 }
