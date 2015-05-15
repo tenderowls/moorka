@@ -2,7 +2,6 @@ package moorka
 
 import moorka.rx.base.ops.{RxSeqOps, RxOps}
 import moorka.rx.collection.ops.BufferOps
-import moorka.rx.death.Reaper
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
@@ -25,6 +24,7 @@ package object rx {
   val Var = base.Var
   val Val = base.Val
   val Dummy = base.Dummy
+  val Killer = base.Killer
   val Lazy = base.Lazy
 
   val Reaper = death.Reaper
@@ -52,7 +52,12 @@ package object rx {
   
   implicit class FutureOps[A](val self: Future[A]) extends AnyVal {
     def toRx(implicit executor: ExecutionContext): Rx[Try[A]] = {
-      new base.RxFuture(self)
+      if (self.isCompleted) {
+        Val(self.value.get)
+      }
+      else {
+        new base.RxFuture(self)
+      }
     }
   }
 }

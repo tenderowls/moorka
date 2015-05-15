@@ -4,8 +4,13 @@ import moorka.rx.base.bindings.{Binding, StatefulBinding}
 import moorka.rx.death.Mortal
 
 object Var {
-  def withDefaultMod[A](x: A)(f: A ⇒ Rx[A]): Var[A] = {
-    val res = Var(x)
+  
+  @inline
+  @deprecated("Use withMod instead", "0.5.0")
+  def withDefaultMod[A](x: A)(f: A ⇒ Rx[A]): Var[A] = withMod(x)(f)
+  
+  def withMod[A](x: A)(f: A ⇒ Rx[A]): Var[A] = {
+      val res = Var(x)
     res mod f
     res
   }
@@ -30,7 +35,7 @@ final case class Var[A](private[rx] var x: A)
     mods = mods.filter(_ == x)
   }
 
-  def mod(f: A ⇒ Rx[A]): Mortal = {
+  private[rx] def mod(f: A ⇒ Rx[A]): Mortal = {
     val mod = new VarHelper.Mod(f, removeMod)
     def listenMod(ignoreStatefulBehavior: Boolean): Unit = {
       addUpstream {
@@ -39,10 +44,16 @@ final case class Var[A](private[rx] var x: A)
             new Binding[A, A](modX, x ⇒ Val(x))
           case modX ⇒ modX
         }
-        rx once { v ⇒
-          update(v)
-          cleanupUpstreams()
-          listenMod(ignoreStatefulBehavior = true)
+        rx match {
+          case Killer ⇒
+            kill()
+            Dummy
+          case _ ⇒
+            rx once { v ⇒
+              update(v)
+              cleanupUpstreams()
+              listenMod(ignoreStatefulBehavior = true)
+            }
         }
       }
     }

@@ -14,6 +14,7 @@ final class RxFuture[A](future: Future[A])
 
   future onComplete { x ⇒
     st.update(Some(x))
+    st.kill()
   }
 
   def flatMap[B](f: (Try[A]) => Rx[B]): Rx[B] = {
