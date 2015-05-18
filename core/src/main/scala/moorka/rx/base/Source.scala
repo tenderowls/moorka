@@ -76,8 +76,6 @@ trait Source[A] extends Rx[A] {
     update(data)
   }
 
-  def flatMap[B](f: A ⇒ Rx[B]): Rx[B]
-
   def kill() = {
     _alive = false
     bindings = Nil

@@ -1,6 +1,7 @@
 package moorka.rx.base.bindings
 
 import moorka.rx.base.{Dummy, Rx, Source}
+import moorka.rx.death.Reaper
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -46,9 +47,9 @@ private[rx] class Binding[From, To](val parent: Source[From],
     super.kill()
   }
 
-  def flatMap[B](f: (To) => Rx[B]): Rx[B] = {
+  def flatMap[B](f: (To) => Rx[B])(implicit reaper: Reaper = Reaper.nice): Rx[B] = {
     if (_alive) {
-      new Binding(this, f)
+      reaper.mark(new Binding(this, f))
     }
     else {
       Dummy

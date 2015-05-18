@@ -1,6 +1,7 @@
 package moorka.rx.base.bindings
 
 import moorka.rx.base.{Dummy, StatefulSource, Rx, Source}
+import moorka.rx.death.Reaper
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -21,9 +22,9 @@ private[rx] class StatefulBinding[From, To](initialValue: Option[From],
     }
   }
 
-  override def flatMap[B](f: (To) => Rx[B]): Rx[B] = {
+  override def flatMap[B](f: (To) => Rx[B])(implicit reaper: Reaper = Reaper.nice): Rx[B] = {
     if (_alive) {
-      new StatefulBinding(state, this, f)
+      reaper.mark(new StatefulBinding(state, this, f))
     }
     else {
       state match {
@@ -32,8 +33,6 @@ private[rx] class StatefulBinding[From, To](initialValue: Option[From],
       }
     }
   }
-
-  //override def subscribe[U](f: (To) => U): Rx[Unit] = drop(1).foreach(f)
 
   initialValue foreach run
 }

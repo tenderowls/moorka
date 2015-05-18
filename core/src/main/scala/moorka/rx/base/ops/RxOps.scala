@@ -1,6 +1,7 @@
 package moorka.rx.base.ops
 
 import moorka.rx.base._
+import moorka.rx.death.Reaper
 
 import scala.concurrent._
 
@@ -9,14 +10,16 @@ import scala.concurrent._
  */
 final class RxOps[A](val self: Rx[A]) extends AnyVal {
 
-  def until(f: A ⇒ Boolean): Rx[Unit] = {
+  def until(f: A ⇒ Boolean)
+           (implicit reaper: Reaper = Reaper.nice): Rx[Unit] = {
     self >>= { x ⇒
       if (!f(x)) Killer
       else Dummy
     }
   }
 
-  def zip[B](wth: Rx[B]): Rx[(A, B)] = {
+  def zip[B](wth: Rx[B])
+            (implicit reaper: Reaper = Reaper.nice): Rx[(A, B)] = {
     self >>= { a ⇒
       wth >>= { b ⇒
         Val((a, b))
@@ -24,7 +27,8 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
     }
   }
 
-  def drop(num: Int): Rx[A] = {
+  def drop(num: Int)
+          (implicit reaper: Reaper = Reaper.nice): Rx[A] = {
     var drops = 0
     self >>= { x ⇒
       if (drops < num) {
@@ -37,7 +41,8 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
     }
   }
 
-  def take(num: Int): Rx[Seq[A]] = {
+  def take(num: Int)
+          (implicit reaper: Reaper = Reaper.nice): Rx[Seq[A]] = {
     val channel = Channel[Seq[A]]()
     val seq = collection.mutable.Buffer[A]()
     self foreach { value ⇒
@@ -50,7 +55,8 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
     channel
   }
 
-  def fold[B](z: B)(op: (B, A) => B): Rx[B] = {
+  def fold[B](z: B)(op: (B, A) => B)
+             (implicit reaper: Reaper = Reaper.nice): Rx[B] = {
     Var.withMod(z) { b =>
       self >>= { a =>
         Val(op(b, a))
@@ -58,7 +64,8 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
     }
   }
 
-  def or[B](b: Rx[B]): Rx[Either[A, B]] = {
+  def or[B](b: Rx[B])
+           (implicit reaper: Reaper = Reaper.nice): Rx[Either[A, B]] = {
     val rx = Channel[Either[A, B]]()
     val left: Rx[Either[A, B]] = self >>= (x ⇒ Val(Left(x)))
     val right: Rx[Either[A, B]] = b >>= (x ⇒ Val(Right(x)))
@@ -67,7 +74,8 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
     rx
   }
 
-  def collect[B](pf: PartialFunction[A, B]): Rx[B] = {
+  def collect[B](pf: PartialFunction[A, B])
+                (implicit reaper: Reaper = Reaper.nice): Rx[B] = {
     self >>= { x ⇒
       if (pf.isDefinedAt(x)) {
         Val(pf(x))
@@ -78,13 +86,14 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
     }
   }
 
-  def stateful: Rx[Option[A]] = {
+  def stateful(implicit reaper: Reaper = Reaper.nice): Rx[Option[A]] = {
     val state = Var[Option[A]](None)
     state.pull(self.map(Some(_)))
     state
   }
 
-  def switch[L, R](f: A ⇒ Either[L, R]): (Rx[L], Rx[R]) = {
+  def switch[L, R](f: A ⇒ Either[L, R])
+                  (implicit reaper: Reaper = Reaper.nice): (Rx[L], Rx[R]) = {
     val left = Channel[L]()
     val right = Channel[R]()
     val switcher = self map f
@@ -101,7 +110,8 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
     (left, right)
   }
 
-  def partition(f: A ⇒ Boolean): (Rx[A], Rx[A]) = {
+  def partition(f: A ⇒ Boolean)
+               (implicit reaper: Reaper = Reaper.nice): (Rx[A], Rx[A]) = {
     val left = Channel[A]()
     val right = Channel[A]()
     val switcher = zip(self.map(f))
@@ -118,5 +128,5 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
     (left, right)
   }
 
-  def toFuture: Future[A] = new FutureRx(self)
+  def toFuture(implicit reaper: Reaper = Reaper.nice): Future[A] = new FutureRx(self)
 }

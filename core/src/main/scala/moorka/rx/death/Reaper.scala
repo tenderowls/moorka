@@ -9,7 +9,7 @@ object Reaper {
   val nice = new Reaper {
     def sweep(): Unit = {}
 
-    def mark(mortal: Mortal): Unit = {}
+    def mark[T <: Mortal](mortal: T): T = mortal
   }
 
   def apply() = new Reaper() {
@@ -17,7 +17,10 @@ object Reaper {
     @volatile
     private var mortals: List[Mortal] = Nil
 
-    def mark(mortal: Mortal) = mortals ::= mortal
+    def mark[T <: Mortal](mortal: T): T = {
+      mortals ::= mortal
+      mortal
+    }
 
     def sweep() = {
       mortals.foreach(_.kill())
@@ -36,7 +39,7 @@ trait Reaper {
     }
   }
 
-  def mark(mortal: Mortal): Unit
+  def mark[T <: Mortal](mortal: T): T
 
   def sweep(): Unit
 }
