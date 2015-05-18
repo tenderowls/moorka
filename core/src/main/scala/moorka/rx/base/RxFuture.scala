@@ -1,5 +1,7 @@
 package moorka.rx.base
 
+import moorka.rx.death.Reaper
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
@@ -17,7 +19,7 @@ final class RxFuture[A](future: Future[A])
     st.kill()
   }
 
-  def flatMap[B](f: (Try[A]) => Rx[B]): Rx[B] = {
+  def flatMap[B](f: (Try[A]) => Rx[B])(implicit reaper: Reaper = Reaper.nice): Rx[B] = {
     st flatMap {
       case Some(x) ⇒ f(x)
       case None ⇒ Dummy

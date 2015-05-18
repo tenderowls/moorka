@@ -1,16 +1,20 @@
 package moorka.rx.base
 
 import moorka.rx.base.bindings.{Binding, StatefulBinding}
-import moorka.rx.death.Mortal
+import moorka.rx.death.{Reaper, Mortal}
 
 object Var {
   
   @inline
   @deprecated("Use withMod instead", "0.5.0")
-  def withDefaultMod[A](x: A)(f: A ⇒ Rx[A]): Var[A] = withMod(x)(f)
+  def withDefaultMod[A](x: A)(f: A ⇒ Rx[A])
+                       (implicit reaper: Reaper = Reaper.nice): Var[A] = {
+    withMod(x)(f)
+  }
   
-  def withMod[A](x: A)(f: A ⇒ Rx[A]): Var[A] = {
-      val res = Var(x)
+  def withMod[A](x: A)(f: A ⇒ Rx[A])
+                (implicit reaper: Reaper = Reaper.nice): Var[A] = {
+    val res = Var(x)
     res mod f
     res
   }
@@ -20,8 +24,11 @@ object Var {
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 final case class Var[A](private[rx] var x: A)
+                       (implicit reaper: Reaper = Reaper.nice)
   extends Source[A] with StatefulSource[A] {
 
+  reaper.mark(this)
+  
   override private[rx] def update(v: A) = {
     if (_alive && x != v) {
       x = v
@@ -35,7 +42,7 @@ final case class Var[A](private[rx] var x: A)
     mods = mods.filter(_ == x)
   }
 
-  private[rx] def mod(f: A ⇒ Rx[A]): Mortal = {
+  private[rx] def mod(f: A ⇒ Rx[A])(implicit reaper: Reaper = Reaper.nice): Mortal = {
     val mod = new VarHelper.Mod(f, removeMod)
     def listenMod(ignoreStatefulBehavior: Boolean): Unit = {
       addUpstream {
@@ -72,10 +79,7 @@ final case class Var[A](private[rx] var x: A)
     cleanupUpstreams()
   }
 
-  //  @deprecated("Use foreach() instead subscribe(). Note that foreach calls `f` immediately", "0.4.0")
-  //  override def subscribe[U](f: (A) => U): Rx[Unit] = drop(1).foreach(f)
-
-  override def flatMap[B](f: (A) => Rx[B]): Rx[B] = {
+  override def flatMap[B](f: (A) => Rx[B])(implicit reaper: Reaper = Reaper.nice): Rx[B] = {
     if (_alive) {
       new StatefulBinding(Some(x), this, f)
     }
@@ -84,7 +88,7 @@ final case class Var[A](private[rx] var x: A)
     }
   }
 
-  override def once[U](f: (A) => U): Rx[Unit] = {
+  override def once[U](f: (A) => U)(implicit reaper: Reaper = Reaper.nice): Rx[Unit] = {
     // We don't need to create binding to
     // get value just once.
     f(x)
