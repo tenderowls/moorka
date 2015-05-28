@@ -1,6 +1,7 @@
 package moorka.rx.base
 
 import moorka.rx.base.bindings.{Binding, StatefulBinding}
+import moorka.rx.base.ops.RxOps
 import moorka.rx.death.{Reaper, Mortal}
 
 object Var {
@@ -11,7 +12,7 @@ object Var {
                        (implicit reaper: Reaper = Reaper.nice): Var[A] = {
     withMod(x)(f)
   }
-  
+
   def withMod[A](x: A)(f: A ⇒ Rx[A])
                 (implicit reaper: Reaper = Reaper.nice): Var[A] = {
     val res = Var(x)
@@ -56,10 +57,14 @@ final case class Var[A](private[rx] var x: A)
             kill()
             Dummy
           case _ ⇒
-            rx once { v ⇒
-              update(v)
-              cleanupUpstreams()
-              listenMod(ignoreStatefulBehavior = true)
+            new RxOps(rx).until { v ⇒
+              if (v != x) {
+                update(v)
+                cleanupUpstreams()
+                listenMod(ignoreStatefulBehavior = true)
+                false
+              }
+              else true
             }
         }
       }

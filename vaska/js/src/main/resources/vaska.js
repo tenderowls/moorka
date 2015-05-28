@@ -1,7 +1,9 @@
 var Vaska = (function (global) {
   'use strict';
 
-  var LinkPrefix = '@link:',
+  var workerProtocolDebugEnabled = (localStorage.getItem("$vaska.workerProtocolDebugEnabled") === 'true'),
+    tmpLinkLifetime = parseInt(localStorage.getItem("$vaska.tmpLinkLifetime")) || 5000,
+    LinkPrefix = '@link:',
     SourceMappingPattern = '//# sourceMappingURL=',
     ArrayPrefix = '@arr:',
     ObjPrefix = '@obj:',
@@ -13,6 +15,10 @@ var Vaska = (function (global) {
       type: 'application/javascript'
     };
 
+  function Transferable(value) { 
+    this.value = value
+  }
+  
   function loadScript(url, progressCb) {
     return new Promise(function (resolve, reject) {
       var http = new XMLHttpRequest();
@@ -30,12 +36,22 @@ var Vaska = (function (global) {
     });
   }
 
-  function Vaska(postMessage, testEnv) {
+  function Vaska(postMessageFunction, testEnv) {
+    function postMessage(data) {
+      var res = data[2], value;
+      if (res instanceof Transferable) {
+        value = res.value
+        data[2] = value;
+        postMessageFunction(data, [value]);
+      }
+      else postMessageFunction(data);
+    }
     var self = this,
       initialize = null,
       lastLinkId = 0,
       tmpLinks = new Map(),
       tmpLinksIndex = new Map(),
+      tmpLinksTime = new Map(),
       links = new Map(),
       linksIndex = new Map();
 
@@ -46,9 +62,10 @@ var Vaska = (function (global) {
 
     function createTmpLink(obj) {
       var id = lastLinkId.toString();
-      lastLinkId += 1;
+      lastLinkId++;
       tmpLinks.set(id, obj);
       tmpLinksIndex.set(obj, id);
+      tmpLinksTime.set(id, Date.now());
       return id;
     }
 
@@ -81,6 +98,12 @@ var Vaska = (function (global) {
     }
 
     function packResult(arg) {
+      if (arg === undefined) {
+        return UnitResult;
+      }
+      if (arg instanceof Transferable) {
+        return arg
+      }
       if (typeof arg === 'object') {
         var id = tmpLinksIndex.get(arg) || linksIndex.get(arg);
         if (id === undefined) {
@@ -115,7 +138,7 @@ var Vaska = (function (global) {
       }
       name = args[1];
       callArgs = args.slice(2);
-      for (i = 0; i < callArgs.length; i += 1) {
+      for (i = 0; i < callArgs.length; i++) {
         arg = callArgs[i];
         if (arg === HookSuccess) {
           callArgs[i] = createHook(reqId, true, cb);
@@ -163,9 +186,10 @@ var Vaska = (function (global) {
         if (callRes.indexOf(ObjPrefix) !== -1) {
           id = callRes.substring(ObjPrefix.length);
           receiveSave(reqId, [getLink(id), newId], cb);
+        } else {
+          err = args[1] + ' returns ' + (typeof callRes);
+          cb([reqId, false, err]);
         }
-        err = args[1] + ' returns ' + (typeof callRes);
-        cb([reqId, false, err]);
       });
     }
 
@@ -182,6 +206,7 @@ var Vaska = (function (global) {
     });
 
     this.receive = function (data) {
+      if (workerProtocolDebugEnabled) console.log('->', data);
       var reqId = data[0],
         method = data[1],
         rawArgs = data.slice(2),
@@ -192,6 +217,20 @@ var Vaska = (function (global) {
       case 'init':
         initialize(self);
         postMessage([reqId, true, UnitResult]);
+        setInterval(function () {
+          var result = 0;
+          tmpLinksIndex.forEach(function (id) {
+            var dt = Date.now() - tmpLinksTime.get(id), obj;
+            if (dt > tmpLinkLifetime) {
+              obj = tmpLinks.get(id);
+              tmpLinks.delete(id);
+              tmpLinksTime.delete(id);
+              tmpLinksIndex.delete(obj);
+              result++;
+            }
+          });
+          console.log('Cleanup result', result);
+        }, tmpLinkLifetime);
         break;
       case 'registerCallback':
         (function VaskaRegisterCallback() {
@@ -302,48 +341,80 @@ var Vaska = (function (global) {
      * Run Scala.js compiled application in the
      * same thread as DOM runs
      */
-    worker: function (mainClass, scriptUrl) {
+    worker: function (mainClass, scriptUrl, dependencies) {
+      var //scriptFileName = scriptUrl.substring(scriptUrl.lastIndexOf('/')),
+        dependenciesBlobsUrls = [],
+        workerCode, sourceMapCode;
       return new Promise(function (resolve, reject) {
-        loadScript(scriptUrl + '.map').then(function (mapCode) {
-          var sourceMappingBlob = new Blob([mapCode]),
-            sourceMappingURL = URL.createObjectURL(sourceMappingBlob);
-             
-          loadScript(scriptUrl).then(function (workerCode) {
-            var workerBlob = null,
-              launcherBlob = null,
-              worker = null,
-              vaska = null;
-              
-            // Change source map
-            workerCode = replaceSourceMappingURL(workerCode, sourceMappingURL);
-
-            workerBlob = new Blob([workerCode], JSMimeType);
-            launcherBlob = new Blob([
-              'importScripts("' + URL.createObjectURL(workerBlob) + '");',
-              'var jsAccess = new vaska.NativeJSAccess(this);',
-              '' + mainClass + '().main(jsAccess);'
-            ], JSMimeType);
-
-            // Run launcher in WebWorker
-            worker = new Worker(URL.createObjectURL(launcherBlob));
-            vaska = new Vaska(function(data) {
-              var res = data[2];
-              if (res instanceof ArrayBuffer || res instanceof Blob) {
-                // Use worker transferable
-                worker.postMessage(data, [res]);
-              } else {
-                worker.postMessage(data);
-              }
-            });
-            
-            worker.addEventListener('message', function(event) {
-              vaska.receive(event.data);
-            });
-            
-            vaska.initialized.then(function () {
-              resolve(vaska);
-            });
-          }).catch(reject);
+        // First of all resolve dependencies for script
+        var loaded = 0, expected = 2; // workerCode and sourceMapCode
+        function checkLoaded() {
+          var sourceMapBlob, sourceMapBlobURL, workerBlob,
+            launcherBlob, worker, vaska;
+          if (loaded !== expected)
+            return;
+          if (sourceMapCode !== undefined) {
+            sourceMapBlob = new Blob([sourceMapCode]);
+            sourceMapBlobURL = URL.createObjectURL(sourceMapBlob);  
+          }
+          // Change source map
+          if (sourceMapBlobURL !== undefined) {
+            workerCode = replaceSourceMappingURL(workerCode, sourceMapBlobURL);
+          }
+          workerBlob = new Blob([workerCode], JSMimeType);
+          dependenciesBlobsUrls.push(URL.createObjectURL(workerBlob));
+          dependenciesBlobsUrls = dependenciesBlobsUrls.map(function(value) {
+            return '"' + value + '"';
+          });
+          launcherBlob = new Blob([
+            'importScripts(' + dependenciesBlobsUrls.join(', ') + ');\n',
+            'console.log("Scripts imported to worker");\n',
+            'var jsAccess = new vaska.NativeJSAccess(this);\n',
+            '' + mainClass + '().main(jsAccess);\n',
+            'console.log("Application started inside worker");\n'
+          ], JSMimeType);
+          // Run launcher in WebWorker
+          worker = new Worker(URL.createObjectURL(launcherBlob));
+          vaska = new Vaska(function(data, transferable) {
+            if (workerProtocolDebugEnabled) console.log('<-', data, transferable);
+            worker.postMessage(data, transferable);
+          });
+          worker.addEventListener('message', function(event) {
+            vaska.receive(event.data);
+          });
+          vaska.initialized.then(function () {
+            resolve(vaska);
+          });
+        }
+        // Normalize deps
+        if (typeof dependencies === "string") dependencies = [dependencies];
+        if (dependencies === undefined || dependencies instanceof Array === false) dependencies = [];
+        expected += dependencies.length; 
+        dependencies.forEach(function (dependency) {
+          loadScript(dependency).then(function (dependencyCode) {
+            var dependencyBlob = new Blob([dependencyCode], JSMimeType);
+            dependenciesBlobsUrls.push(URL.createObjectURL(dependencyBlob));
+            loaded++;
+            checkLoaded();
+          }).catch(function() {
+            console.error('Dependency "'+dependency+'" for '+scriptUrl+' was not loaded');
+            reject(dependency + 'is missing');
+          });
+        });
+        // Load worker code
+        loadScript(scriptUrl).then(function(code) {
+          workerCode = code;
+          loaded++;
+          checkLoaded();
+        }).catch(reject);
+        // Load source map
+        loadScript(scriptUrl + '.map').then(function (code) {
+          sourceMapCode = code;
+          loaded++;
+          checkLoaded();
+        }).catch(function () {
+          loaded++;
+          checkLoaded();
         });
       });
     },
@@ -365,6 +436,17 @@ var Vaska = (function (global) {
 
     create: function (postMessage, testEnv) {
       return new Vaska(postMessage, testEnv);
+    },
+    
+    Transferable: Transferable,
+    
+    setWorkerProtocolDebugEnabled: function(value) {
+      localStorage.setItem("$vaska.workerProtocolDebugEnabled", value);
+      workerProtocolDebugEnabled = value;
+    },
+    setTmpLinkLifetime: function(value) {
+      localStorage.setItem("$vaska.tmpLinkLifetime", value);
+      console.log('Restart application to apply changes');
     }
   };
 }(this));

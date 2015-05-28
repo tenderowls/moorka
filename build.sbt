@@ -3,7 +3,7 @@ import sbt.Keys._
 import bintray.Keys._
 
 val currentScalaVersion = "2.11.6"
-val moorkaVersion = "0.5.0-SNAPSHOT"
+val moorkaVersion = "0.5.F13-SNAPSHOT"
 
 scalaVersion := currentScalaVersion
 
@@ -68,7 +68,8 @@ lazy val vaska = crossProject
     ),
     jsDependencies in Test ++= Seq(
       "org.webjars" % "es6-shim" % "0.20.2" / "es6-shim.js",
-      ProvidedJS / "vaska.js"
+      ProvidedJS / "localStorage.js",
+      ProvidedJS / "vaska.js" dependsOn "localStorage.js"
     )
   )
   .jvmSettings(utestSettingsJVM:_*)

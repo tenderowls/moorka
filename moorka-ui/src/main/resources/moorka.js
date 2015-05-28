@@ -12,7 +12,15 @@ Element.prototype.appendChildren = function(elements) {
   this.appendChild(fragment);
 };
 
-EventTarget.prototype.addEventListenerWhichPreventDefault = function (eventType, listener) {
+Element.prototype.classAdd = function(className) {
+  this.classList.add(className);
+}
+
+Element.prototype.classRemove = function(className) {
+  this.classList.remove(className);
+}
+
+Element.prototype.addEventListenerWhichPreventDefault = function (eventType, listener) {
   this.addEventListener(eventType, function (event) {
     event.preventDefault();
     listener(event);

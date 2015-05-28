@@ -4,7 +4,9 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 
 object JSAccess {
 
-  final class JSSideException(message: String) extends Exception(message)
+  class JSSideException(message: String) extends Exception(message)
+  final class JSSideErrorCode(val code: Int) extends JSSideException(s"Error code $code")
+  final class JSSideUnrecognizedException() extends JSSideException("Unrecognized exception")
 
   val LinkPrefix = "@link:"
   val ArrayPrefix = "@arr:"
@@ -57,10 +59,14 @@ trait JSAccess {
     val pair = (requestId, promise)
     lastReqId += 1
     promises += pair
-    send {
-      // Pack arguments
-      packArgs(Seq(requestId) ++ args)
-    }
+    try {
+      // Pack result and send
+      send(packArgs(Seq(requestId) ++ args))
+    } 
+    catch {
+      case exception: Throwable ⇒
+        promise.failure(exception)
+    } 
     // Unpack result
     promise.future map unpackArg[A]
   }
@@ -111,8 +117,11 @@ trait JSAccess {
           promise.success(res)
         }
         else {
-          val message = res.asInstanceOf[String]
-          val exception = new JSSideException(message)
+          val exception = res match {
+            case s: String ⇒ new JSSideException(s)
+            case i: Int ⇒ new JSSideErrorCode(i)
+            case _ ⇒ new JSSideUnrecognizedException()
+          }
           promise.failure(exception)
         }
         promises -= reqId

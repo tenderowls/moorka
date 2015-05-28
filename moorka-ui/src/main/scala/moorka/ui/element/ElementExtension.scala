@@ -104,16 +104,8 @@ case class ElementPropertyExtension[A](name: String, value: A) extends ElementEx
 
 case class UseClassExtension(className: String, trigger:Boolean) extends ElementExtension {
   def start(element: ElementBase): Unit = {
-    if (trigger) {
-      element.ref.get[JSObj]("classList") foreach {
-        _.call[Unit]("add", className)
-      }
-    }
-    else {
-      element.ref.get[JSObj]("classList") foreach {
-        _.call[Unit]("remove", className)
-      }
-    }
+    if (trigger) element.ref.call[Unit]("classAdd", className)
+    else element.ref.call[Unit]("classRemove", className)
   }
 }
 
@@ -133,13 +125,9 @@ case class UseClassBoundExtension(className: String, trigger:Rx[Boolean])
   def start(element: ElementBase): Unit = {
     subscription = trigger foreach {
       case true =>
-        element.ref.get[JSObj]("classList") foreach {
-          _.call[Unit]("add", className)
-        }
+        element.ref.call[Unit]("classAdd", className)
       case false =>
-        element.ref.get[JSObj]("classList") foreach {
-          _.call[Unit]("remove", className)
-        }
+        element.ref.call[Unit]("classRemove", className)
     }
   }
 }

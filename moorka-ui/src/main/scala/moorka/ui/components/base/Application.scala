@@ -17,10 +17,15 @@ trait Application {
 
   @JSExport
   def main(jsAccess: JSAccess): Unit = {
-    setJSAccess(jsAccess) foreach { _ =>
-      document.get[JSObj]("body") foreach { body ⇒
-        body.call[JSObj]("appendChild", start().ref)
-      }
+    for {
+      _ ← setJSAccess(jsAccess)
+      body ← document.get[JSObj]("body")
+      _ ← body.save()
+      _ ← body.call[JSObj]("appendChild", start().ref)
+      _ ← body.free()
+      _ ← jsAccess.request[Unit]("init")
+    } yield {
+      ()
     }
   }
 

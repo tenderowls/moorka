@@ -28,8 +28,6 @@ object EventProcessor {
   
   def propagate(tpe: String, element:EventTarget, nativeEvent: JSObj) = {
 
-    // todo: May be it's more effective to use js.Array instead of scala's
-    // todo: immutable collection. They are produce a lot of garbage.
     @tailrec
     def collectParents(e: EventTarget, xs: List[EventTarget]): List[EventTarget] = {
       val ep = e.parent
@@ -83,18 +81,23 @@ object EventProcessor {
     captures.getOrElseUpdate((tpe, element), Channel[SyntheticEvent]()).foreach(capture)
   }
 
-  jsAccess.registerCallback { nativeEvent: JSObj ⇒
+  /**
+   * Use this callback to handle events.
+   */
+  val globalEventListener = jsAccess.registerCallback { nativeEvent: JSObj ⇒
     for {
       tpe ← nativeEvent.get[String]("type")
       target ← nativeEvent.get[JSObj]("target")
       id ← target.get[String]("id")
     } yield {
       val element = EventProcessor.nativeElementIndex.get(id)
-      element foreach { target =>
+      element foreach { target ⇒
         propagate(tpe, target, nativeEvent)
       }
     }
-  } foreach { listener ⇒
+  } 
+  
+  globalEventListener foreach { listener ⇒
     val eventTypes = Seq(
       "click", "touchstart", "touchend", 
       "mousedown", "mouseup", "dblclick",

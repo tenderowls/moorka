@@ -41,7 +41,18 @@ final class NativeJSAccess(scope: js.Dynamic) extends JSAccess {
   }
 
   def send(args: Seq[Any]): Unit = {
-    val buffer = js.Array(args: _*)
-    scope.postMessage(buffer)
+    val buffer = js.Array[Any]()
+    val transferable = js.Array[Any]()
+    args foreach {
+      case Transferable(value) ⇒
+        buffer.push(value)
+        transferable.push(value)
+      case value ⇒
+        buffer.push(value)
+    }
+    if (transferable.length > 0) {
+      scope.postMessage(buffer, transferable)
+    }
+    else scope.postMessage(buffer)
   }
 }

@@ -39,9 +39,11 @@ package object ui {
   }
 
   private[moorka] var jsAccess: JSAccess = null
-  
+
   private[moorka] var document: JSObj = null
 
+  lazy val global = jsAccess.obj("global")
+  
   // So dirty
   private[moorka] def setJSAccess(value: JSAccess): Future[Unit] = {
     jsAccess = value
