@@ -2,6 +2,7 @@ package moorka.ui.components.base
 
 import moorka.rx._
 import moorka.ui.element._
+import vaska.JSObj
 
 import scala.collection.mutable
 
@@ -37,7 +38,7 @@ class DataRepeat[A](dataProvider: BufferView[A],
       component
     }
 
-    ref.appendChildren(
+    ref.call[Unit]("appendChildren",
       dataProvider.asSeq.map { x =>
         val c = createAndAppendComponent(x)
         c.parent = element
@@ -48,13 +49,13 @@ class DataRepeat[A](dataProvider: BufferView[A],
     subscribtions ::= dataProvider.added foreach { x =>
       val c = createAndAppendComponent(x)
       c.parent = element
-      ref.appendChild(c.ref)
+      ref.call[Unit]("appendChild", c.ref)
     }
 
     subscribtions ::= dataProvider.removed foreach { x =>
       states.remove(x.idx)
       val c = components.remove(x.idx)
-      ref.removeChild(c.ref)
+      ref.call[Unit]("removeChild", c.ref)
       c.parent = null
       c.kill()
     }
@@ -68,9 +69,9 @@ class DataRepeat[A](dataProvider: BufferView[A],
       // Insert into DOM
       x.idx + 1 match {
         case idx if idx < components.length =>
-          ref.insertChild(c.ref, components(idx).ref)
+          ref.call[JSObj]("insertChild", c.ref, components(idx).ref)
         case _ =>
-          ref.appendChild(c.ref)
+          ref.call[JSObj]("appendChild", c.ref)
       }
     }
 

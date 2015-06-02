@@ -20,8 +20,6 @@ val commonSettings = Seq(
 )
 
 val utestSetting = Seq(
-  scalaJSStage in Test := FastOptStage,
-  persistLauncher in Test := false,
   testFrameworks += new TestFramework("utest.runner.Framework")
 )
 
@@ -60,6 +58,31 @@ lazy val core = crossProject
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
 
+lazy val vaska = crossProject
+  .crossType(CrossType.Full)
+  .jsSettings(utestSettingsJS:_*)
+  .jsSettings(
+    //postLinkJSEnv in Test := PhantomJSEnv().value,
+    libraryDependencies ++= Seq(
+      "org.webjars" % "es6-shim" % "0.20.2" % "test"
+    ),
+    jsDependencies in Test ++= Seq(
+      "org.webjars" % "es6-shim" % "0.20.2" / "es6-shim.js",
+      ProvidedJS / "localStorage.js",
+      ProvidedJS / "vaska.js" dependsOn "localStorage.js"
+    )
+  )
+  .jvmSettings(utestSettingsJVM:_*)
+  .settings(publishSettings:_*)
+  .settings(commonSettings:_*)
+  .settings(
+    normalizedName := "vaska",
+    scalaVersion := currentScalaVersion
+  )
+
+val vaskaJS = vaska.js
+val vaskaJVM = vaska.jvm
+
 lazy val ui = (project in file("moorka-ui"))
   .enablePlugins(ScalaJSPlugin)
   .settings(publishSettings:_*)
@@ -69,6 +92,7 @@ lazy val ui = (project in file("moorka-ui"))
     scalaVersion := currentScalaVersion
   )
   .dependsOn(coreJS)
+  .dependsOn(vaskaJS)
 
 lazy val root = (project in file("."))
   .settings(dontPublish:_*)
@@ -77,6 +101,7 @@ lazy val root = (project in file("."))
   )
   .aggregate(
     ui,
+    vaskaJS, vaskaJVM,
     coreJS, coreJVM
   )
 

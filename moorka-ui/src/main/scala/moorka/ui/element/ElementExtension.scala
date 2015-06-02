@@ -3,6 +3,7 @@ package moorka.ui.element
 import moorka.rx._
 import moorka.ui.RefHolder
 import moorka.ui.event._
+import vaska.JSObj
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
@@ -20,27 +21,27 @@ case class ElementAttributeName(name: String) {
   def :=(x: Rx[String]) = ElementBoundAttributeExtension(name, x)
 }
 
-case class ElementEventName[EventType <: SyntheticEvent](processor: EventProcessor[EventType]) {
+case class ElementEventName(eventType: String) {
 
-  def subscribe(listener: (EventType) => Unit) = {
-    SyntheticEventExtension[EventType](
-      processor,
+  def subscribe(listener: (SyntheticEvent) => Unit) = {
+    SyntheticEventExtension(
+      eventType,
       listener,
       useCapture = false
     )
   }
 
   def listen(listener: => Unit) = {
-    SyntheticEventExtension[EventType](
-      processor,
+    SyntheticEventExtension(
+      eventType,
       _ => listener,
       useCapture = false
     )
   }
 
-  def capture(listener: (EventType) => Unit) = {
-    SyntheticEventExtension[EventType](
-      processor,
+  def capture(listener: (SyntheticEvent) => Unit) = {
+    SyntheticEventExtension(
+      eventType,
       listener,
       useCapture = true
     )
@@ -71,21 +72,21 @@ class StaticExtensionFactory[A](static: (A => ElementExtension)) {
 
 case class ElementAttributeExtension(name: String, value: String) extends ElementExtension {
   def start(element: ElementBase): Unit = {
-    element.ref.updateAttribute(name, value)
+    element.ref.call[Any]("setAttribute", name, value)
   }
 }
 
-case class SyntheticEventExtension[EventType <: SyntheticEvent](processor: EventProcessor[EventType],
-                                                                listener: EventType => Unit,
-                                                                useCapture: Boolean)
+case class SyntheticEventExtension(eventType: String,
+                                  listener: SyntheticEvent => Unit,
+                                  useCapture: Boolean)
   extends ElementExtension {
 
   var slot:Option[Rx[_]] = None
 
   def start(element: ElementBase): Unit = {
     slot = useCapture match {
-      case false => Some(processor.addListener(element, listener))
-      case true => Some(processor.addCapture(element, listener))
+      case false => Some(EventProcessor.addListener(element, eventType, listener))
+      case true => Some(EventProcessor.addCapture(element, eventType, listener))
     }
   }
 
@@ -103,12 +104,8 @@ case class ElementPropertyExtension[A](name: String, value: A) extends ElementEx
 
 case class UseClassExtension(className: String, trigger:Boolean) extends ElementExtension {
   def start(element: ElementBase): Unit = {
-    if (trigger) {
-      element.ref.classAdd(className)
-    }
-    else {
-      element.ref.classRemove(className)
-    }
+    if (trigger) element.ref.call[Unit]("classAdd", className)
+    else element.ref.call[Unit]("classRemove", className)
   }
 }
 
@@ -127,8 +124,10 @@ case class UseClassBoundExtension(className: String, trigger:Rx[Boolean])
 
   def start(element: ElementBase): Unit = {
     subscription = trigger foreach {
-      case true => element.ref.classAdd(className)
-      case false => element.ref.classRemove(className)
+      case true =>
+        element.ref.call[Unit]("classAdd", className)
+      case false =>
+        element.ref.call[Unit]("classRemove", className)
     }
   }
 }
@@ -138,7 +137,6 @@ case class ElementBoundPropertyExtension[A](name: String, value: Rx[A])
 
   def start(element: ElementBase): Unit = {
     subscription = value foreach { x ⇒
-      println(s"$name, $x")
       element.ref.set(name, x)
     }
   }
@@ -168,8 +166,8 @@ case class VarPropertyExtension[A](name: String, value: Var[A])
   def start(element: ElementBase): Unit = {
 
     subscriptions =
-      ChangeEventProcessor.addListener(element, listener) ::
-      InputEventProcessor.addListener(element, listener) ::
+      EventProcessor.addListener(element, "change", listener) ::
+      EventProcessor.addListener(element, "input", listener) ::
       value.foreach { x ⇒
         if (awaitForWrite) element.ref.set(name, x)
         else awaitForWrite = true
@@ -189,7 +187,7 @@ case class ElementBoundAttributeExtension(name: String, value: Rx[String])
 
   def start(element: ElementBase): Unit = {
     subscription = value foreach { x ⇒
-      element.ref.updateAttribute(name, x)
+      element.ref.call[Unit]("setAttribute", name, x)
     }
   }
 }

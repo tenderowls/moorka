@@ -1,16 +1,16 @@
 package moorka.ui.event
 
 import moorka.rx._
-import moorka.ui.RenderAPI
+import moorka.ui._
+import vaska.JSObj
 
 import scala.annotation.tailrec
 import scala.collection.mutable
-import scala.scalajs.js
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
-/**
- * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
- */
 object EventProcessor {
+
+  final class PropagationStopped extends Throwable
 
   private[ui] val nativeElementIndex = mutable.Map[String, EventTarget]()
 
@@ -21,32 +21,13 @@ object EventProcessor {
   def deregisterElement(element: EventTarget) = {
     nativeElementIndex.remove(element.ref.id)
   }
-}
 
-trait EventProcessor[A <: SyntheticEvent ] {
+  val listeners = mutable.Map[(String, EventTarget), Channel[SyntheticEvent]]()
 
-  /**
-   * Type of native event
-   */
-  val eventType:String
+  val captures = mutable.Map[(String, EventTarget), Channel[SyntheticEvent]]()
+  
+  def propagate(tpe: String, element:EventTarget, nativeEvent: JSObj) = {
 
-  object PropagationStopped extends Throwable
-
-  val event: A
-
-  val listeners = mutable.Map[EventTarget, Channel[A]]()
-
-  val captures = mutable.Map[EventTarget, Channel[A]]()
-
-  def fillEvent(element: EventTarget, nativeEvent: js.Dynamic) = {
-    event._target = element
-    event._bubbles = false
-  }
-
-  def propagate(element:EventTarget, nativeEvent: js.Dynamic) = {
-
-    // todo: May be it's more effective to use js.Array instead of scala's
-    // todo: immutable collection. They are produce a lot of garbage.
     @tailrec
     def collectParents(e: EventTarget, xs: List[EventTarget]): List[EventTarget] = {
       val ep = e.parent
@@ -58,109 +39,78 @@ trait EventProcessor[A <: SyntheticEvent ] {
       }
     }
 
-    fillEvent(element, nativeEvent)
+    val event = new SyntheticEvent(nativeEvent, element)
 
     try {
       // Capturing phase
       event._eventPhase = Capturing
       collectParents(element, Nil).foreach { x =>
         event._currentTarget = x
-        captures.get(x).foreach(_.pull(event))
+        captures.get(tpe, x).foreach(_.pull(event))
         if (event._propagationStopped)
-          throw PropagationStopped
+          throw new PropagationStopped()
       }
       // At target
       event._eventPhase = AtTarget
       event._currentTarget = element
-      listeners.get(element).foreach(_.pull(event))
+      listeners.get(tpe, element).foreach(_.pull(event))
       if (event._propagationStopped)
-        throw PropagationStopped
+        throw new PropagationStopped()
       // Bubbling
       event._eventPhase = Bubbling
       event._bubbles = true
       var ct = element.parent
       while (ct != null) {
-        listeners.get(ct).foreach(_.pull(event))
+        listeners.get(tpe, ct).foreach(_.pull(event))
         if (event._propagationStopped)
-          throw PropagationStopped
+          throw new PropagationStopped()
         ct = ct.parent
       }
     }
     catch {
-      case PropagationStopped =>
+      case x: PropagationStopped =>
         // Stop event propagation cycle
     }
-    if (event._defaultPrevented)
-      nativeEvent.preventDefault()
   }
   
-  def topLevelListener(nativeEvent: js.Dynamic) = {
-    val targetId = nativeEvent.target.asInstanceOf[String]
-    EventProcessor.nativeElementIndex.get(targetId).foreach { syntheticTarget =>
-      propagate(syntheticTarget, nativeEvent)
-    }
+  def addListener(element: EventTarget, tpe: String, listener: (SyntheticEvent) => Unit): Rx[Unit] = {
+    listeners.getOrElseUpdate((tpe, element), Channel[SyntheticEvent]()).foreach(listener)
   }
 
-  def addListener(element: EventTarget, listener: (A) => Unit): Rx[Unit] = {
-    listeners.getOrElseUpdate(element, Channel[A]()).foreach(listener)
+  def addCapture(element: EventTarget, tpe: String, capture: (SyntheticEvent) => Unit): Rx[Unit] = {
+    captures.getOrElseUpdate((tpe, element), Channel[SyntheticEvent]()).foreach(capture)
   }
 
-  def addCapture(element: EventTarget, capture: (A) => Unit): Rx[Unit] = {
-    captures.getOrElseUpdate(element, Channel[A]()).foreach(capture)
-  }
-
-  private val onMessageListener = RenderAPI.onMessage foreach { x =>
-    if (x(0) == "event") {
-      val e = x(1).asInstanceOf[js.Dynamic]
-      if (e.`type`.asInstanceOf[String] == eventType) {
-        topLevelListener(e)
+  /**
+   * Use this callback to handle events.
+   */
+  val globalEventListener = jsAccess.registerCallback { nativeEvent: JSObj ⇒
+    for {
+      tpe ← nativeEvent.get[String]("type")
+      target ← nativeEvent.get[JSObj]("target")
+      id ← target.get[String]("id")
+    } yield {
+      val element = EventProcessor.nativeElementIndex.get(id)
+      element foreach { target ⇒
+        propagate(tpe, target, nativeEvent)
       }
     }
+  } 
+  
+  globalEventListener foreach { listener ⇒
+    val eventTypes = Seq(
+      "click", "touchstart", "touchend", 
+      "mousedown", "mouseup", "dblclick",
+      "change", "input"
+    )
+    eventTypes foreach { eventType ⇒
+      document.call[Unit]("addEventListener", eventType, listener)
+    }
+    // Prevent default behavior for every submit
+    document.call[Unit](
+      "addEventListenerWhichPreventDefault",
+      "submit", 
+      listener
+    )
   }
-}
-
-sealed trait MouseEventProcessor extends EventProcessor[MouseEvent] {
-
-  val event: MouseEvent = new MouseEvent()
-
-  override def fillEvent(element: EventTarget, x: js.Dynamic): Unit = {
-    super.fillEvent(element, x)
-    event._altKey = x.altKey.asInstanceOf[Boolean]
-    event._ctrlKey = x.ctrlKey.asInstanceOf[Boolean]
-    event._metaKey = x.metaKey.asInstanceOf[Boolean]
-    event._button = x.button.asInstanceOf[Int]
-    event._clientX = x.clientX.asInstanceOf[Int]
-    event._clientY = x.clientY.asInstanceOf[Int]
-    event._screenX = x.screenX.asInstanceOf[Int]
-    event._screenY = x.screenY.asInstanceOf[Int]
-  }
-}
-
-sealed trait FormEventProcessor extends EventProcessor[FormEvent] {
-  val event: FormEvent = new FormEvent()
-}
-
-object ClickEventProcessor extends MouseEventProcessor {
-  val eventType: String = "click"
-}
-
-object TouchendEventProcessor extends EventProcessor[TouchEvent] {
-  val eventType: String = "touchend"
-  val event = new TouchEvent()
-}
-
-object DoubleClickEventProcessor extends MouseEventProcessor {
-  val eventType: String = "dblclick"
-}
-
-object SubmitEventProcessor extends FormEventProcessor {
-  val eventType: String = "submit"
-}
-
-object ChangeEventProcessor extends FormEventProcessor {
-  val eventType: String = "change"
-}
-
-object InputEventProcessor extends FormEventProcessor {
-  val eventType: String = "input"
 }

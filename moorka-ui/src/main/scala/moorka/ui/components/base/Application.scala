@@ -1,22 +1,32 @@
 package moorka.ui.components.base
 
+import moorka.ui._
 import moorka.ui.element.ElementBase
-import moorka.ui.RenderAPI
+import vaska.{JSAccess, JSObj}
 
-import scala.scalajs.js
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scala.scalajs.js.annotation.{JSExport, JSExportDescendentObjects}
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-abstract class Application extends js.JSApp {
+@JSExportDescendentObjects
+trait Application {
 
   def start(): ElementBase
 
-  def main() = {
-    RenderAPI ! js.Array(
-      "append_to_root",
-      start().ref.id
-    )
+  @JSExport
+  def main(jsAccess: JSAccess): Unit = {
+    for {
+      _ ← setJSAccess(jsAccess)
+      body ← document.get[JSObj]("body")
+      _ ← body.save()
+      _ ← body.call[JSObj]("appendChild", start().ref)
+      _ ← body.free()
+      _ ← jsAccess.request[Unit]("init")
+    } yield {
+      ()
+    }
   }
 
 }
