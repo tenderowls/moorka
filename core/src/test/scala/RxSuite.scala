@@ -2,8 +2,8 @@ import moorka.rx._
 import moorka.rx.base.Killer
 import utest._
 
-import scala.concurrent.Promise
-import scala.util.Success
+import scala.concurrent.{Future, Promise}
+import scala.util.{Failure, Success}
 
 import utest.ExecutionContext.RunNow
 
@@ -403,6 +403,20 @@ object RxSuite extends TestSuite {
       System.gc()
       p.success(10)
       assert(calls == 1)
+    }
+
+    "check Rx[Success[T]] to Rx[T] conversion" - {
+      val r = Val(Success(10))
+      r.getOrElse(0) foreach { x ⇒
+        assert(x == 10)
+      }
+    }
+
+    "check Rx[Failure[T]] to Rx[T] conversion" - {
+      val r = Val(Failure(new RuntimeException("Its gonna blow!")))
+      r.getOrElse(5) foreach { x ⇒
+        assert(x == 5)
+      }
     }
 
     def complexWithModBehavior() = {
