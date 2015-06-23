@@ -5,7 +5,7 @@ import moorka.rx.collection.ops.BufferOps
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
-import scala.util.Try
+import scala.util.{Success, Try}
 
  /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -58,6 +58,13 @@ package object rx {
       else {
         new base.RxFuture(self)
       }
+    }
+  }
+
+  implicit class RxTryOps[T](val self: Rx[Try[T]]) extends AnyVal {
+    def getOrElse(default: ⇒ T) = self map {
+      case Success(r) ⇒ r
+      case _          ⇒ default
     }
   }
 }
