@@ -1092,6 +1092,8 @@ package object html {
    */
   val `value` = ElementPropertyName[String]("value")
 
+  val `selectedIndex` = ElementPropertyName[Int]("selectedIndex")
+
   /**
    * When the value of the type attribute is radio or checkbox, the presence of
    * this Boolean attribute indicates that the control is selected by default;
