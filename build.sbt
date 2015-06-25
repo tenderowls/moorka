@@ -13,9 +13,10 @@ val dontPublish = Seq(
 
 val commonSettings = Seq(
   version := moorkaVersion,
-  organization := "com.tenderowls.opensource",
+  organization := "org.reactivekittens",
   licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")),
   homepage := Some(url("http://github.com/tenderowls/moorka")),
+  scalaVersion := currentScalaVersion,
   scalacOptions ++= Seq("-deprecation", "-feature")
 )
 
@@ -44,25 +45,24 @@ val publishSettings = moorkaVersion.endsWith("SNAPSHOT") match {
   )
 }
 
-lazy val core = crossProject
+lazy val moorka = crossProject
   .crossType(CrossType.Pure)
   .jsSettings(utestSettingsJS:_*)
   .jvmSettings(utestSettingsJVM:_*)
   .settings(publishSettings:_*)
   .settings(commonSettings:_*)
   .settings(
-    normalizedName := "moorka-core",
+    normalizedName := "moorka",
     scalaVersion := currentScalaVersion
   )
 
-lazy val coreJS = core.js
-lazy val coreJVM = core.jvm
+lazy val moorkaJS = moorka.js
+lazy val moorkaJVM = moorka.jvm
 
 lazy val vaska = crossProject
   .crossType(CrossType.Full)
   .jsSettings(utestSettingsJS:_*)
   .jsSettings(
-    //postLinkJSEnv in Test := PhantomJSEnv().value,
     libraryDependencies ++= Seq(
       "org.webjars" % "es6-shim" % "0.20.2" % "test"
     ),
@@ -75,24 +75,34 @@ lazy val vaska = crossProject
   .jvmSettings(utestSettingsJVM:_*)
   .settings(publishSettings:_*)
   .settings(commonSettings:_*)
-  .settings(
-    normalizedName := "vaska",
-    scalaVersion := currentScalaVersion
-  )
+  .settings(normalizedName := "vaska")
 
 val vaskaJS = vaska.js
 val vaskaJVM = vaska.jvm
 
-lazy val ui = (project in file("moorka-ui"))
-  .enablePlugins(ScalaJSPlugin)
+lazy val felix = crossProject
+  .crossType(CrossType.Full)
   .settings(publishSettings:_*)
   .settings(commonSettings:_*)
-  .settings(
-    normalizedName := "moorka-ui",
-    scalaVersion := currentScalaVersion
-  )
-  .dependsOn(coreJS)
-  .dependsOn(vaskaJS)
+  .settings(normalizedName := "felix")
+  .jsSettings(utestSettingsJS:_*)
+  .jsConfigure(_.dependsOn(vaskaJS, moorkaJS))
+  .jvmSettings(utestSettingsJVM:_*)
+  .jvmConfigure(_.dependsOn(vaskaJVM, moorkaJVM))
+
+val felixJS = felix.js
+val felixJVM = felix.jvm
+
+//lazy val ui = (project in file("moorka-ui"))
+//  .enablePlugins(ScalaJSPlugin)
+//  .settings(publishSettings:_*)
+//  .settings(commonSettings:_*)
+//  .settings(
+//    normalizedName := "moorka-ui",
+//    scalaVersion := currentScalaVersion
+//  )
+//  .dependsOn(coreJS)
+//  .dependsOn(vaskaJS)
 
 lazy val root = (project in file("."))
   .settings(dontPublish:_*)
@@ -100,8 +110,8 @@ lazy val root = (project in file("."))
     scalaVersion := currentScalaVersion
   )
   .aggregate(
-    ui,
+    felixJS, felixJVM,
     vaskaJS, vaskaJVM,
-    coreJS, coreJVM
+    moorkaJS, moorkaJVM
   )
 

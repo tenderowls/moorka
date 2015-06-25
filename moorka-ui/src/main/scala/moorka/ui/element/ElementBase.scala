@@ -37,7 +37,7 @@ trait ElementBase extends ElementEntry with Mortal with EventTarget {
 
     EventProcessor.registerElement(this)
   }
-  
+
   def kill(): Unit = {
     EventProcessor.deregisterElement(this)
     reaper.sweep()
