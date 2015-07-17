@@ -1,11 +1,10 @@
 package moorka.rx.base
 
-import moorka.rx.base.bindings.{Binding, StatefulBinding}
-import moorka.rx.base.ops.RxOps
-import moorka.rx.death.{Reaper, Mortal}
+import moorka.rx.base.bindings.{Binding, StatefulBinding, StatelessBinding}
+import moorka.rx.death.{Mortal, Reaper}
 
 object Var {
-  
+
   @inline
   @deprecated("Use withMod instead", "0.5.0")
   def withDefaultMod[A](x: A)(f: A ⇒ Rx[A])
@@ -26,10 +25,12 @@ object Var {
  */
 final case class Var[A](private[rx] var x: A)
                        (implicit reaper: Reaper = Reaper.nice)
-  extends Source[A] with StatefulSource[A] {
+  extends Source[A] with StatefulSource[A] with Binding[A] {
 
   reaper.mark(this)
-  
+
+  def run(x: A): Unit = ()
+
   override private[rx] def update(v: A) = {
     if (_alive && x != v) {
       x = v
@@ -37,51 +38,35 @@ final case class Var[A](private[rx] var x: A)
     }
   }
 
-  private var mods = List.empty[VarHelper.Mod[A]]
+  private var currentModBindings = List.empty[Mortal]
 
-  private def removeMod(x: VarHelper.Mod[A]) = {
-    mods = mods.filter(_ == x)
-  }
-
-  private[rx] def mod(f: A ⇒ Rx[A])(implicit reaper: Reaper = Reaper.nice): Mortal = {
-    val mod = new VarHelper.Mod(f, removeMod)
+  private[rx] def mod(f: A ⇒ Rx[A])(implicit reaper: Reaper = Reaper.nice): Unit = {
     def listenMod(ignoreStatefulBehavior: Boolean): Unit = {
-      addUpstream {
-        val rx = mod(x) match {
-          case modX: StatefulSource[A] if ignoreStatefulBehavior ⇒
-            new Binding[A, A](modX, x ⇒ Val(x))
-          case modX ⇒ modX
-        }
-        rx match {
-          case Killer ⇒
-            kill()
-            Dummy
-          case _ ⇒
-            new RxOps(rx).until { v ⇒
-              if (v != x) {
+      withContext(currentModBindings) {
+        currentModBindings = List {
+          val rx = f(x) match {
+            case modX: StatefulSource[A] if ignoreStatefulBehavior ⇒
+              new StatelessBinding[A, A](modX, x ⇒ Val(x))
+            case modX ⇒ modX
+          }
+          rx match {
+            case Killer ⇒
+              kill()
+              Dummy
+            case _ ⇒
+              rx once { v ⇒
                 update(v)
-                cleanupUpstreams()
                 listenMod(ignoreStatefulBehavior = true)
-                false
               }
-              else true
-            }
+          }
         }
       }
     }
-    mods ::= mod
     listenMod(ignoreStatefulBehavior = false)
-    mod
   }
 
   def modOnce(f: A ⇒ Rx[A]): Unit = {
-    addUpstream {
-      f(x) once { v ⇒
-        cleanupUpstreams()
-        update(v)
-      }
-    }
-    cleanupUpstreams()
+    currentModBindings = List(f(x).once(update))
   }
 
   override def flatMap[B](f: (A) => Rx[B])(implicit reaper: Reaper = Reaper.nice): Rx[B] = {
@@ -102,18 +87,6 @@ final case class Var[A](private[rx] var x: A)
 
   override def kill(): Unit = {
     super.kill()
-    mods = Nil
+    currentModBindings.foreach(_.kill())
   }
-}
-
-private object VarHelper {
-
-  final class Mod[A](f: A ⇒ Rx[A], killF: Mod[A] ⇒ Unit)
-    extends (A => Rx[A]) with Mortal {
-
-    @inline def apply(x: A) = f(x)
-
-    def kill() = killF(this)
-  }
-
 }

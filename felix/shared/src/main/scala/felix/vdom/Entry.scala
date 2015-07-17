@@ -1,4 +1,4 @@
-package felix.dom
+package felix.vdom
 
 /**
  * Base trait to all tag entities

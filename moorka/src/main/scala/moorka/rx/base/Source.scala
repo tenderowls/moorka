@@ -1,6 +1,7 @@
 package moorka.rx.base
 
-import moorka.rx.base.bindings.Binding
+import moorka.rx.base.bindings.{Binding, OnceBinding}
+import moorka.rx.death.Reaper
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -16,7 +17,7 @@ trait Source[A] extends Rx[A] {
    * all bindings will get a new value
    * @see [[flatMap]]
    */
-  private[rx] var bindings = List.empty[Binding[A, _]]
+  private[rx] var bindings = List.empty[Binding[A]]
 
   /**
    * List of values this source depends on.
@@ -49,11 +50,11 @@ trait Source[A] extends Rx[A] {
     }
   }
 
-  private[rx] def attachBinding(b: Binding[A, _]) = {
+  private[rx] def attachBinding(b: Binding[A]) = {
     bindings ::= b
   }
 
-  private[rx] def detachBinding(b: Binding[A, _]) = {
+  private[rx] def detachBinding(b: Binding[A]) = {
     bindings = bindings.filter(_ != b)
   }
 
@@ -74,6 +75,14 @@ trait Source[A] extends Rx[A] {
 
   def pullOnce(rx: Rx[A]) = rx once { data ⇒
     update(data)
+  }
+
+  override def once[U](f: (A) => U)(implicit reaper: Reaper): Rx[Unit] = {
+    if (_alive) {
+      reaper.mark(new OnceBinding[A, U](this, f))
+    } else {
+      Dummy
+    }
   }
 
   def kill() = {

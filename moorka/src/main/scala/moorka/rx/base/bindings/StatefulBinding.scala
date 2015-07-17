@@ -9,7 +9,7 @@ import moorka.rx.death.Reaper
 private[rx] class StatefulBinding[From, To](initialValue: Option[From],
                                             parent: Source[From],
                                             lambda: From ⇒ Rx[To])
-  extends Binding[From, To](parent, lambda) 
+  extends StatelessBinding[From, To](parent, lambda)
   with StatefulSource[To] {
 
   var state: Option[To] = None
@@ -27,12 +27,25 @@ private[rx] class StatefulBinding[From, To](initialValue: Option[From],
       reaper.mark(new StatefulBinding(state, this, f))
     }
     else {
-      state match {
-        case Some(x) ⇒ f(x)
-        case None ⇒ Dummy
-      }
+      state.fold[Rx[B]](Dummy)(f)
     }
   }
 
+  override def once[U](f: (To) => U)(implicit reaper: Reaper): Rx[Unit] = {
+    if (_alive) {
+      val binding = new OnceBinding(this, f)
+      reaper.mark(binding)
+      state.foreach(binding.run)
+      binding
+    } else {
+      state match {
+        case Some(x) ⇒ 
+          f(x)
+          Dummy
+        case None ⇒ Dummy
+      }
+    } 
+  }
+  
   initialValue foreach run
 }

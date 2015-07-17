@@ -1,4 +1,4 @@
-package felix.dom
+package felix.vdom
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>

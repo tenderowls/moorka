@@ -1,6 +1,7 @@
 package moorka.rx.base.ops
 
 import moorka.rx.base._
+import moorka.rx.base.bindings.StatelessBinding
 import moorka.rx.death.Reaper
 
 import scala.concurrent._
@@ -67,8 +68,8 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
   def or[B](b: Rx[B])
            (implicit reaper: Reaper = Reaper.nice): Rx[Either[A, B]] = {
     val rx = Channel[Either[A, B]]()
-    val left: Rx[Either[A, B]] = self >>= (x ⇒ Val(Left(x)))
-    val right: Rx[Either[A, B]] = b >>= (x ⇒ Val(Right(x)))
+    val left: Rx[Either[A, B]] = self.map(Left(_))
+    val right: Rx[Either[A, B]] = b.map(Right(_))
     rx.pull(left)
     rx.pull(right)
     rx
@@ -84,12 +85,6 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
         Dummy
       }
     }
-  }
-
-  def stateful(implicit reaper: Reaper = Reaper.nice): Rx[Option[A]] = {
-    val state = Var[Option[A]](None)
-    state.pull(self.map(Some(_)))
-    state
   }
 
   def switch[L, R](f: A ⇒ Either[L, R])

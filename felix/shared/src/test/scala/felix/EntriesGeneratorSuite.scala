@@ -1,4 +1,5 @@
-import felix._
+package felix
+
 import felix.core.FelixSystem
 import moorka.rx.base.{Val, Var}
 import utest.{TestSuite, TestableString, assert}
@@ -50,20 +51,20 @@ object EntriesGeneratorSuite extends TestSuite {
         'mySpan('className := "secondSpan", 'disabled attr)
       )
       type S = String
-      //println(buffer)
       utest.assertMatch(buffer) {
         case Seq(
         Seq(_, "callAndSaveAs", "@link:^Felix", "createElementAndSetId", _, "span", span1: S),
         Seq(_, "call", setAttributeLink: S, "setAttribute", "name", "firstSpan"),
+        Seq(_, "registerCallback", _),
         Seq(_, "callAndSaveAs", "@link:^Felix", "createElementAndSetId", _, "my-span", span2: S),
-        Seq(_, "set", setPropertyLink: S, "class-name", "secondSpan"),
+        Seq(_, "set", setPropertyLink: S, "className", "secondSpan"),
         Seq(_, "call", _, "setAttribute", "disabled"),
         Seq(_, "callAndSaveAs", "@link:^Felix", "createElementAndSetId", _, "div", div: S),
         Seq(_, "call", "@link:^Felix", "appendChildren", appendLink: S, Seq(fcLink: S, "Hello", scLink:S)))
           if appendLink.endsWith(div) &&
              setAttributeLink.endsWith(span1) &&
              setPropertyLink.endsWith(span2) &&
-             fcLink.endsWith(span1) && 
+             fcLink.endsWith(span1) &&
              scLink.endsWith(span2) ⇒
       }
     }

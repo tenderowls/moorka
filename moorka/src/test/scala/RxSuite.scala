@@ -142,6 +142,7 @@ object RxSuite extends TestSuite {
         System.gc()
         assert(calls == 1)
       }
+
       "until() should kill after f returns false" - {
         var calls = 0
         val ch = Channel[Int]()
@@ -251,7 +252,7 @@ object RxSuite extends TestSuite {
               click >>= { z ⇒
                 Lazy {
                   evalCalls += 1
-                  x() + y() + z()
+                  x.eval() + y.eval() + z.eval()
                 }
               }
             }
@@ -260,7 +261,7 @@ object RxSuite extends TestSuite {
         System.gc()
         res foreach { x ⇒
           calls += 1
-          assert(x() == 6)
+          assert(x.eval() == 6)
         }
         System.gc()
         vy.pull(Lazy(2))
@@ -449,6 +450,32 @@ object RxSuite extends TestSuite {
         assert(x == "BFailure")
         assert(!res.alive)
       }
+    }
+    
+    "check Var ignore side effects when state was changed twice" - {
+      val state = Var(0d)
+      val changesChannel1 = Channel.signal()
+      val changesChannel2 = state.stateless
+      var bug = false
+      Var.withMod(0) {
+        case 0 ⇒
+          changesChannel1 or changesChannel2 map {
+            case Left(_) ⇒ 2
+            case Right(_) ⇒ 1
+          }
+        case 1 ⇒ // Writing
+          bug = true
+          Dummy
+        case 2 ⇒ // Updating
+          Val(0)
+      } foreach {
+        case 2 ⇒
+          state.pull(Val(Math.random()))
+        case _ ⇒
+      }
+      changesChannel1.fire()
+      changesChannel1.fire()
+      assert(!bug)
     }
   }
 }

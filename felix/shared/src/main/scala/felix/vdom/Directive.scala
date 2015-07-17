@@ -1,4 +1,4 @@
-package felix.dom
+package felix.vdom
 
 import moorka.rx.Mortal
 
@@ -7,5 +7,4 @@ import moorka.rx.Mortal
  */
 trait Directive extends Entry with Mortal {
   def affect(element: Element)
-  
 }

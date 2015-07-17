@@ -58,7 +58,7 @@ final class BufferOps[A](val self: BufferView[A]) extends AnyVal {
       state pull {
         ch map { _ =>
           var result = z
-          asSeq foreach (x => result = op(result, x))
+          toSeq foreach (x => result = op(result, x))
           result
         }
       }
@@ -90,11 +90,14 @@ final class BufferOps[A](val self: BufferView[A]) extends AnyVal {
     count
   }
 
+  @deprecated("Use toSeq against asSeq", "0.6.0")
+  @inline def asSeq: Seq[A] = toSeq
+
   /**
    * Converts to standard scala immutable sequence
    */
-  def asSeq: Seq[A] = {
+  def toSeq: Seq[A] = {
     for (i <- 0 until self.length)
-    yield self(i)
+      yield self(i)
   }
 }

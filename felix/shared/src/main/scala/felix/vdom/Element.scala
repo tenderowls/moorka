@@ -1,7 +1,6 @@
-package felix.dom
+package felix.vdom
 
-import felix.core.{ElementRef, FelixSystem}
-import felix.event.EventTarget
+import felix.core.{EventTarget, FelixSystem}
 import moorka.rx.Mortal
 import moorka.rx.death.Reaper
 
@@ -16,9 +15,12 @@ class Element(tag: String, system: FelixSystem) extends Entry with Mortal with E
   implicit val reaper = Reaper()
 
   val ref = new ElementRef(tag)(system)
-
-  def append(entries: Seq[Entry]): Element = {
+  
+  def refId = ref.id
+  
+  def append(entries: Seq[Entry]): this.type = {
     val childrenRefs = mutable.Buffer.empty[Any]
+    val directives = mutable.Buffer.empty[Directive]
     entries foreach {
       case element: Element ⇒
         reaper.mark(element)
@@ -26,19 +28,22 @@ class Element(tag: String, system: FelixSystem) extends Entry with Mortal with E
         childrenRefs += element.ref
       case directive: Directive ⇒
         reaper.mark(directive)
-        directive.affect(this)
+        directives += directive
       case TextEntry(s) ⇒ childrenRefs += s
       case Elements(xs) ⇒ childrenRefs ++= xs.map(_.ref)
     }
     if (childrenRefs.nonEmpty) {
       system.utils.call[Unit]("appendChildren", ref, childrenRefs)
     }
-    //EventProcessor.deregisterElement(this)
+    for (directive ← directives) {
+      directive.affect(this)
+    }
+    system.eventProcessor.registerElement(this)
     this
   }
-  
+
   def kill(): Unit = {
-    //EventProcessor.deregisterElement(this)
+    system.eventProcessor.unregisterElement(this)
     reaper.sweep()
     ref.free()
   }

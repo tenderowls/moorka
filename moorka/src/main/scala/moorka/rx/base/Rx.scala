@@ -1,6 +1,8 @@
 package moorka.rx.base
 
-import moorka.rx.death.{Reaper, Mortal}
+import moorka.rx.Mortal
+import moorka.rx.base.bindings.{Binding, StatelessBinding}
+import moorka.rx.death.Reaper
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>

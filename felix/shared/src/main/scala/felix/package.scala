@@ -1,11 +1,12 @@
-import felix.dom._
+import felix.dsl.{HtmlHelpers, EntriesGenerator}
+import felix.vdom._
 
 import scala.language.implicitConversions
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-package object felix {
+package object felix extends HtmlHelpers {
 
   implicit def toEntriesGenerator(x: Symbol): EntriesGenerator = new EntriesGenerator(x)
 

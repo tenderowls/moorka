@@ -176,6 +176,38 @@ var Vaska = (function (global) {
       });
     }
 
+    function receiveGet(reqId, args, cb) {
+      var obj = args[0],
+        res = null,
+        err = null;
+      if (obj) {
+        res = obj[args[1]];
+        if (res === undefined) {
+          err = obj + "." + args[1] + " is undefined";
+          cb([reqId, false, err]);
+        } else {
+          cb([reqId, true, packResult(res)]);
+        }
+      } else {
+        cb([reqId, false, LinkNotFound]);
+      }
+    }
+    
+    function receiveGetAndSaveAs(reqId, args, cb) {
+      var newId = args[2];
+      receiveGet(reqId, args, function (callRes) {
+        var id = null;
+        callRes = callRes[2]
+        if (callRes.indexOf(ObjPrefix) !== -1) {
+          id = callRes.substring(ObjPrefix.length);
+          receiveSave(reqId, [getLink(id), newId], cb);
+        } else {
+          err = args[1] + ' returns ' + (typeof callRes);
+          cb([reqId, false, err]);
+        }
+      });
+    }
+    
     this.checkLinkExists = function (id) {
       return unpackArgs([LinkPrefix + id])[0] !== undefined;
     };
@@ -244,23 +276,11 @@ var Vaska = (function (global) {
         })();
         break;
       // Object methods
+      case 'getAndSaveAs':
+        receiveGetAndSaveAs(reqId, args, postMessage);
+        break;
       case 'get':
-        (function VaskaReceiveGet() {
-          var obj = args[0],
-            res = null,
-            err = null;
-          if (obj) {
-            res = obj[args[1]];
-            if (res === undefined) {
-              err = obj + "." + args[1] + " is undefined";
-              postMessage([reqId, false, err]);
-            } else {
-              postMessage([reqId, true, packResult(res)]);
-            }
-          } else {
-            postMessage([reqId, false, LinkNotFound]);
-          }
-        })();
+        receiveGet(reqId, args, postMessage);
         break;
       case 'set':
         (function VaskaReceiveSet() {

@@ -1,6 +1,6 @@
 package moorka
 
-import moorka.rx.base.ops.{RxSeqOps, RxOps}
+import moorka.rx.base.ops.{VarOps, RxSeqOps, RxOps}
 import moorka.rx.collection.ops.BufferOps
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,6 +38,8 @@ package object rx {
   implicit def ToRx[T](x: T): Rx[T] = Val(x)
 
   implicit def ToBufferOps[A](x: BufferView[A]): BufferOps[A] = new BufferOps(x)
+
+  implicit def ToVarOps[A](x: Var[A]): VarOps[A] = new VarOps(x)
 
   implicit def ToRxOps[A](x: Rx[A]): RxOps[A] = new RxOps(x)
 

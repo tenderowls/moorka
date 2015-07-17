@@ -1,6 +1,6 @@
 package moorka.rx.base
 
-import moorka.rx.base.bindings.Binding
+import moorka.rx.base.bindings.StatelessBinding
 import moorka.rx.death.Reaper
 
 /**
@@ -38,7 +38,7 @@ class Channel[A]() extends Source[A] {
 
   def flatMap[B](f: (A) => Rx[B])(implicit reaper: Reaper = Reaper.nice): Rx[B] = {
     if (_alive) {
-      reaper.mark(new Binding(this, f))
+      reaper.mark(new StatelessBinding(this, f))
     }
     else {
       Dummy

@@ -1,7 +1,8 @@
-package felix.core
+package felix.vdom
 
 import java.util.UUID
 
+import felix.core.FelixSystem
 import vaska.JSObj
 
 /**

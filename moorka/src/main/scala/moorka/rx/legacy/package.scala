@@ -1,7 +1,7 @@
 package moorka.rx
 
 import moorka.rx.base.Source
-import moorka.rx.base.bindings.{Binding, StatefulBinding}
+import moorka.rx.base.bindings.{StatelessBinding, StatefulBinding}
 
 import scala.language.postfixOps
 
@@ -43,7 +43,7 @@ package object legacy {
     def legacyUntil(f: A ⇒ Boolean): Rx[Unit] = {
       self match {
         case x: Source[A] ⇒
-          new Binding(x, f andThen { condition ⇒
+          new StatelessBinding(x, f andThen { condition ⇒
             if (condition) Dummy else Killer
           })
         case _ ⇒ throw new RxOperationException("This Rx is not source")

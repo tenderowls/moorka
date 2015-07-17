@@ -1,6 +1,6 @@
-package felix.dom.directives
+package felix.vdom.directives
 
-import felix.dom.{Directive, Element}
+import felix.vdom.{Directive, Element}
 import moorka.rx._
 
 /**

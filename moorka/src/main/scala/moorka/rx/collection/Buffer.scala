@@ -69,11 +69,14 @@ class Buffer[A](private var buffer: mutable.Buffer[A]) extends BufferView[A] {
   def remove(f: (A) => Boolean) = {
     val removedElems = mutable.Buffer[IndexedElement[A]]()
     var offset = 0
-    for (i <- 0 until buffer.length) {
+    for (i <- buffer.indices) {
       val j = i - offset
-      removedElems += IndexedElement(j, buffer(i))
-      buffer.remove(j)
-      offset += 1
+      val x = buffer(j)
+      if (!f(x)) {
+        removedElems += IndexedElement(j, x)
+        buffer.remove(j)
+        offset += 1
+      }
     }
     _length() = buffer.length
     for (x <- removedElems) {
@@ -102,7 +105,7 @@ class Buffer[A](private var buffer: mutable.Buffer[A]) extends BufferView[A] {
   }
 
   def updateAll(f: A => A) = {
-    val elements = this.asSeq
+    val elements = this.toSeq
     for (i <- 0 until _length.x) {
       val e = elements(i)
       update(i, f(e))

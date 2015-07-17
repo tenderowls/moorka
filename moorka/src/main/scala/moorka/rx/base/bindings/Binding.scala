@@ -1,58 +1,41 @@
 package moorka.rx.base.bindings
 
-import moorka.rx.base.{Dummy, Rx, Source}
-import moorka.rx.death.Reaper
+import moorka.rx.Mortal
+import moorka.rx.base.Source
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-private[rx] class Binding[From, To](val parent: Source[From],
-                                    lambda: From ⇒ Rx[To]) extends Source[To] {
+trait Binding[A] {
 
-  val bindingContext: Option[Rx[_]] = bindingStack.headOption
-  
-  def run(x: From) = {
+  val bindingContext: Option[Binding[_]] = bindingStack.headOption
+
+  def run(x: A): Unit
+
+  def withContext[U](dependencies: Seq[Mortal])(f: ⇒ U) = {
     // Cleanup upstreams
     val currentBindingStack = bindingStack
     currentBindingStack.push(this)
-    killUpstreams()
+    killDependencies(dependencies)
     try {
-      // Pull value from upstream
-      pull(lambda(x))
+      f
     }
     finally {
       currentBindingStack.pop()
     }
   }
 
-  parent.attachBinding(this)
-
-  override private[rx] def killUpstreams(): Unit = {
+  def killDependencies(dependencies: Seq[Mortal]): Unit = {
     val optionThis = Some(this)
-    upstreams foreach {
-      case upstream: Binding[_, _] ⇒
+    dependencies foreach {
+      case upstream: DependentBinding[_] ⇒
         upstream.parent match {
-          case binding: Binding[_, _] if binding.bindingContext == optionThis ⇒
-            binding.kill()
+          case binding: Binding[_] 
+            if binding.bindingContext == optionThis ⇒ binding.kill()
           case _ ⇒ ()
         }
         upstream.kill()
-      case x ⇒
-        x.kill()
-    }
-  }
-
-  override def kill(): Unit = {
-    parent.detachBinding(this)
-    super.kill()
-  }
-
-  def flatMap[B](f: (To) => Rx[B])(implicit reaper: Reaper = Reaper.nice): Rx[B] = {
-    if (_alive) {
-      reaper.mark(new Binding(this, f))
-    }
-    else {
-      Dummy
+      case x ⇒ x.kill()
     }
   }
 }

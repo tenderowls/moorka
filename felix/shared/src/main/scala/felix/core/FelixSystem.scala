@@ -1,8 +1,6 @@
 package felix.core
 
-import java.util.UUID
-
-import vaska.{JSAccess, JSObj}
+import vaska.JSAccess
 
 import scala.concurrent.ExecutionContext
 
@@ -12,10 +10,11 @@ object FelixSystem {
   val FelixObjectId = "^Felix"
   val DocumentObjectName = "document"
   val DocumentObjectId = "^document"
-  
+
   object utils {
     val CreateElementAndSetId = "createElementAndSetId"
   }
+
 }
 
 /**
@@ -26,7 +25,7 @@ trait FelixSystem {
   import FelixSystem._
 
   val ec: ExecutionContext
-  
+
   val jsAccess: JSAccess
 
   lazy val global = jsAccess.obj(GlobalObjectName)
@@ -39,5 +38,9 @@ trait FelixSystem {
   lazy val utils = {
     global.getAndSaveAs(FelixObjectName, FelixObjectId)
     jsAccess.obj(FelixObjectId)
+  }
+
+  lazy val eventProcessor = {
+    new EventProcessor(jsAccess, document, utils)(ec)
   }
 }
