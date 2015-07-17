@@ -44,8 +44,8 @@ trait Source[A] extends Rx[A] {
    * Broadcast `v` to bindings. Removes bindings dropped by GC.
    * @param v new value
    */
-  private[rx] def update(v: A): Unit = {
-    if (_alive) {
+  private[rx] def update(v: A, silent: Boolean = false): Unit = {
+    if (_alive && !silent) {
       bindings.foreach(_.run(v))
     }
   }
@@ -61,16 +61,13 @@ trait Source[A] extends Rx[A] {
   @inline def <<=(rx: Rx[A]) = pull(rx)
 
   def pull(rx: Rx[A]) = rx match {
-    case Val(x) ⇒
-      update(x)
-    case Killer ⇒
-      kill()
-    case Dummy ⇒
-    // Do nothing
-    case upstream ⇒
-      addUpstream {
-        upstream foreach update
-      }
+    case Val(x) ⇒ update(x, silent = false)
+    case Silent(some) ⇒ update(some, silent = true)
+    case Killer ⇒ kill()
+    case Dummy ⇒ // Do nothing
+    case value ⇒
+      val upstream = value.foreach(update(_, silent = false))
+      addUpstream(upstream)
   }
 
   def pullOnce(rx: Rx[A]) = rx once { data ⇒

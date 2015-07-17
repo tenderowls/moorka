@@ -64,23 +64,17 @@ object PropertyDirective {
       }
       Var.withMod(TwoWayBindingState.empty[T]) {
         case Idle ⇒
-          println("PropertyDirective in Idle")
           changesFromDom or changesFromVar map {
-            case Left(x) ⇒ 
-              Update(x)
-            case Right(x) ⇒
-              println(s"PropertyDirective move to Writing($x)")
-              Writing(x)
+            case Left(x) ⇒ Update(x)
+            case Right(x) ⇒ Writing(x)
           }
         case Writing(x) ⇒
-          println(s"PropertyDirective in Writing($x)")
           element.ref.set(name, x).toRx or changesFromVar map {
             case Left(_) ⇒ Idle
             case Right(updatedX) ⇒ Writing(updatedX)
           }
         case Update(x) ⇒
-          println(s"PropertyDirective in Update($x)")
-          aVar.pull(Val(x))
+          aVar.pull(Silent(x))
           Val(Idle)
       }
     }

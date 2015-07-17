@@ -1,14 +1,11 @@
 package moorka.rx.base.bindings
 
 import moorka.rx.Mortal
-import moorka.rx.base.Source
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 trait Binding[A] {
-
-  val bindingContext: Option[Binding[_]] = bindingStack.headOption
 
   def run(x: A): Unit
 
@@ -28,9 +25,9 @@ trait Binding[A] {
   def killDependencies(dependencies: Seq[Mortal]): Unit = {
     val optionThis = Some(this)
     dependencies foreach {
-      case upstream: DependentBinding[_] ⇒
+      case upstream: HasBindingContext[_] ⇒
         upstream.parent match {
-          case binding: Binding[_] 
+          case binding: HasBindingContext[_]
             if binding.bindingContext == optionThis ⇒ binding.kill()
           case _ ⇒ ()
         }

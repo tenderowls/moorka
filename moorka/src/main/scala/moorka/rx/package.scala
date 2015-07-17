@@ -15,6 +15,7 @@ package object rx {
   type Channel[A] = base.Channel[A]
   @deprecated("Use Rx instead State", "0.4.0")
   type State[A] = base.Rx[A]
+  type Silent[A] = base.Silent[A]
   type Var[A] = base.Var[A]
   type Lazy[A] = base.Lazy[A]
   type Rx[A] = base.Rx[A]
@@ -24,6 +25,7 @@ package object rx {
   val Var = base.Var
   val Val = base.Val
   val Dummy = base.Dummy
+  val Silent = base.Silent
   val Killer = base.Killer
   val Lazy = base.Lazy
 

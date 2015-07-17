@@ -1,7 +1,6 @@
 package moorka.rx.base.ops
 
 import moorka.rx.base._
-import moorka.rx.base.bindings.StatelessBinding
 import moorka.rx.death.Reaper
 
 import scala.concurrent._
@@ -56,14 +55,14 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
     channel
   }
 
-  def fold[B](z: B)(op: (B, A) => B)
-             (implicit reaper: Reaper = Reaper.nice): Rx[B] = {
-    Var.withMod(z) { b =>
-      self >>= { a =>
-        Val(op(b, a))
-      }
-    }
-  }
+//  def fold[B](z: B)(op: (B, A) => B)
+//             (implicit reaper: Reaper = Reaper.nice): Rx[B] = {
+//    Var.withMod(z) { b =>
+//      self >>= { a =>
+//        Val(op(b, a))
+//      }
+//    }
+//  }
 
   def or[B](b: Rx[B])
            (implicit reaper: Reaper = Reaper.nice): Rx[Either[A, B]] = {

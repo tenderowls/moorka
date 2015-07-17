@@ -14,11 +14,11 @@ private[rx] class StatefulBinding[From, To](initialValue: Option[From],
 
   var state: Option[To] = None
 
-  override private[rx] def update(v: To): Unit = {
+  override private[rx] def update(v: To, silent: Boolean = false): Unit = {
     val optionV = Some(v)
-    if (_alive && state != optionV) {
+    if (_alive && state != optionV && !silent) {
       state = optionV
-      super.update(v)
+      super.update(v, silent)
     }
   }
 

@@ -8,7 +8,8 @@ import moorka.rx.{Dummy, Reaper, Rx}
  */
 class OnceBinding[A, U](val parent: Source[A], lambda: A ⇒ U) 
   extends Rx[Unit] 
-  with DependentBinding[A] {
+  with HasBindingContext[A]
+  with Binding[A] {
  
   var isAlive = true
  

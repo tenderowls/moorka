@@ -61,6 +61,15 @@ trait Rx[+A] extends Mortal {
   }
 }
 
+final case class Silent[+A](x: A) extends Rx[A] {
+
+  def flatMap[B](f: (A) => Rx[B])(implicit reaper: Reaper = Reaper.nice): Rx[B] = f(x)
+
+  def kill(): Unit = ()
+
+  def alive: Boolean = true
+}
+
 final case class Val[+A](x: A) extends Rx[A] {
 
   def flatMap[B](f: (A) => Rx[B])(implicit reaper: Reaper = Reaper.nice): Rx[B] = f(x)

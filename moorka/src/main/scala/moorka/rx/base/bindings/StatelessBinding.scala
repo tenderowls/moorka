@@ -9,7 +9,8 @@ import moorka.rx.death.Reaper
 private[rx] class StatelessBinding[From, To](val parent: Source[From],
                                     lambda: From ⇒ Rx[To]) 
   extends Source[To]
-  with DependentBinding[From] {
+  with Binding[From]
+  with HasBindingContext[From] {
 
   def run(x: From): Unit = {
     withContext(upstreams) {

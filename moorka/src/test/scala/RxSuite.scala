@@ -1,5 +1,4 @@
 import moorka.rx._
-import moorka.rx.base.Killer
 import utest._
 
 import scala.concurrent.Promise
@@ -114,14 +113,19 @@ object RxSuite extends TestSuite {
           case x if x > 0 ⇒
             x.toString
         } foreach { x ⇒
+          calls match {
+            case 0 ⇒ assert(x == "1")
+            case 1 ⇒ assert(x == "2")
+          }
           calls += 1
-          assert(x == "1")
         }
         System.gc()
         ch.pull(0)
         System.gc()
         ch.pull(1)
-        assert(calls == 1)
+        ch.pull(-1)
+        ch.pull(2)
+        assert(calls == 2)
       }
     }
 
@@ -337,30 +341,30 @@ object RxSuite extends TestSuite {
       x.pull(4)
     }
 
-    "check fold() on Var" - {
-      val x = Var("I")
-      val res = x.fold("")(_ + " " + _)
-      System.gc()
-      x.pull("am")
-      x.pull("cow")
-      res.foreach { x =>
-        assert(x == " I am cow")
-      }
-      ()
-    }
+//    "check fold() on Var" - {
+//      val x = Var("I")
+//      val res = x.fold("")(_ + " " + _)
+//      System.gc()
+//      x.pull("am")
+//      x.pull("cow")
+//      res.foreach { x =>
+//        assert(x == " I am cow")
+//      }
+//      ()
+//    }
 
-    "check fold() on Channel" - {
-      val x = Channel[String]()
-      val res = x.fold("")(_ + " " + _)
-      System.gc()
-      x.pull("I")
-      x.pull("am")
-      x.pull("cow")
-      res.foreach { x =>
-        assert(x == " I am cow")
-      }
-      ()
-    }
+//    "check fold() on Channel" - {
+//      val x = Channel[String]()
+//      val res = x.fold("")(_ + " " + _)
+//      System.gc()
+//      x.pull("I")
+//      x.pull("am")
+//      x.pull("cow")
+//      res.foreach { x =>
+//        assert(x == " I am cow")
+//      }
+//      ()
+//    }
 
     "check switch" - {
       val a = Channel[Int]()
@@ -409,7 +413,7 @@ object RxSuite extends TestSuite {
     def complexWithModBehavior() = {
       val promise = Promise[Boolean]()
       val dependency = Var[String]("AIdle")
-      lazy val collectDependency = {
+      val collectDependency = {
         dependency collect {
           case x if x startsWith "AProgress" ⇒ "BProgress"
           case "ASuccess" ⇒ "BSuccess"
@@ -431,11 +435,11 @@ object RxSuite extends TestSuite {
     "check complex withMod behavior 1" - {
       val (promise, dependency, res) = complexWithModBehavior()
       promise.success(true)
-      dependency.pull("AProgress 10")
-      dependency.pull("AProgress 12")
-      dependency.pull("AProgress 24")
-      dependency.pull("AProgress 100")
-      dependency.pull("ASuccess")
+      dependency.pull(Val("AProgress 10"))
+      dependency.pull(Val("AProgress 12"))
+      dependency.pull(Val("AProgress 24"))
+      dependency.pull(Val("AProgress 100"))
+      dependency.pull(Val("ASuccess"))
 
       res once { x ⇒
         assert(x == "BSuccess")
@@ -470,7 +474,7 @@ object RxSuite extends TestSuite {
           Val(0)
       } foreach {
         case 2 ⇒
-          state.pull(Val(Math.random()))
+          state.pull(Silent(Math.random()))
         case _ ⇒
       }
       changesChannel1.fire()
