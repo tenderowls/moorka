@@ -1,4 +1,4 @@
-package felix.components
+package felix.dsl
 
 import felix.vdom.{Directive, Element}
 import moorka.rx._

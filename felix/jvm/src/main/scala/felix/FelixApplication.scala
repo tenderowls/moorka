@@ -1,8 +1,6 @@
-package moorka.rx.death
+package felix
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-trait Mortal {
-  def kill(): Unit
-}
+trait FelixApplication extends Component

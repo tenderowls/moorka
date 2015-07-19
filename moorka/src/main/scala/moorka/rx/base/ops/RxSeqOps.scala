@@ -22,7 +22,7 @@ final class RxSeqOps[A](val self: Rx[Seq[A]]) extends AnyVal {
               this.remove(0)
           case _ ⇒
         }
-        for (i ← 0 until s.length) {
+        for (i ← s.indices) {
           this(i) = s(i)
         }
       }

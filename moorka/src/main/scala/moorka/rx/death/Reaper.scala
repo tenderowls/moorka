@@ -18,7 +18,10 @@ object Reaper {
     private var mortals: List[Mortal] = Nil
 
     def mark[T <: Mortal](mortal: T): T = {
-      mortals ::= mortal
+      mortals = mortal :: mortals collect {
+        case value: Alive if value.alive ⇒ value
+        case value ⇒ value
+      }
       mortal
     }
 

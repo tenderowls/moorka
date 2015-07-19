@@ -10,7 +10,7 @@ import scala.collection.mutable
  * DOM element representation
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class Element(tag: String, system: FelixSystem) extends Entry with Mortal with EventTarget {
+class Element(tag: String, system: FelixSystem) extends NodeLike with Mortal with EventTarget {
 
   implicit val reaper = Reaper()
 
@@ -22,10 +22,10 @@ class Element(tag: String, system: FelixSystem) extends Entry with Mortal with E
     val childrenRefs = mutable.Buffer.empty[Any]
     val directives = mutable.Buffer.empty[Directive]
     entries foreach {
-      case element: Element ⇒
-        reaper.mark(element)
-        element.parent = Some(this)
-        childrenRefs += element.ref
+      case nl: NodeLike ⇒
+        reaper.mark(nl)
+        nl.setParent(Some(this))
+        childrenRefs += nl.ref
       case directive: Directive ⇒
         reaper.mark(directive)
         directives += directive
@@ -40,6 +40,10 @@ class Element(tag: String, system: FelixSystem) extends Entry with Mortal with E
     }
     system.eventProcessor.registerElement(this)
     this
+  }
+
+  def setParent(value: Option[EventTarget]): Unit = {
+    parent = value
   }
 
   def kill(): Unit = {

@@ -1,16 +1,12 @@
 package moorka.rx.base
 
-import moorka.rx.Mortal
-import moorka.rx.base.bindings.{Binding, StatelessBinding}
-import moorka.rx.death.Reaper
+import moorka.rx.death.{Alive, Reaper}
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-trait Rx[+A] extends Mortal {
+trait Rx[+A] extends Alive {
 
-  def alive: Boolean 
-  
   @inline final def >>=[B](f: A ⇒ Rx[B])(implicit reaper: Reaper = Reaper.nice): Rx[B] = flatMap(f)
 
   /**

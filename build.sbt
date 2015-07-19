@@ -61,6 +61,9 @@ lazy val moorkaJVM = moorka.jvm
 
 lazy val vaska = crossProject
   .crossType(CrossType.Full)
+  .settings(
+    unmanagedResourceDirectories in Compile += file("vaska") / "shared" / "src" / "main" / "resources"
+  )
   .jsSettings(utestSettingsJS:_*)
   .jsSettings(
     libraryDependencies ++= Seq(
@@ -84,10 +87,16 @@ lazy val felix = crossProject
   .crossType(CrossType.Full)
   .settings(publishSettings:_*)
   .settings(commonSettings:_*)
-  .settings(normalizedName := "felix")
+  .settings(
+    normalizedName := "felix",
+    unmanagedResourceDirectories in Compile += file("felix") / "shared" / "src" / "main" / "resources"
+  )
   .jsSettings(utestSettingsJS:_*)
   .jsConfigure(_.dependsOn(vaskaJS, moorkaJS))
   .jvmSettings(utestSettingsJVM:_*)
+  .jvmSettings(
+    libraryDependencies += "org.java-websocket" % "Java-WebSocket" % "1.3.0"
+  )
   .jvmConfigure(_.dependsOn(vaskaJVM, moorkaJVM))
 
 val felixJS = felix.js

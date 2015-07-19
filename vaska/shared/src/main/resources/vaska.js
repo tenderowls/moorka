@@ -196,7 +196,7 @@ var Vaska = (function (global) {
     function receiveGetAndSaveAs(reqId, args, cb) {
       var newId = args[2];
       receiveGet(reqId, args, function (callRes) {
-        var id = null;
+        var id = null, err;
         callRes = callRes[2]
         if (callRes.indexOf(ObjPrefix) !== -1) {
           id = callRes.substring(ObjPrefix.length);
@@ -388,8 +388,12 @@ var Vaska = (function (global) {
     webSocket: function (url) {
       return new Promise(function (resolve, reject) {
         var ws = new WebSocket(url),
-          vaska = new Vaska(ws.send);
-        ws.addEventListener('message', vaska.receive);
+          vaska = new Vaska(function (data) {
+            ws.send(JSON.stringify(data));
+          });
+        ws.addEventListener('message', function (event) {
+          vaska.receive(JSON.parse(event.data));
+        });
         ws.addEventListener('error', reject);
         vaska.initialized.then(function () {
           resolve(vaska);
