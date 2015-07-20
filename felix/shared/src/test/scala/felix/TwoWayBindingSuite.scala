@@ -1,6 +1,5 @@
 package felix
 
-import felix.core.FelixSystem
 import utest._
 import vaska.JSAccess
 

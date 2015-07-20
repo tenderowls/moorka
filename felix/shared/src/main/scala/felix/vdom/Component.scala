@@ -3,6 +3,8 @@ package felix.vdom
 import felix.core.{EventTarget, FelixSystem}
 import moorka.rx.death.{Mortal, Reaper}
 
+import scala.concurrent.ExecutionContext
+
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
@@ -10,13 +12,13 @@ trait Component extends NodeLike with Mortal {
 
   implicit def system: FelixSystem
 
-  implicit def ec = system.ec
+  implicit def ec: ExecutionContext = system.ec
 
   implicit val reaper = Reaper()
 
   private lazy val element = start
 
-  def ref = element.ref
+  def ref: ElementRef = element.ref
 
   def start: Element
 

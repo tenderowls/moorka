@@ -29,7 +29,7 @@ trait Rx[+A] extends Alive {
 
   /**
    * Similar to foreach but call lambda once 
-   * @see [[foreach]] 
+   * @see [[foreach]]
    */
   def once[U](f: A ⇒ U)(implicit reaper: Reaper = Reaper.nice): Rx[Unit] = {
     flatMap { x ⇒
@@ -76,19 +76,19 @@ final case class Val[+A](x: A) extends Rx[A] {
 }
 
 case object Dummy extends Rx[Nothing] {
-  
+
   def flatMap[B](f: Nothing ⇒ Rx[B])(implicit reaper: Reaper = Reaper.nice): Rx[B] = Dummy
 
-  def kill() = ()
+  def kill(): Unit = ()
 
   def alive: Boolean = false
 }
 
 case object Killer extends Rx[Nothing] {
-  
+
   def flatMap[B](f: Nothing ⇒ Rx[B])(implicit reaper: Reaper = Reaper.nice): Rx[B] = Dummy
 
-  def kill() = ()
+  def kill(): Unit = ()
 
   def alive: Boolean = false
 }

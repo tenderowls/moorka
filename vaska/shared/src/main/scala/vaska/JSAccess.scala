@@ -5,7 +5,9 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 object JSAccess {
 
   class JSSideException(message: String) extends Exception(message)
+
   final class JSSideErrorCode(val code: Int) extends JSSideException(s"Error code $code")
+
   final class JSSideUnrecognizedException() extends JSSideException("Unrecognized exception")
 
   val LinkPrefix = "@link:"
@@ -62,11 +64,11 @@ trait JSAccess {
     try {
       // Pack result and send
       send(packArgs(Seq(requestId) ++ args))
-    } 
+    }
     catch {
       case exception: Throwable ⇒
         promise.failure(exception)
-    } 
+    }
     // Unpack result
     promise.future map unpackArg[A]
   }
@@ -85,9 +87,9 @@ trait JSAccess {
     }
   }
 
-  def platformDependentPack(value: Any) = value
+  def platformDependentPack(value: Any): Any = value
 
-  def platformDependentUnpack(value: Any) = value
+  def platformDependentUnpack(value: Any): Any = value
 
   def packArgs(args: Seq[Any]): Seq[Any] = args collect {
     case anyLink: JSLink ⇒ LinkPrefix + anyLink.id
@@ -96,7 +98,7 @@ trait JSAccess {
     case otherwise ⇒ platformDependentPack(otherwise)
   }
 
-  def unpackArg[A](arg: Any) = arg match {
+  def unpackArg[A](arg: Any): A = arg match {
     case s: String if s.startsWith(ObjPrefix) ⇒
       val id = s.stripPrefix(ObjPrefix)
       obj(id).asInstanceOf[A]
@@ -110,7 +112,7 @@ trait JSAccess {
         asInstanceOf[A]
   }
 
-  def resolvePromise(reqId: Int, isSuccess: Boolean, res: Any) = {
+  def resolvePromise(reqId: Int, isSuccess: Boolean, res: Any): Unit = {
     promises.get(reqId) match {
       case Some(promise) ⇒
         if (isSuccess) {
@@ -129,7 +131,7 @@ trait JSAccess {
     }
   }
 
-  def fireCallback(callbackId: String, arg: Any) = {
+  def fireCallback(callbackId: String, arg: Any): Unit = {
     callbacks(callbackId)(unpackArg(arg))
   }
 

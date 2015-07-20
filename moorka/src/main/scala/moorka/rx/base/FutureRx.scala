@@ -9,8 +9,9 @@ import scala.util.{Success, Try}
  */
 final class FutureRx[A](rx: Rx[A]) extends Future[A] {
 
-  private val reaper = moorka.rx.Reaper()
-  private var savedValue: Option[A] = None
+  private[this] val reaper = moorka.rx.Reaper()
+
+  private[this] var savedValue: Option[A] = None
 
   reaper mark {
     rx once { x ⇒
@@ -46,9 +47,13 @@ final class FutureRx[A](rx: Rx[A]) extends Future[A] {
   def value: Option[Try[A]] = savedValue.map(Success(_))
 
   @throws[Exception](classOf[Exception])
-  def result(atMost: Duration)(implicit permit: CanAwait): A = ???
+  def result(atMost: Duration)(implicit permit: CanAwait): A = {
+    throw new Exception("Not implemented")
+  }
 
   @throws[InterruptedException](classOf[InterruptedException])
   @throws[TimeoutException](classOf[TimeoutException])
-  def ready(atMost: Duration)(implicit permit: CanAwait): this.type = ???
+  def ready(atMost: Duration)(implicit permit: CanAwait): this.type = {
+    throw new Exception("Not implemented")
+  }
 }

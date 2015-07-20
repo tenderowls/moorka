@@ -22,7 +22,7 @@ object Buffer {
   }
 }
 
-class Buffer[A](private var buffer: mutable.Buffer[A]) extends BufferView[A] {
+class Buffer[A](private[this] var buffer: mutable.Buffer[A]) extends BufferView[A] {
 
   val added = Channel[A]
 
@@ -32,41 +32,41 @@ class Buffer[A](private var buffer: mutable.Buffer[A]) extends BufferView[A] {
 
   val removed = Channel[IndexedElement[A]]
 
-  private val _length = Var(buffer.length)
+  private[this] val privateLength = Var(buffer.length)
 
-  val rxLength: Rx[Int] = _length
+  val rxLength: Rx[Int] = privateLength
 
-  def length: Int = _length.x
+  def length: Int = privateLength.x
 
-  def apply(x: Int) = buffer(x)
+  def apply(x: Int): A = buffer(x)
 
-  def indexOf(e: A) = buffer.indexOf(e)
+  def indexOf(e: A): Int = buffer.indexOf(e)
 
   def view: BufferView[A] = this
 
-  def +=(e: A) = {
+  def +=(e: A): Buffer[A] = {
     buffer += e
-    _length() = buffer.length
+    privateLength() = buffer.length
     added.update(e)
     this
   }
 
-  def -=(e: A) = {
+  def -=(e: A): Buffer[A] = {
     val idx = indexOf(e)
     remove(idx)
     this
   }
 
-  def remove(idx: Int) = {
+  def remove(idx: Int): A = {
     val e = buffer(idx)
     buffer.remove(idx)
     val tpl = IndexedElement(idx, e)
-    _length() = buffer.length
+    privateLength() = buffer.length
     removed.update(tpl)
     e
   }
 
-  def remove(f: (A) => Boolean) = {
+  def remove(f: (A) => Boolean): Unit = {
     val removedElems = mutable.Buffer[IndexedElement[A]]()
     var offset = 0
     for (i <- buffer.indices) {
@@ -78,15 +78,15 @@ class Buffer[A](private var buffer: mutable.Buffer[A]) extends BufferView[A] {
         offset += 1
       }
     }
-    _length() = buffer.length
+    privateLength() = buffer.length
     for (x <- removedElems) {
       removed.update(x)
     }
   }
 
-  def insert(idx: Int, e: A) = {
+  def insert(idx: Int, e: A): Unit = {
     buffer.insert(idx, e)
-    _length() = buffer.length
+    privateLength() = buffer.length
     inserted.update(IndexedElement(idx, e))
   }
 
@@ -94,7 +94,7 @@ class Buffer[A](private var buffer: mutable.Buffer[A]) extends BufferView[A] {
     if (buffer(idx) != e) {
       val prevE = buffer(idx)
       buffer(idx) = e
-      _length() = buffer.length
+      privateLength() = buffer.length
       updated.update(UpdatedIndexedElement(idx, e, prevE))
     }
   }
@@ -104,9 +104,9 @@ class Buffer[A](private var buffer: mutable.Buffer[A]) extends BufferView[A] {
     update(idx, to)
   }
 
-  def updateAll(f: A => A) = {
+  def updateAll(f: A => A): Unit = {
     val elements = this.toSeq
-    for (i <- 0 until _length.x) {
+    for (i <- 0 until privateLength.x) {
       val e = elements(i)
       update(i, f(e))
     }

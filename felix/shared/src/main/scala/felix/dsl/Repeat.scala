@@ -42,12 +42,12 @@ class Repeat(val buffer: BufferView[Element]) extends Directive {
     }
 
     subscriptions ::= buffer.removed foreach { x ⇒
-      x.e.parent = null
+      x.e.parent = None
       el.ref.call[JSObj]("removeChild", x.e.ref)
     }
 
     subscriptions ::= buffer.updated foreach { x ⇒
-      x.prevE.parent = null
+      x.prevE.parent = None
       x.e.parent = Some(el)
       el.ref.call[JSObj]("removeChild", x.prevE.ref)
       el.ref.call[JSObj]("appendChild", x.e.ref)

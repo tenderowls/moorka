@@ -28,11 +28,11 @@ package object legacy {
       }
     }
 
-    def listen(f: ⇒ Unit)(implicit reaper: Reaper = Reaper.nice) = {
+    def listen(f: ⇒ Unit)(implicit reaper: Reaper = Reaper.nice): Rx[Unit] = {
       subscribe(_ ⇒ f)  
     }
     
-    def observe(f: ⇒ Unit)(implicit reaper: Reaper = Reaper.nice) = {
+    def observe(f: ⇒ Unit)(implicit reaper: Reaper = Reaper.nice): Rx[Unit] = {
       self match {
         case x: Source[A] ⇒
           x.foreach(_ ⇒ f).mark()
@@ -68,6 +68,6 @@ package object legacy {
 
   implicit final class VarLegacyOps[A](val self: Var[A]) extends AnyVal {
     def apply(): A = self.x
-    def update(v: A) = self.update(v)
+    def update(v: A): Unit = self.update(v)
   }
 }

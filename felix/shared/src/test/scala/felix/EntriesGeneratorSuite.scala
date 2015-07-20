@@ -1,6 +1,5 @@
 package felix
 
-import felix.core.FelixSystem
 import moorka.rx.base.{Val, Var}
 import utest.{TestSuite, TestableString, assert}
 import vaska.JSAccess

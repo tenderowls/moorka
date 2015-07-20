@@ -8,7 +8,7 @@ import scala.concurrent.ExecutionContext
 
 object EventProcessor {
 
-  private object PropagationStopped extends Throwable
+  private[core] object PropagationStopped extends Throwable
 
   /**
    * objectId@eventType 
@@ -21,7 +21,7 @@ object EventProcessor {
    */
   type EventListener = (EventTarget, EventTarget, JSObj) ⇒ Any
 
-  private def makeKey(eventType: String, target: EventTarget): ListenerKey = {
+  private[core] def makeKey(eventType: String, target: EventTarget): ListenerKey = {
     eventType + "@" + target.refId
   }
 }
@@ -36,13 +36,13 @@ final class EventProcessor(jsAccess: JSAccess,
 
   import EventProcessor._
 
-  private val index = mutable.Map.empty[String, EventTarget]
+  private[this] val index = mutable.Map.empty[String, EventTarget]
 
-  private val listeners = mutable.Map.empty[ListenerKey, List[EventListener]]
+  private[this] val listeners = mutable.Map.empty[ListenerKey, List[EventListener]]
 
-  private val captures = mutable.Map.empty[ListenerKey, List[EventListener]]
+  private[this] val captures = mutable.Map.empty[ListenerKey, List[EventListener]]
 
-  private val types = mutable.Set.empty[String]
+  private[this] val types = mutable.Set.empty[String]
 
   private def propagate(eventType: String, target: EventTarget, nativeEvent: JSObj): Unit = {
     def broadcast(listeners: mutable.Map[ListenerKey, List[EventListener]],
@@ -82,7 +82,7 @@ final class EventProcessor(jsAccess: JSAccess,
     new Mortal {
       def kill(): Unit = {
         listeners(key) = listeners(key).filter(_ != f)
-      } 
+      }
     }
   }
 

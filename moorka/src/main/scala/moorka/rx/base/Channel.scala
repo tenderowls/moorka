@@ -37,7 +37,7 @@ class Signal extends Channel[Unit] {
 class Channel[A]() extends Source[A] {
 
   def flatMap[B](f: (A) => Rx[B])(implicit reaper: Reaper = Reaper.nice): Rx[B] = {
-    if (_alive) {
+    if (isAlive) {
       reaper.mark(new StatelessBinding(this, f))
     }
     else {

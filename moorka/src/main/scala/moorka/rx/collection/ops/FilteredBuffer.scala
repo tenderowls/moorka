@@ -25,7 +25,7 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
     }
   }
 
-  def refreshElement(x: A) = {
+  def refreshElement(x: A): Unit = {
     // todo optimize
     val idx = buffer.indexOf(x)
     if (idx > -1) {
@@ -49,11 +49,11 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
   val inserted = Channel[IndexedElement[A]]
   val updated = Channel[UpdatedIndexedElement[A]]
 
-  private val _length = Var(buffer.length)
+  private[this] val privateLength = Var(buffer.length)
 
-  val rxLength: Rx[Int] = _length
+  val rxLength: Rx[Int] = privateLength
 
-  def length = _length.x
+  def length: Int = privateLength.x
 
   // Copy collection to internal buffer
   // filtered with `filterFunction`
@@ -62,7 +62,7 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
     origBuffer += e
     if (filterFunction(e)) {
       buffer += e
-      _length() = buffer.length
+      privateLength() = buffer.length
     }
   }
 
@@ -70,7 +70,7 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
     origBuffer += e
     if (filterFunction(e)) {
       buffer += e
-      _length() = buffer.length
+      privateLength() = buffer.length
       added.update(e)
     }
   }
@@ -80,7 +80,7 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
     if (filterFunction(x.e)) {
       val idx = buffer.indexOf(x.e)
       buffer.remove(idx, 1)
-      _length() = buffer.length
+      privateLength() = buffer.length
       removed.update(IndexedElement(idx, x.e))
     }
   }
@@ -100,7 +100,7 @@ private[collection] class FilteredBuffer[A](parent: BufferView[A],
     handlers.foreach(_.kill())
   }
 
-  def indexOf(e: A) = buffer.indexOf(e)
+  def indexOf(e: A): Int = buffer.indexOf(e)
 
-  def apply(idx: Int) = buffer(idx)
+  def apply(idx: Int): A = buffer(idx)
 }

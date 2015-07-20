@@ -55,7 +55,7 @@ sealed case class Var[A](private[rx] var x: A)
   reaper.mark(this)
 
   override private[rx] def update(v: A, silent: Boolean = false) = {
-    if (_alive && x != v) {
+    if (isAlive && x != v) {
       x = v
       super.update(v, silent)
     }
@@ -66,7 +66,7 @@ sealed case class Var[A](private[rx] var x: A)
   }
 
   override def flatMap[B](f: (A) => Rx[B])(implicit reaper: Reaper = Reaper.nice): Rx[B] = {
-    if (_alive) {
+    if (isAlive) {
       new StatefulBinding(Some(x), this, f)
     }
     else {

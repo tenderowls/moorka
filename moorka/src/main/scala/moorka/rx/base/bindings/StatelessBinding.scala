@@ -30,7 +30,7 @@ private[rx] class StatelessBinding[From, To](val parent: Source[From],
   }
 
   def flatMap[B](f: (To) => Rx[B])(implicit reaper: Reaper = Reaper.nice): Rx[B] = {
-    if (_alive) {
+    if (isAlive) {
       reaper.mark(new StatelessBinding(this, f))
     }
     else {
