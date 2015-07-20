@@ -318,13 +318,18 @@ var Vaska = (function (global) {
      * Run Scala.js compiled application in the
      * same thread as DOM runs
      */
-    worker: function (mainClass, scriptUrl) {
-      var convertUrlToAbsolutePath = function (url) {
+    worker: function (mainClass, scriptUrl, dependencies) {
+      var toAbsoluteUrl = function (url) {
         var parser = document.createElement('a');
         parser.href = url;
         return parser.href;
       };
 
+      if (typeof dependencies === "string") dependencies = [dependencies];
+      if (!dependencies || dependencies instanceof Array === false) dependencies = [];
+
+      var scripts = dependencies.map(toAbsoluteUrl);
+      scripts.push(toAbsoluteUrl(scriptUrl));
 
       return new Promise(function (resolve, reject) {
         var injectedJS = ('importScripts(\'{0}\');\n' +
@@ -332,7 +337,7 @@ var Vaska = (function (global) {
                           'var jsAccess = new vaska.NativeJSAccess(this);' +
                           '{1}().main(jsAccess);' +
                           'console.log("Application started inside worker");')
-                            .replace('{0}', convertUrlToAbsolutePath(scriptUrl))
+                            .replace('{0}', scripts.join('\', \''))
                             .replace('{1}', mainClass);
 
         var launcherBlob = new Blob([injectedJS], JSMimeType);
