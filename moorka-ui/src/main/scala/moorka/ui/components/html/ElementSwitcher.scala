@@ -1,7 +1,7 @@
 package moorka.ui.components.html
 
 import moorka.rx._
-import moorka.ui.element.{ElementBase, ElementExtension}
+import moorka.ui.element.{Element, ElementBase, ElementExtension}
 import vaska.JSObj
 
 /**
@@ -10,21 +10,23 @@ import vaska.JSObj
 class ElementSwitcher(state: Rx[ElementBase]) extends ElementExtension {
 
   val reaper = Reaper()
-  var previous: ElementBase = null
+  private var current: ElementBase = null
 
   def start(element: ElementBase): Unit = {
     reaper mark {
-      state foreach { x ⇒
-        if (previous != null) {
-          previous.parent = null
-          element.ref.call[JSObj]("removeChild", previous.ref)
-          previous.kill()
-        }
-        // Swap it
-        val current = x
-        previous = current
-        current.parent = element
-        element.ref.call[JSObj]("appendChild", current.ref)
+      current = new Element("span", Seq(style := "display: none;"))
+      current.parent = element
+      element.ref.call[JSObj]("appendChild", current.ref)
+
+      state foreach { replacement ⇒
+        replacement.parent = element
+
+        element.ref.call[JSObj]("replaceChild", replacement.ref,  current.ref)
+
+        current.parent = null
+        current.kill()
+
+        current = replacement
       }
     }
   }
@@ -32,7 +34,7 @@ class ElementSwitcher(state: Rx[ElementBase]) extends ElementExtension {
   override def kill(): Unit = {
     super.kill()
     reaper.sweep()
-    if (previous != null)
-      previous.kill()
+    if (current != null)
+      current.kill()
   }
 }
