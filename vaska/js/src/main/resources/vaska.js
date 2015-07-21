@@ -18,23 +18,6 @@ var Vaska = (function (global) {
   function Transferable(value) { 
     this.value = value
   }
-  
-  function loadScript(url, progressCb) {
-    return new Promise(function (resolve, reject) {
-      var http = new XMLHttpRequest();
-      http.open('GET', url, true);
-      http.addEventListener('load', function() {
-        resolve(http.response);
-      });
-      http.addEventListener('error', reject);
-      http.addEventListener('progress', function (oEvent) {
-        if (progressCb) {
-          progressCb(oEvent.loaded / oEvent.total);
-        }
-      });
-      http.send();
-    });
-  }
 
   function Vaska(postMessageFunction, testEnv) {
     function postMessage(data) {
@@ -302,13 +285,7 @@ var Vaska = (function (global) {
         break;
       }
     };
-  }
-
-  function replaceSourceMappingURL(code, sourceMappingURL) {
-    var i = code.lastIndexOf(SourceMappingPattern),
-      newTail = SourceMappingPattern + sourceMappingURL + '\n';
-    return code.substring(0, i) + newTail;
-  }
+  };
   
   return {
 
@@ -342,79 +319,45 @@ var Vaska = (function (global) {
      * same thread as DOM runs
      */
     worker: function (mainClass, scriptUrl, dependencies) {
-      var //scriptFileName = scriptUrl.substring(scriptUrl.lastIndexOf('/')),
-        dependenciesBlobsUrls = [],
-        workerCode, sourceMapCode;
+      var toAbsoluteUrl = function (url) {
+        var parser = document.createElement('a');
+        parser.href = url;
+        return parser.href;
+      };
+
+      if (typeof dependencies === "string") dependencies = [dependencies];
+      if (!dependencies || dependencies instanceof Array === false) dependencies = [];
+
+      var scripts = dependencies.map(toAbsoluteUrl);
+      scripts.push(toAbsoluteUrl(scriptUrl));
+
       return new Promise(function (resolve, reject) {
-        // First of all resolve dependencies for script
-        var loaded = 0, expected = 2; // workerCode and sourceMapCode
-        function checkLoaded() {
-          var sourceMapBlob, sourceMapBlobURL, workerBlob,
-            launcherBlob, worker, vaska;
-          if (loaded !== expected)
-            return;
-          if (sourceMapCode !== undefined) {
-            sourceMapBlob = new Blob([sourceMapCode]);
-            sourceMapBlobURL = URL.createObjectURL(sourceMapBlob);  
+        var injectedJS = ('importScripts(\'{0}\');\n' +
+                          'console.log("Scripts imported to worker");\n' +
+                          'var jsAccess = new vaska.NativeJSAccess(this);' +
+                          '{1}().main(jsAccess);' +
+                          'console.log("Application started inside worker");')
+                            .replace('{0}', scripts.join('\', \''))
+                            .replace('{1}', mainClass);
+
+        var launcherBlob = new Blob([injectedJS], JSMimeType);
+
+        // Run launcher in WebWorker
+        var worker = new Worker(URL.createObjectURL(launcherBlob));
+
+        var vaska = new Vaska(function(data, transferable) {
+          if (workerProtocolDebugEnabled) {
+            console.log('<-', data, transferable);
           }
-          // Change source map
-          if (sourceMapBlobURL !== undefined) {
-            workerCode = replaceSourceMappingURL(workerCode, sourceMapBlobURL);
-          }
-          workerBlob = new Blob([workerCode], JSMimeType);
-          dependenciesBlobsUrls.push(URL.createObjectURL(workerBlob));
-          dependenciesBlobsUrls = dependenciesBlobsUrls.map(function(value) {
-            return '"' + value + '"';
-          });
-          launcherBlob = new Blob([
-            'importScripts(' + dependenciesBlobsUrls.join(', ') + ');\n',
-            'console.log("Scripts imported to worker");\n',
-            'var jsAccess = new vaska.NativeJSAccess(this);\n',
-            '' + mainClass + '().main(jsAccess);\n',
-            'console.log("Application started inside worker");\n'
-          ], JSMimeType);
-          // Run launcher in WebWorker
-          worker = new Worker(URL.createObjectURL(launcherBlob));
-          vaska = new Vaska(function(data, transferable) {
-            if (workerProtocolDebugEnabled) console.log('<-', data, transferable);
-            worker.postMessage(data, transferable);
-          });
-          worker.addEventListener('message', function(event) {
-            vaska.receive(event.data);
-          });
-          vaska.initialized.then(function () {
-            resolve(vaska);
-          });
-        }
-        // Normalize deps
-        if (typeof dependencies === "string") dependencies = [dependencies];
-        if (dependencies === undefined || dependencies instanceof Array === false) dependencies = [];
-        expected += dependencies.length; 
-        dependencies.forEach(function (dependency) {
-          loadScript(dependency).then(function (dependencyCode) {
-            var dependencyBlob = new Blob([dependencyCode], JSMimeType);
-            dependenciesBlobsUrls.push(URL.createObjectURL(dependencyBlob));
-            loaded++;
-            checkLoaded();
-          }).catch(function() {
-            console.error('Dependency "'+dependency+'" for '+scriptUrl+' was not loaded');
-            reject(dependency + 'is missing');
-          });
+          worker.postMessage(data, transferable);
         });
-        // Load worker code
-        loadScript(scriptUrl).then(function(code) {
-          workerCode = code;
-          loaded++;
-          checkLoaded();
-        }).catch(reject);
-        // Load source map
-        loadScript(scriptUrl + '.map').then(function (code) {
-          sourceMapCode = code;
-          loaded++;
-          checkLoaded();
-        }).catch(function () {
-          loaded++;
-          checkLoaded();
+
+        worker.addEventListener('message', function(event) {
+          vaska.receive(event.data);
+        });
+
+        vaska.initialized.then(function () {
+          resolve(vaska);
         });
       });
     },
