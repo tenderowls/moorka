@@ -10,7 +10,7 @@ import vaska.JSObj
 class ElementSwitcher(state: Rx[ElementBase]) extends ElementExtension {
 
   val reaper = Reaper()
-  private var current: ElementBase = null
+  private[this] var current: ElementBase = null
 
   def start(element: ElementBase): Unit = {
     reaper mark {
@@ -23,6 +23,7 @@ class ElementSwitcher(state: Rx[ElementBase]) extends ElementExtension {
 
         element.ref.call[JSObj]("replaceChild", replacement.ref,  current.ref)
 
+        // Remove the old element
         current.parent = null
         current.kill()
 
