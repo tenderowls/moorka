@@ -1,7 +1,7 @@
-package moorka.rx.base
+package moorka.rx
 
-import moorka.rx.base.bindings.StatelessBinding
-import moorka.rx.death.Reaper
+import moorka.rx.bindings.StatelessBinding
+import moorka.death.Reaper
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>

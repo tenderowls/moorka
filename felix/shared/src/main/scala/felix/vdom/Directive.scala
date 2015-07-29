@@ -1,6 +1,6 @@
 package felix.vdom
 
-import moorka.rx.Mortal
+import moorka.death.Mortal
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>

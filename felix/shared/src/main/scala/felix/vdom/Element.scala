@@ -1,8 +1,8 @@
 package felix.vdom
 
 import felix.core.{EventTarget, FelixSystem}
-import moorka.rx.Mortal
-import moorka.rx.death.Reaper
+import moorka.death.Mortal
+import moorka.death.Reaper
 
 import scala.collection.mutable
 

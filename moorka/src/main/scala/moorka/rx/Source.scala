@@ -1,14 +1,14 @@
-package moorka.rx.base
+package moorka.rx
 
-import moorka.rx.base.bindings.{Binding, OnceBinding}
-import moorka.rx.death.Reaper
+import moorka.rx.bindings.{Binding, OnceBinding}
+import moorka.death.Reaper
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 trait Source[A] extends Rx[A] {
 
-  private[rx] var isAlive = true
+  private[moorka] var isAlive = true
 
   def alive: Boolean = isAlive
 
@@ -17,25 +17,25 @@ trait Source[A] extends Rx[A] {
    * all bindings will get a new value
    * @see [[flatMap]]
    */
-  private[rx] var bindings = List.empty[Binding[A]]
+  private[moorka] var bindings = List.empty[Binding[A]]
 
   /**
    * List of values this source depends on.
    */
-  private[rx] var upstreams = List.empty[Rx[_]]
+  private[moorka] var upstreams = List.empty[Rx[_]]
 
   /**
    * Remove references to all upstreams that are not alive.
    */
-  private[rx] def cleanupUpstreams() = {
+  private[moorka] def cleanupUpstreams() = {
     upstreams = upstreams.filter(_.alive)
   }
 
-  private[rx] def addUpstream(x: Rx[_]): Unit = {
+  private[moorka] def addUpstream(x: Rx[_]): Unit = {
     upstreams ::= x
   }
 
-  private[rx] def killUpstreams() = {
+  private[moorka] def killUpstreams() = {
     upstreams.foreach(_.kill())
     upstreams = Nil
   }
@@ -44,17 +44,17 @@ trait Source[A] extends Rx[A] {
    * Broadcast `v` to bindings. Removes bindings dropped by GC.
    * @param v new value
    */
-  private[rx] def update(v: A, silent: Boolean = false): Unit = {
+  private[moorka] def update(v: A, silent: Boolean = false): Unit = {
     if (isAlive && !silent) {
       bindings.foreach(_.run(v))
     }
   }
 
-  private[rx] def attachBinding(b: Binding[A]) = {
+  private[moorka] def attachBinding(b: Binding[A]) = {
     bindings ::= b
   }
 
-  private[rx] def detachBinding(b: Binding[A]) = {
+  private[moorka] def detachBinding(b: Binding[A]) = {
     bindings = bindings.filter(_ != b)
   }
 

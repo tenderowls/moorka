@@ -1,7 +1,5 @@
-package moorka
-
-import moorka.rx.base.ops.{VarOps, RxSeqOps, RxOps}
-import moorka.rx.collection.ops.BufferOps
+import moorka.rx.ops.{RxOps, RxSeqOps, VarOps}
+import moorka.collection.ops.BufferOps
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
@@ -10,32 +8,32 @@ import scala.util.Try
  /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-package object rx {
+package object moorka {
 
-  type Channel[A] = base.Channel[A]
+  type Channel[A] = moorka.rx.Channel[A]
   @deprecated("Use Rx instead State", "0.4.0")
-  type State[A] = base.Rx[A]
-  type Silent[A] = base.Silent[A]
-  type Var[A] = base.Var[A]
-  type Lazy[A] = base.Lazy[A]
-  type Rx[A] = base.Rx[A]
+  type State[A] = moorka.rx.Rx[A]
+  type Silent[A] = moorka.rx.Silent[A]
+  type Var[A] = moorka.rx.Var[A]
+  type Lazy[A] = moorka.rx.Lazy[A]
+  type Rx[A] = moorka.rx.Rx[A]
 
   val Buffer = collection.Buffer
-  val Channel = base.Channel
-  val Var = base.Var
-  val Val = base.Val
-  val Dummy = base.Dummy
-  val Silent = base.Silent
-  val Killer = base.Killer
-  val Lazy = base.Lazy
+  val Channel = rx.Channel
+  val Var = rx.Var
+  val Val = rx.Val
+  val Dummy = rx.Dummy
+  val Silent = rx.Silent
+  val Killer = rx.Killer
+  val Lazy = rx.Lazy
 
   val Reaper = death.Reaper
 
-  type Buffer[A] = collection.Buffer[A]
-  type BufferView[A] = collection.BufferView[A]
+  type Buffer[A] = moorka.collection.Buffer[A]
+  type BufferView[A] = moorka.collection.BufferView[A]
 
-  type Mortal = death.Mortal
-  type Reaper = death.Reaper
+  type Mortal = moorka.death.Mortal
+  type Reaper = moorka.death.Reaper
 
   implicit def ToRx[T](x: T): Rx[T] = Val(x)
 
@@ -60,7 +58,7 @@ package object rx {
         Val(self.value.get)
       }
       else {
-        new base.RxFuture(self)
+        new moorka.rx.RxFuture(self)
       }
     }
   }

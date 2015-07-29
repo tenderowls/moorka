@@ -1,4 +1,4 @@
-package moorka.rx.base
+package moorka.rx
 
 object Lazy {
   def apply[T](f: ⇒ T): Lazy[T] = {

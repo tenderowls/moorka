@@ -1,4 +1,4 @@
-package moorka.rx.base
+package moorka.rx
 
 import scala.concurrent._
 import scala.concurrent.duration.Duration
@@ -9,7 +9,7 @@ import scala.util.{Success, Try}
  */
 final class FutureRx[A](rx: Rx[A]) extends Future[A] {
 
-  private[this] val reaper = moorka.rx.Reaper()
+  private[this] val reaper = moorka.death.Reaper()
 
   private[this] var savedValue: Option[A] = None
 

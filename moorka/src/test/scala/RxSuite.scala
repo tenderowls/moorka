@@ -1,4 +1,4 @@
-import moorka.rx._
+import moorka._
 import utest._
 
 import scala.concurrent.Promise
@@ -132,7 +132,7 @@ object RxSuite extends TestSuite {
     "check autokill combinators" - {
       "once() should kill after fist call" - {
         var calls = 0
-        val ch = base.Channel[Int]()
+        val ch = Channel[Int]()
         System.gc()
         ch once { x ⇒
           calls += 1

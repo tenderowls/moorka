@@ -1,4 +1,4 @@
-package moorka.rx.base
+package moorka.rx
 
 import scala.collection.mutable
 

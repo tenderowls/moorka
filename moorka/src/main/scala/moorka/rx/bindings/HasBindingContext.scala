@@ -1,6 +1,6 @@
-package moorka.rx.base.bindings
+package moorka.rx.bindings
 
-import moorka.rx.base.Source
+import moorka.rx.Source
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>

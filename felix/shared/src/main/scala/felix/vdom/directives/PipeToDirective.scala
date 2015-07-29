@@ -2,7 +2,7 @@ package felix.vdom.directives
 
 import felix.core.{EventProcessor, FelixSystem}
 import felix.vdom.{Directive, Element}
-import moorka.rx.death.Reaper
+import moorka.death.Reaper
 import moorka.rx.{Channel, Val}
 
 /**

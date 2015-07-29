@@ -1,8 +1,8 @@
-package moorka.rx.base
+package moorka.rx
 
-import moorka.rx.Mortal
-import moorka.rx.base.bindings.{Binding, StatefulBinding}
-import moorka.rx.death.Reaper
+import moorka.death.Mortal
+import moorka.rx.bindings.{Binding, StatefulBinding}
+import moorka.death.Reaper
 
 object Var {
 
@@ -48,13 +48,13 @@ object Var {
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-sealed case class Var[A](private[rx] var x: A)
+sealed case class Var[A](private[moorka] var x: A)
                         (implicit reaper: Reaper = Reaper.nice)
   extends Source[A] with StatefulSource[A] {
 
   reaper.mark(this)
 
-  override private[rx] def update(v: A, silent: Boolean = false) = {
+  override private[moorka] def update(v: A, silent: Boolean = false) = {
     if (isAlive && x != v) {
       x = v
       super.update(v, silent)

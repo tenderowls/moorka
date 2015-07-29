@@ -1,6 +1,6 @@
-package moorka.rx.base.bindings
+package moorka.rx.bindings
 
-import moorka.rx.Mortal
+import moorka.death.Mortal
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>

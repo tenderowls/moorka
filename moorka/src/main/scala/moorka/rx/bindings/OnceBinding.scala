@@ -1,7 +1,7 @@
-package moorka.rx.base.bindings
+package moorka.rx.bindings
 
-import moorka.rx.base.Source
-import moorka.rx.{Dummy, Reaper, Rx}
+import moorka.death.Reaper
+import moorka.rx.{Dummy, Rx, Source}
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>

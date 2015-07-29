@@ -1,7 +1,7 @@
 package felix.vdom
 
 import felix.core.{EventTarget, FelixSystem}
-import moorka.rx.death.{Mortal, Reaper}
+import moorka.death.{Mortal, Reaper}
 
 import scala.concurrent.ExecutionContext
 

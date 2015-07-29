@@ -1,9 +1,9 @@
-package moorka.rx.base.ops
+package moorka.rx.ops
 
 import moorka.rx.Var
-import moorka.rx.base.bindings.StatelessBinding
-import moorka.rx.base.{Rx, Val}
-import moorka.rx.death.Reaper
+import moorka.rx.bindings.StatelessBinding
+import moorka.rx.{Rx, Val}
+import moorka.death.Reaper
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
