@@ -5,12 +5,15 @@ import scala.concurrent.Promise
 import scala.util.Success
 
 import utest.ExecutionContext.RunNow
+import scala.language.implicitConversions
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 object RxSuite extends TestSuite {
 
+  implicit def toRx[T](x: T): Rx[T] = Val(x)
+  
   val tests = TestSuite {
 
     "check kill behavior" - {

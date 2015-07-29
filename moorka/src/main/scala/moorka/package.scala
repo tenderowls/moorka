@@ -35,8 +35,6 @@ package object moorka {
   type Mortal = moorka.death.Mortal
   type Reaper = moorka.death.Reaper
 
-  implicit def ToRx[T](x: T): Rx[T] = Val(x)
-
   implicit def ToBufferOps[A](x: BufferView[A]): BufferOps[A] = new BufferOps(x)
 
   implicit def ToVarOps[A](x: Var[A]): VarOps[A] = new VarOps(x)
