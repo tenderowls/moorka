@@ -42,7 +42,7 @@ class Element(tag: String, system: FelixSystem) extends NodeLike with Mortal wit
     this
   }
 
-  def setParent(value: Option[EventTarget]): Unit = {
+  private[felix] def setParent(value: Option[RefHolder with EventTarget]): Unit = {
     parent = value
   }
 

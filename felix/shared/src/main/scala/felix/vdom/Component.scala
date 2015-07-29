@@ -27,7 +27,7 @@ trait Component extends NodeLike with Mortal {
     reaper.sweep()
   }
 
-  def setParent(value: Option[EventTarget]): Unit = {
+  private[felix] def setParent(value: Option[RefHolder with EventTarget]): Unit = {
     element.parent = value
   }
 }

@@ -8,5 +8,5 @@ import moorka.rx.death.Mortal
  */
 trait NodeLike extends Entry with RefHolder with Mortal {
   // TODO tmp
-  def setParent(value: Option[EventTarget]): Unit
+  private[felix] def setParent(value: Option[RefHolder with EventTarget]): Unit
 }
