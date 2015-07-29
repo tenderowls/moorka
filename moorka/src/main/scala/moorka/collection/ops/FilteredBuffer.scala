@@ -1,7 +1,7 @@
-package moorka.rx.collection.ops
+package moorka.collection.ops
 
-import moorka.rx._
-import moorka.rx.collection.{UpdatedIndexedElement, BufferView, IndexedElement}
+import moorka._
+import moorka.collection.{UpdatedIndexedElement, BufferView, IndexedElement}
 
 import scala.collection.mutable
 

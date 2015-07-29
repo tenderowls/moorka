@@ -1,7 +1,7 @@
-package moorka.rx.base.ops
+package moorka.rx.ops
 
-import moorka.rx.base._
-import moorka.rx.death.Reaper
+import moorka.death.Reaper
+import moorka.rx._
 
 import scala.concurrent._
 
@@ -44,7 +44,7 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
   def take(num: Int)
           (implicit reaper: Reaper = Reaper.nice): Rx[Seq[A]] = {
     val channel = Channel[Seq[A]]()
-    val seq = collection.mutable.Buffer[A]()
+    val seq = scala.collection.mutable.Buffer[A]()
     self foreach { value ⇒
       seq += value
       if (seq.length == num) {

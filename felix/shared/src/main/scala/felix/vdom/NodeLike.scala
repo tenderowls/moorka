@@ -1,7 +1,7 @@
 package felix.vdom
 
 import felix.core.EventTarget
-import moorka.rx.death.Mortal
+import moorka.death.Mortal
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>

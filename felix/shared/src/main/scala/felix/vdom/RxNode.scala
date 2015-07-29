@@ -2,8 +2,8 @@ package felix.vdom
 
 import felix.core.{EventTarget, FelixSystem}
 import felix.vdom.directives.AttributeDirective
-import moorka.rx.death.Reaper
-import moorka.rx.{Mortal, Rx}
+import moorka.death.{Mortal, Reaper}
+import moorka.rx.Rx
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>

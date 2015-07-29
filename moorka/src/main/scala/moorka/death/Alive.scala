@@ -1,4 +1,4 @@
-package moorka.rx.death
+package moorka.death
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>

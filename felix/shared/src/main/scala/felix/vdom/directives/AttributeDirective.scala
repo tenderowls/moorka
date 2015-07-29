@@ -1,7 +1,7 @@
 package felix.vdom.directives
 
 import felix.vdom.{Directive, Element}
-import moorka.rx._
+import moorka._
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>

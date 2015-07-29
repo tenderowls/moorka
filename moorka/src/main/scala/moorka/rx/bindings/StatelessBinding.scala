@@ -1,12 +1,12 @@
-package moorka.rx.base.bindings
+package moorka.rx.bindings
 
-import moorka.rx.base.{Dummy, Rx, Source}
-import moorka.rx.death.Reaper
+import moorka.rx.{Dummy, Rx, Source}
+import moorka.death.Reaper
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-private[rx] class StatelessBinding[From, To](val parent: Source[From],
+private[moorka] class StatelessBinding[From, To](val parent: Source[From],
                                     lambda: From ⇒ Rx[To]) 
   extends Source[To]
   with Binding[From]
@@ -20,7 +20,7 @@ private[rx] class StatelessBinding[From, To](val parent: Source[From],
 
   parent.attachBinding(this)
 
-  override private[rx] def killUpstreams(): Unit = {
+  override private[moorka] def killUpstreams(): Unit = {
     killDependencies(upstreams)
   }
 

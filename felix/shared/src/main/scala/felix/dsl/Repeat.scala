@@ -1,7 +1,7 @@
 package felix.dsl
 
 import felix.vdom.{Directive, Element}
-import moorka.rx._
+import moorka._
 import vaska.JSObj
 
 object Repeat {

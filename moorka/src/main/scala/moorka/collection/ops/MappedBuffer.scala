@@ -1,7 +1,7 @@
-package moorka.rx.collection.ops
+package moorka.collection.ops
 
-import moorka.rx._
-import moorka.rx.collection.BufferView
+import moorka._
+import moorka.collection.BufferView
 
 import scala.collection.mutable
 

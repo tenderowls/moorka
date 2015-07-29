@@ -1,6 +1,6 @@
 package felix.core
 
-import moorka.rx.Mortal
+import moorka.death.Mortal
 import vaska.{JSAccess, JSObj}
 
 import scala.collection.mutable

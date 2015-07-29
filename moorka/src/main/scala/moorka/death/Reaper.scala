@@ -1,4 +1,4 @@
-package moorka.rx.death
+package moorka.death
 
 object Reaper {
 

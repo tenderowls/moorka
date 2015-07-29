@@ -1,6 +1,6 @@
 package felix
 
-import moorka.rx.base.{Val, Var}
+import moorka.rx.{Val, Var}
 import utest.{TestSuite, TestableString, assert}
 import vaska.JSAccess
 

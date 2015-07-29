@@ -1,6 +1,6 @@
-package moorka.rx.base
+package moorka.rx
 
-import moorka.rx.death.{Alive, Reaper}
+import moorka.death.{Alive, Reaper}
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>

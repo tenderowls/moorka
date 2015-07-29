@@ -1,6 +1,6 @@
-package moorka.rx.base
+package moorka.rx
 
-import moorka.rx.death.Reaper
+import moorka.death.Reaper
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try

@@ -2,7 +2,7 @@ package felix.dsl
 
 import felix.core.FelixSystem
 import felix.vdom.{NodeLike, Directive, Element}
-import moorka.rx._
+import moorka._
 import vaska.JSObj
 
 import scala.collection.mutable

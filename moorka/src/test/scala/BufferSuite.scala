@@ -1,4 +1,4 @@
-import moorka.rx._
+import moorka._
 import utest._
 
 /**

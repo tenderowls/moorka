@@ -3,7 +3,7 @@ package felix.dsl
 import felix.core.{EventProcessor, FelixSystem}
 import felix.vdom.directives.{AttributeDirective, EventDirective, PipeToDirective, PropertyDirective}
 import felix.vdom.{Directive, Element, Entry}
-import moorka.rx.death.Reaper
+import moorka.death.Reaper
 import moorka.rx.{Var, Channel, Rx}
 
 import scala.collection.mutable

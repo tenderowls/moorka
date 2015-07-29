@@ -1,6 +1,6 @@
-package moorka.rx.collection
+package moorka.collection
 
-import moorka.rx._
+import moorka._
 
 import scala.collection.mutable
 

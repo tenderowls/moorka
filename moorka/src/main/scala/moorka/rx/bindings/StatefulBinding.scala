@@ -1,12 +1,12 @@
-package moorka.rx.base.bindings
+package moorka.rx.bindings
 
-import moorka.rx.base.{Dummy, StatefulSource, Rx, Source}
-import moorka.rx.death.Reaper
+import moorka.rx.{Dummy, StatefulSource, Rx, Source}
+import moorka.death.Reaper
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-private[rx] class StatefulBinding[From, To](initialValue: Option[From],
+private[moorka] class StatefulBinding[From, To](initialValue: Option[From],
                                             parent: Source[From],
                                             lambda: From ⇒ Rx[To])
   extends StatelessBinding[From, To](parent, lambda)
@@ -14,7 +14,7 @@ private[rx] class StatefulBinding[From, To](initialValue: Option[From],
 
   var state: Option[To] = None
 
-  override private[rx] def update(v: To, silent: Boolean = false): Unit = {
+  override private[moorka] def update(v: To, silent: Boolean = false): Unit = {
     val optionV = Some(v)
     if (isAlive && state != optionV && !silent) {
       state = optionV

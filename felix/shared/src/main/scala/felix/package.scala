@@ -1,6 +1,6 @@
 import felix.dsl.{EntriesGenerator, HtmlHelpers}
 import felix.vdom._
-import moorka.rx._
+import moorka._
 
 import scala.concurrent.Future
 import scala.language.implicitConversions
