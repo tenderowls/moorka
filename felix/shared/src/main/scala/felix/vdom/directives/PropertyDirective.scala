@@ -62,7 +62,7 @@ object PropertyDirective {
         system.eventProcessor.registerEventType(eventType, autoPreventDefault = false)
         system.eventProcessor.addListener(element, eventType, listener)
       }
-      Var.withMod(TwoWayBindingState.empty[T]) {
+      FSM(TwoWayBindingState.empty[T]) {
         case Idle ⇒
           changesFromDom or changesFromVar map {
             case Left(x) ⇒ Update(x)

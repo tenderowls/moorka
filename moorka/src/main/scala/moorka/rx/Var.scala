@@ -1,49 +1,7 @@
 package moorka.rx
 
-import moorka.death.Mortal
-import moorka.rx.bindings.{Binding, StatefulBinding}
 import moorka.death.Reaper
-
-object Var {
-
-  @inline
-  @deprecated("Use withMod instead", "0.5.0")
-  def withDefaultMod[A](x: A)(f: A ⇒ Rx[A])
-                       (implicit reaper: Reaper = Reaper.nice): Var[A] = {
-    withMod(x)(f)
-  }
-
-  def withMod[T](initialValue: T)(mod: T ⇒ Rx[T])
-                (implicit reaper: Reaper = Reaper.nice): Var[T] = {
-    
-    new Var(initialValue) with Binding[T] {
-      
-      var dependencies = List.empty[Mortal]
-
-      override def run(x: T): Unit = {
-        withContext(dependencies) {
-          mod(x) match {
-            case Val(some) ⇒ update(some, silent = false)
-            case Silent(some) ⇒ update(some, silent = true)
-            case Killer ⇒ kill()
-            case Dummy ⇒ // Do nothing
-            case value ⇒
-              val dependency = value.foreach(update(_, silent = false))
-              dependencies = dependency :: dependencies
-          }
-        }
-      }
-
-      override def kill(): Unit = {
-        super.kill()
-        killDependencies(dependencies)
-      }
-
-      attachBinding(this)
-      run(x)
-    }
-  }
-}
+import moorka.rx.bindings.StatefulBinding
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -59,6 +17,22 @@ sealed case class Var[A](private[moorka] var x: A)
       x = v
       super.update(v, silent)
     }
+  }
+
+  /**
+   * Warning: don't use this method without special necessity
+   * @return current value of this Var
+   */
+  def unsafeGet: A = x
+
+  /**
+   * Updates Var directly, without Rx container
+   * Warning: don't use this method without special necessity
+   * @param x New value for Var
+   * @param silent do not run bindings when true
+   */
+  @inline def unsafeSet(x: A, silent: Boolean = false): Unit = {
+    update(x, silent)
   }
 
   def modOnce(f: A ⇒ Rx[A]): Unit = {
