@@ -21,6 +21,7 @@ package object moorka {
   val Buffer = collection.Buffer
   val Channel = rx.Channel
   val Var = rx.Var
+  val FSM = rx.FSM
   val Val = rx.Val
   val Dummy = rx.Dummy
   val Silent = rx.Silent
