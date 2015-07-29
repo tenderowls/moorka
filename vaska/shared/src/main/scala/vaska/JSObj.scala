@@ -24,12 +24,14 @@ trait JSObj extends JSLink {
 
   /**
    * Make call to object and save result with specified id 
-   * @param args
-   * @param id
    * @return
    */
   def callAndSaveAs(name: String, args: Any*)(id: String): Future[JSObj] = {
     val req = Seq("callAndSaveAs", this, name, id) ++ args
     jsAccess.request(req: _*)
+  }
+  
+  def getAndSaveAs(name: String, id: String): Future[JSObj] = {
+    jsAccess.request("getAndSaveAs", this, name, id)
   }
 }
