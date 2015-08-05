@@ -23,9 +23,11 @@ class WebSocketApplicationWrapper(webSocket: WebSocket,
   val application = factory(system)
 
   system.document.getAndSaveAs("body", "startupBody") foreach { body ⇒
-    body.call[JSObj]("appendChild", application.ref) foreach { _ =>
-      webSocketJsAccess.request[Unit]("init") foreach { _ ⇒
-        body.free()
+    webSocketJsAccess.request[Unit]("init") foreach { _ ⇒
+      application.beforeStart() foreach { _ ⇒
+        body.call[JSObj]("appendChild", application.ref) foreach { _ =>
+          body.free()
+        }
       }
     }
   }

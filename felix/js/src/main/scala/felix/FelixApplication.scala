@@ -2,6 +2,7 @@ package felix
 
 import vaska.{JSAccess, JSObj}
 
+import scala.concurrent.Future
 import scala.scalajs.js.annotation.{JSExport, JSExportDescendentObjects}
 
 /**
@@ -21,11 +22,17 @@ trait FelixApplication extends Component {
       val ec = scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
     }
     system.document.getAndSaveAs("body", "startupBody") foreach { body ⇒
-      body.call[JSObj]("appendChild", this.ref) foreach { _ =>
-        jsa.request[Unit]("init") foreach { _ ⇒
-          body.free()
+      jsa.request[Unit]("init") foreach { _ ⇒
+        beforeStart() foreach { _ ⇒
+          body.call[JSObj]("appendChild", this.ref) foreach { _ =>
+            body.free()
+          }
         }
       }
     }
+  }
+  
+  def beforeStart(): Future[Unit] = {
+    Future.successful(())
   }
 }
