@@ -20,7 +20,7 @@ trait Component extends NodeLike with Mortal {
 
   def ref: ElementRef = element.ref
 
-  def start: Element
+  def start: NodeLike
 
   def kill(): Unit = {
     element.kill()
@@ -28,6 +28,6 @@ trait Component extends NodeLike with Mortal {
   }
 
   private[felix] def setParent(value: Option[RefHolder with EventTarget]): Unit = {
-    element.parent = value
+    element.setParent(value)
   }
 }
