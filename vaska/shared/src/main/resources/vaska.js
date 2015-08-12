@@ -315,22 +315,25 @@ var Vaska = (function (global) {
      */
     basic: function (mainClass, scriptUrl) {
       return new Promise(function (resolve, reject) {
-        loadScript(scriptUrl).then(function (applicationCode) {
-          var applicationBlob = new Blob([applicationCode], JSMimeType),
-            tag = document.createElement("script");
-          tag.setAttribute('src', URL.createObjectURL(applicationBlob));
+        var tag = document.createElement('script');
+          tag.setAttribute('src', scriptUrl);
+          
           tag.addEventListener('load', function () {
             var scope = {},
               jsAccess = new vaska.NativeJSAccess(scope),
               vaskaObj = new Vaska(scope.onmessage);
+
             scope.postMessage = function (data) {
               vaskaObj.receive(data);
             };
+            
             eval(mainClass)().main(jsAccess);
             resolve(vaskaObj);
           });
-          document.body.appendChild(tag);
-        }).catch(reject);
+
+          document.addEventListener('DOMContentLoaded', function() {
+            document.head.appendChild(tag);
+          });
       });
     },
 
