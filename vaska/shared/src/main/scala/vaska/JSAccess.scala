@@ -14,6 +14,7 @@ object JSAccess {
   val ArrayPrefix = "@arr:"
   val ObjPrefix = "@obj:"
   val UnitResult = "@unit"
+  val NullResult = "@null"
 }
 
 /**
@@ -107,6 +108,8 @@ trait JSAccess {
       array(id).asInstanceOf[A]
     case `UnitResult` ⇒
       ().asInstanceOf[A]
+    case `NullResult` ⇒
+      null.asInstanceOf[A]
     case otherwise ⇒
       platformDependentUnpack(otherwise).
         asInstanceOf[A]

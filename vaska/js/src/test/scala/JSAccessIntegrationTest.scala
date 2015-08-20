@@ -45,6 +45,17 @@ object JSAccessIntegrationTest extends TestSuite {
       }
     }
 
+    "Check get with null" - {
+      val o = createRootObject {
+        js.Dynamic.literal(
+          width = null
+        )
+      }
+      for (width ← o.get[String]("width")) yield {
+        assert(width == null)
+      }
+    }
+
     "Check set" - {
       var calls = 0
       val scope = js.Dynamic.literal(name = "")

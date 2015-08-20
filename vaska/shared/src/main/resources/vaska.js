@@ -8,8 +8,11 @@ var Vaska = (function (global) {
     ArrayPrefix = '@arr:',
     ObjPrefix = '@obj:',
     UnitResult = "@unit",
+    NullResult = "@null",
+
     HookSuccess = "@hook_success",
     HookFailure = "@hook_failure",
+    
     LinkNotFound = "Link no found",
     JSMimeType = {
       type: 'application/javascript'
@@ -83,6 +86,9 @@ var Vaska = (function (global) {
     function packResult(arg) {
       if (arg === undefined) {
         return UnitResult;
+      }
+      if (arg === null) {
+        return NullResult;
       }
       if (arg instanceof Transferable) {
         return arg
