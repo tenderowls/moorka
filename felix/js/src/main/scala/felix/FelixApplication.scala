@@ -19,7 +19,7 @@ trait FelixApplication extends Component {
   def main(jsa: JSAccess): Unit = {
     systemFromJS = new FelixSystem {
       val jsAccess = jsa
-      val ec = scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+      val executionContext = scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
     }
     system.document.getAndSaveAs("body", "startupBody") foreach { body ⇒
       jsa.request[Unit]("init") foreach { _ ⇒
@@ -31,7 +31,7 @@ trait FelixApplication extends Component {
       }
     }
   }
-  
+
   def beforeStart(): Future[Unit] = {
     Future.successful(())
   }

@@ -20,8 +20,9 @@ object EntriesGeneratorSuite extends TestSuite {
   }
 
   implicit val felixSystem = {
+    val ec = utest.ExecutionContext.RunNow
     val system = new FelixSystem {
-      val ec: ExecutionContext = utest.ExecutionContext.RunNow
+      val executionContext: ExecutionContext = ec
       val jsAccess: JSAccess = new JSAccess {
         implicit val executionContext: ExecutionContext = ec
 

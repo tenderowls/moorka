@@ -11,8 +11,9 @@ import scala.concurrent.ExecutionContext
 object TwoWayBindingSuite extends TestSuite {
 
   def mock() = {
+    val ec = utest.ExecutionContext.RunNow
     val system = new FelixSystem {
-      val ec: ExecutionContext = utest.ExecutionContext.RunNow
+      val executionContext: ExecutionContext = ec
       val jsAccess: JSAccess = new JSAccess {
         def send(args: Seq[Any]): Unit = ???
         implicit val executionContext: ExecutionContext = ec

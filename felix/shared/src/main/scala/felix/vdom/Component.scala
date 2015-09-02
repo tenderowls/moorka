@@ -12,7 +12,7 @@ trait Component extends NodeLike with Mortal {
 
   implicit def system: FelixSystem
 
-  implicit def ec: ExecutionContext = system.ec
+  implicit def executionContext: ExecutionContext = system.executionContext
 
   implicit val reaper = Reaper()
 

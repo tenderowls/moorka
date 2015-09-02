@@ -36,7 +36,7 @@ object PropertyDirective {
     case class Update[A](data: A) extends TwoWayBindingState[A]
 
     case class Writing[A](data: A) extends TwoWayBindingState[A]
-    
+
     def empty[A]: TwoWayBindingState[A] = TwoWayBindingState.Idle
   }
 
@@ -49,7 +49,7 @@ object PropertyDirective {
 
     def affect(element: Element): Unit = {
       import TwoWayBindingState._
-      implicit val ec = system.ec
+      implicit val ec = system.executionContext
       aVar.once(element.ref.set(name, _))
       val changesFromDom = Channel[T]()
       val changesFromVar = aVar.stateless
