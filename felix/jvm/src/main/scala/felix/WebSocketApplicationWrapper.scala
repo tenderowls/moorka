@@ -16,7 +16,7 @@ class WebSocketApplicationWrapper(webSocket: WebSocket,
   private implicit val ec = webSocketJsAccess.executionContext
 
   val system = new FelixSystem {
-    val ec: ExecutionContext = webSocketJsAccess.executionContext
+    val executionContext: ExecutionContext = webSocketJsAccess.executionContext
     val jsAccess: JSAccess = webSocketJsAccess
   }
 

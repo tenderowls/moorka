@@ -33,7 +33,7 @@ package object felix extends HtmlHelpers {
   }
 
   implicit def toFutureNode(future: Future[NodeLike])(implicit system: FelixSystem): RxNode = {
-    val rx = future.toRx(system.ec) map {
+    val rx = future.toRx(system.executionContext) map {
       case Success(element) ⇒ element
       case Failure(exception) ⇒
         'span('style /= "color: red", exception.toString)

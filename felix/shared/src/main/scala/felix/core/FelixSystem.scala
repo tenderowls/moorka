@@ -24,7 +24,7 @@ trait FelixSystem {
 
   import FelixSystem._
 
-  val ec: ExecutionContext
+  val executionContext: ExecutionContext
 
   val jsAccess: JSAccess
 
@@ -41,6 +41,6 @@ trait FelixSystem {
   }
 
   lazy val eventProcessor = {
-    new EventProcessor(jsAccess, document, utils)(ec)
+    new EventProcessor(jsAccess, document, utils)(executionContext)
   }
 }
