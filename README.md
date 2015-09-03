@@ -1,5 +1,7 @@
 # Moorka
 
+[![Join the chat at https://gitter.im/tenderowls/moorka](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/tenderowls/moorka?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Build Status](https://travis-ci.org/tenderowls/moorka.svg)](https://travis-ci.org/tenderowls/moorka)
 [![Codacy Badge](https://www.codacy.com/project/badge/df4618ce66c04440bdb9d12da9a0b685)](https://www.codacy.com/app/aleksey-fomkin/moorka)
 [![License: Apache 2](https://img.shields.io/badge/license-Apache%202-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
