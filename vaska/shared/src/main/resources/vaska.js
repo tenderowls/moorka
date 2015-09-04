@@ -12,13 +12,13 @@ var Vaska = (function (global) {
 
     HookSuccess = "@hook_success",
     HookFailure = "@hook_failure",
-    
+
     LinkNotFound = "Link no found",
     JSMimeType = {
       type: 'application/javascript'
     };
 
-  function Transferable(value) { 
+  function Transferable(value) {
     this.value = value
   }
 
@@ -62,7 +62,7 @@ var Vaska = (function (global) {
       }
       return links.get(id);
     }
-    
+
     function unpackArgs(args) {
       var l = args.length,
         i = 0,
@@ -198,7 +198,7 @@ var Vaska = (function (global) {
         cb([reqId, false, LinkNotFound]);
       }
     }
-    
+
     function receiveGetAndSaveAs(reqId, args, cb) {
       var newId = args[2];
       receiveGet(reqId, args, function (callRes) {
@@ -213,7 +213,7 @@ var Vaska = (function (global) {
         }
       });
     }
-    
+
     this.checkLinkExists = function (id) {
       return unpackArgs([LinkPrefix + id])[0] !== undefined;
     };
@@ -250,7 +250,6 @@ var Vaska = (function (global) {
               result++;
             }
           });
-          console.log('Cleanup result', result);
         }, tmpLinkLifetime);
         break;
       case 'registerCallback':
@@ -312,18 +311,18 @@ var Vaska = (function (global) {
       }
     };
   };
-  
+
   return {
 
     /**
-     * Run Scala.js compiled application in the 
+     * Run Scala.js compiled application in the
      * same thread as DOM runs
      */
     basic: function (mainClass, scriptUrl) {
       return new Promise(function (resolve, reject) {
         var tag = document.createElement('script');
           tag.setAttribute('src', scriptUrl);
-          
+
           tag.addEventListener('load', function () {
             var scope = {},
               jsAccess = new vaska.NativeJSAccess(scope),
@@ -332,7 +331,7 @@ var Vaska = (function (global) {
             scope.postMessage = function (data) {
               vaskaObj.receive(data);
             };
-            
+
             eval(mainClass)().main(jsAccess);
             resolve(vaskaObj);
           });
@@ -413,9 +412,9 @@ var Vaska = (function (global) {
     create: function (postMessage, testEnv) {
       return new Vaska(postMessage, testEnv);
     },
-    
+
     Transferable: Transferable,
-    
+
     setWorkerProtocolDebugEnabled: function(value) {
       localStorage.setItem("$vaska.workerProtocolDebugEnabled", value);
       workerProtocolDebugEnabled = value;
