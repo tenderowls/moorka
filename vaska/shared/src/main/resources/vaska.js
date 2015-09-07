@@ -326,7 +326,9 @@ var Vaska = (function (global) {
           tag.addEventListener('load', function () {
             var scope = {},
               jsAccess = new vaska.NativeJSAccess(scope),
-              vaskaObj = new Vaska(scope.onmessage);
+              vaskaObj = new Vaska(function (data) {
+                scope.onmessage({data : data});
+              });
 
             scope.postMessage = function (data) {
               vaskaObj.receive(data);
