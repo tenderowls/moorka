@@ -360,13 +360,18 @@ var Vaska = (function (global) {
       scripts.push(toAbsoluteUrl(scriptUrl));
 
       return new Promise(function (resolve, reject) {
-        var injectedJS = ('importScripts(\'{0}\');\n' +
+        var injectedJS = ('if (typeof console === "undefined") {\n' +
+                             'var noop = function() {};\n' +
+                             'console = { log: noop, error: noop }\n' +
+                          '};\n' +
+                          'importScripts("{0}");\n' +
                           'console.log("Scripts imported to worker");\n' +
-                          'var jsAccess = new vaska.NativeJSAccess(this);' +
-                          '{1}().main(jsAccess);' +
+                          'var jsAccess = new vaska.NativeJSAccess(this);\n' +
+                          '{1}().main(jsAccess);\n' +
                           'console.log("Application started inside worker");')
-                            .replace('{0}', scripts.join('\', \''))
-                            .replace('{1}', mainClass);
+                           .replace('{0}', scripts.join('\', \''))
+                           .replace('{1}', mainClass);
+
 
         var launcherBlob = new Blob([injectedJS], JSMimeType);
 
