@@ -72,12 +72,9 @@ object FSMSuite extends TestSuite {
           bug = true
           Dummy
         case 2 ⇒ // Updating
+          state.pull(Val(Math.random()))
           Val(0)
-      } foreach {
-        case 2 ⇒
-          state.pull(Silent(Math.random()))
-        case _ ⇒
-      }
+      } 
       changesChannel1.fire()
       changesChannel1.fire()
       assert(!bug)

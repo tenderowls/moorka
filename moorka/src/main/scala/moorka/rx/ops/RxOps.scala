@@ -2,6 +2,7 @@ package moorka.rx.ops
 
 import moorka.death.Reaper
 import moorka.rx._
+import moorka.rx.bindings.StatelessBinding
 
 import scala.concurrent._
 
@@ -9,6 +10,16 @@ import scala.concurrent._
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 final class RxOps[A](val self: Rx[A]) extends AnyVal {
+
+  def stateless(implicit reaper: Reaper = Reaper.nice): Rx[A] = {
+    self match {
+      case source: StatefulSource[A] ⇒
+        val binding = new StatelessBinding[A, A](source, x ⇒ Val(x))
+        reaper.mark(binding)
+        binding
+      case _ ⇒ self
+    }
+  }
 
   def until(f: A ⇒ Boolean)
            (implicit reaper: Reaper = Reaper.nice): Rx[Unit] = {

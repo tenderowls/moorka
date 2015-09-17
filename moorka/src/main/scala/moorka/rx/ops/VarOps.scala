@@ -10,10 +10,4 @@ import moorka.death.Reaper
  */
 final class VarOps[A](val self: Var[A]) extends AnyVal {
 
-  def stateless(implicit reaper: Reaper = Reaper.nice): Rx[A] = {
-    val binding = new StatelessBinding[A, A](self, x ⇒ Val(x))
-    reaper.mark(binding)
-    binding
-  }
-  
 }

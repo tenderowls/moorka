@@ -70,7 +70,7 @@ final class EntriesGenerator(val self: Symbol) extends AnyVal {
    * @param value property value
    */
   def /=(value: String): Directive = {
-    new AttributeDirective.Simple(htmlName(self), Some(value))
+    new AttributeDirective.Simple(htmlName(self), value)
   }
 
   /**
@@ -93,7 +93,7 @@ final class EntriesGenerator(val self: Symbol) extends AnyVal {
    * Set attribute named as Symbol without value to the tag
    */
   def attr: Directive = {
-    new AttributeDirective.Simple(htmlName(self), None)
+    new AttributeDirective.Simple(htmlName(self), "")
   }
 
   def listen(f: EventProcessor.EventListener)

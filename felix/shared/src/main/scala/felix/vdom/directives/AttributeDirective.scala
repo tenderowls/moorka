@@ -10,11 +10,12 @@ object AttributeDirective {
 
   @inline val SetAttribute = "setAttribute"
 
-  final class Simple(name: String, value: Option[String]) extends Directive {
+  @inline val RemoveAttribute = "removeAttribute"
 
-    def affect(element: Element): Unit = value match {
-      case Some(v) ⇒ element.ref.call[Unit](SetAttribute, name, v)
-      case None ⇒ element.ref.call[Unit](SetAttribute, name)
+  final class Simple(name: String, value: String) extends Directive {
+
+    def affect(element: Element): Unit = {
+      element.ref.call[Unit](SetAttribute, name, value)
     }
 
     def kill(): Unit = ()
@@ -28,7 +29,7 @@ object AttributeDirective {
       mortal = Some {
         value foreach {
           case Some(x) ⇒ element.ref.call[Unit](SetAttribute, name, x)
-          case None ⇒ element.ref.call[Unit](SetAttribute, name)
+          case None ⇒ element.ref.call[Unit](RemoveAttribute, name)
         }
       }
     }

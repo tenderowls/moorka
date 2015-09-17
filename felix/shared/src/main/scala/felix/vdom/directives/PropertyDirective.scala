@@ -74,7 +74,7 @@ object PropertyDirective {
             case Right(updatedX) ⇒ Writing(updatedX)
           }
         case Update(x) ⇒
-          aVar.pull(Silent(x))
+          aVar.pull(Val(x))
           Val(Idle)
       }
     }

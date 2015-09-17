@@ -58,7 +58,7 @@ object EntriesGeneratorSuite extends TestSuite {
         Seq(_, "registerCallback", _),
         Seq(_, "callAndSaveAs", "@link:^Felix", "createElementAndSetId", _, "my-span", span2: S),
         Seq(_, "set", setPropertyLink: S, "className", "secondSpan"),
-        Seq(_, "call", _, "setAttribute", "disabled"),
+        Seq(_, "call", _, "setAttribute", "disabled", ""),
         Seq(_, "callAndSaveAs", "@link:^Felix", "createElementAndSetId", _, "div", div: S),
         Seq(_, "call", "@link:^Felix", "appendChildren", appendLink: S, Seq(fcLink: S, "Hello", scLink:S)))
           if appendLink.endsWith(div) &&
@@ -89,7 +89,7 @@ object EntriesGeneratorSuite extends TestSuite {
           if link.endsWith(element.ref.id) ⇒ ()
       }
       utest.assertMatch(buffer(2)) {
-        case Seq(_, "call", link: String, "setAttribute", "class")
+        case Seq(_, "call", link: String, "removeAttribute", "class")
           if link.endsWith(element.ref.id) ⇒ ()
       }
     }

@@ -7,12 +7,16 @@ import moorka.rx.bindings.{Binding, StatefulBinding}
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 object FSM {
+  def apply[T](initialValue: T, ignoreStateEquality: Boolean)(f: T ⇒ Rx[T]): Rx[T] = {
+    new FSM(initialValue, ignoreStateEquality, f)
+  }
+  
   def apply[T](initialValue: T)(f: T ⇒ Rx[T]): Rx[T] = {
-    new FSM(initialValue, f)
+    new FSM(initialValue, false, f)
   }
 }
 
-final private[moorka] class FSM[T](var x: T, f: T ⇒ Rx[T])
+final private[moorka] class FSM[T](var x: T, ignoreStateEquality: Boolean, f: T ⇒ Rx[T])
   extends Source[T] with Binding[T] {
 
   private[moorka] var dependencies = List.empty[Mortal]
@@ -32,7 +36,7 @@ final private[moorka] class FSM[T](var x: T, f: T ⇒ Rx[T])
   }
 
   override private[moorka] def update(v: T, silent: Boolean = false) = {
-    if (isAlive && x != v) {
+    if (isAlive && (ignoreStateEquality || x != v)) {
       x = v
       super.update(v, silent)
     }

@@ -32,7 +32,7 @@ class RxNode(rx: Rx[NodeLike], system: FelixSystem) extends NodeLike with Mortal
   // element to hold element place
   if (currentNode.isEmpty) {
     val element = new Element("div", system)
-    val styleAttr = new AttributeDirective.Simple("style", Some("display: none"))
+    val styleAttr = new AttributeDirective.Simple("style", "display: none")
     element.append(Seq(styleAttr))
     currentNode = Some(element)
   }
