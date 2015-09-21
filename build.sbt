@@ -73,7 +73,8 @@ lazy val vaska = crossProject
       "org.webjars" % "es6-shim" % "0.20.2" / "es6-shim.js",
       ProvidedJS / "localStorage.js",
       ProvidedJS / "vaska.js" dependsOn "localStorage.js"
-    )
+    ),
+    jsDependencies += ProvidedJS / "vaska.js"
   )
   .jvmSettings(utestSettingsJVM:_*)
   .settings(publishSettings:_*)
@@ -92,7 +93,10 @@ lazy val felix = crossProject
     unmanagedResourceDirectories in Compile += file("felix") / "shared" / "src" / "main" / "resources"
   )
   .jsSettings(utestSettingsJS:_*)
-  .jsConfigure(_.dependsOn(vaskaJS, moorkaJS))
+  .jsConfigure(_.dependsOn(vaskaJS  % "compile->compile;test->test", moorkaJS))
+  .jsSettings(
+    jsDependencies += ProvidedJS / "felix.js"
+  )
   .jvmSettings(utestSettingsJVM:_*)
   .jvmSettings(
     libraryDependencies += "org.java-websocket" % "Java-WebSocket" % "1.3.0"
