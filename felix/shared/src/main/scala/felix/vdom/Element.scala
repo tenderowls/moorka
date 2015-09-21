@@ -51,4 +51,8 @@ class Element(tag: String, system: FelixSystem) extends NodeLike with Mortal wit
     reaper.sweep()
     ref.free()
   }
+
+  override def toString: String = {
+    s"'$tag(...)"
+  }
 }
