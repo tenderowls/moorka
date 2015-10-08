@@ -371,9 +371,8 @@ var Vaska = (function (global) {
                           'var jsAccess = new vaska.NativeJSAccess(this);\n' +
                           '{1}().main(jsAccess);\n' +
                           'console.log("Application started inside worker");')
-                           .replace('{0}', scripts.join('\', \''))
-                           .replace('{1}', mainClass);
-
+                            .replace('{0}', scripts.join('\", \"'))
+                            .replace('{1}', mainClass);
 
         var launcherBlob = new Blob([injectedJS], JSMimeType);
 
