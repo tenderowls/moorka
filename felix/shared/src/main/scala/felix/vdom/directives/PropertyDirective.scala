@@ -3,6 +3,7 @@ package felix.vdom.directives
 import felix.core.{EventProcessor, FelixSystem}
 import felix.vdom.{Directive, Element}
 import moorka._
+import moorka.rx.{StatefulSource, Source}
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -41,7 +42,8 @@ object PropertyDirective {
   }
 
   final class TwoWayBinding[T](name: String,
-                               aVar: Var[T],
+                               input: Rx[T],
+                               output: Source[T],
                                changeEvents: Seq[String],
                                system: FelixSystem) extends Directive {
 
@@ -50,9 +52,11 @@ object PropertyDirective {
     def affect(element: Element): Unit = {
       import TwoWayBindingState._
       implicit val ec = system.executionContext
-      aVar.once(element.ref.set(name, _))
+      if (input.isInstanceOf[StatefulSource[T]]) {
+        input.once(element.ref.set(name, _))
+      }
       val changesFromDom = Channel[T]()
-      val changesFromVar = aVar.stateless
+      val changesFromVar = input.stateless
       val listener: EventProcessor.EventListener = { (_, _, _) ⇒
         element.ref.get[T](name) foreach { data ⇒
           changesFromDom.pull(Val(data))
@@ -74,7 +78,7 @@ object PropertyDirective {
             case Right(updatedX) ⇒ Writing(updatedX)
           }
         case Update(x) ⇒
-          aVar.pull(Val(x))
+          output.pull(Val(x))
           Val(Idle)
       }
     }

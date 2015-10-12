@@ -17,7 +17,7 @@ object FSM {
 }
 
 final private[moorka] class FSM[T](var x: T, ignoreStateEquality: Boolean, f: T ⇒ Rx[T])
-  extends Source[T] with Binding[T] {
+  extends StatefulSource[T] with Binding[T] {
 
   private[moorka] var dependencies = List.empty[Mortal]
 
@@ -44,7 +44,7 @@ final private[moorka] class FSM[T](var x: T, ignoreStateEquality: Boolean, f: T 
 
   def flatMap[B](f: (T) => Rx[B])(implicit reaper: Reaper): Rx[B] = {
     if (isAlive) {
-      new StatefulBinding(Some(x), this, f)
+      reaper.mark(new StatefulBinding(Some(x), this, f))
     }
     else {
       f(x)

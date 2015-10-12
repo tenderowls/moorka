@@ -4,7 +4,7 @@ import felix.core.{EventProcessor, FelixSystem}
 import felix.vdom.directives.{AttributeDirective, EventDirective, PipeToDirective, PropertyDirective}
 import felix.vdom.{Directive, Element, Entry}
 import moorka.death.Reaper
-import moorka.rx.{Var, Channel, Rx}
+import moorka.rx.{Source, Var, Channel, Rx}
 
 import scala.collection.mutable
 import scala.language.implicitConversions
@@ -58,13 +58,30 @@ final class EntriesGenerator(val self: Symbol) extends AnyVal {
    */
   def =:=[T](value: Var[T])(implicit system: FelixSystem): Directive = {
     new PropertyDirective.TwoWayBinding(
-      self.name, 
-      value,
-      twoWayBindingDefaultEvents,
-      system
+      name = self.name,
+      input = value,
+      output = value,
+      changeEvents = twoWayBindingDefaultEvents,
+      system = system
     )
   }
-  
+
+  def bindOn[T](input: Rx[T], output: Source[T])(implicit system: FelixSystem): Directive = {
+    new PropertyDirective.TwoWayBinding(
+      name = self.name,
+      input = input,
+      output = output,
+      changeEvents = twoWayBindingDefaultEvents,
+      system = system
+    )
+  }
+
+  def bindOn[T, U](input: Rx[T], f: T ⇒ U)(implicit system: FelixSystem): Directive = {
+    val output = Channel[T]()
+    output.foreach(f)
+    bindOn(input, output)
+  }
+
   /**
    * Set attribute named as Symbol to tag
    * @param value property value
