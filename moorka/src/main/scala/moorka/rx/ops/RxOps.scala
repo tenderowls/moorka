@@ -115,6 +115,13 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
     (left, right)
   }
 
+  def merge(b: Rx[A]): Rx[A] = {
+    val channel = Channel[A]()
+    channel.pull(self)
+    channel.pull(b)
+    channel
+  }
+
   def partition(f: A ⇒ Boolean)
                (implicit reaper: Reaper = Reaper.nice): (Rx[A], Rx[A]) = {
     val left = Channel[A]()

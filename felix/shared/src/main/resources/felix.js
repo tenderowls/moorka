@@ -37,6 +37,15 @@
       },
       classRemove: function (element, className) {
         element.classList.remove(className)
+      },
+      insertBefore: function(referenceElement, newElement) {
+        referenceElement.parentNode.insertBefore(newElement, referenceElement)
+      },
+      insertAfter: function(referenceElement, newElement) {
+        var parent = referenceElement.parentNode;
+        var next = referenceElement.nextSibling;
+        if (next) parent.insertBefore(newElement, next);
+        else parent.appendChild(newElement);
       }
     }
   }();

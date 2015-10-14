@@ -1,8 +1,8 @@
 package felix.dsl
 
 import felix.core.{EventProcessor, FelixSystem}
-import felix.vdom.directives.{AttributeDirective, EventDirective, PipeToDirective, PropertyDirective}
-import felix.vdom.{Directive, Element, Entry}
+import felix.vdom.directives._
+import felix.vdom.{NodeLike, Directive, Element, Entry}
 import moorka.death.Reaper
 import moorka.rx.{Source, Var, Channel, Rx}
 

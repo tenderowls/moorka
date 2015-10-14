@@ -1,4 +1,4 @@
-import felix.dsl.{EntriesGenerator, HtmlHelpers}
+import felix.dsl.{NodeLikeOps, EntriesGenerator, HtmlHelpers}
 import felix.vdom._
 import moorka._
 
@@ -23,6 +23,8 @@ package object felix extends HtmlHelpers {
   val FelixSystem = core.FelixSystem
 
   implicit def toEntriesGenerator(x: Symbol): EntriesGenerator = new EntriesGenerator(x)
+
+  implicit def toNodeLikeOps(x: NodeLike): NodeLikeOps = new NodeLikeOps(x)
 
   implicit def toElements(xs: Seq[Element]): Elements = Elements(xs)
 

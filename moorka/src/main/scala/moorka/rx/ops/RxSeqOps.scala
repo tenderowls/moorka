@@ -9,7 +9,15 @@ import scala.collection.mutable
  */
 final class RxSeqOps[A](val self: Rx[Seq[A]]) extends AnyVal {
 
-  implicit def toBuffer: BufferView[A] = {
+  def adjusted(implicit reaper: Reaper): Rx[A] = {
+    val channel = Channel[A]()
+    self foreach { xs ⇒
+      xs.foreach(x ⇒ channel.pull(Val(x)))
+    }
+    channel
+  }
+
+  def toBuffer: BufferView[A] = {
     new Buffer[A](mutable.Buffer.empty[A]) {
       val subscription = self foreach { s ⇒
         s.length match {
