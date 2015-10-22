@@ -1,5 +1,6 @@
 package felix
 
+import moorka.flow.Context
 import org.java_websocket.WebSocket
 import vaska.{JSAccess, JSObj}
 
@@ -18,6 +19,7 @@ class WebSocketApplicationWrapper(webSocket: WebSocket,
   val system = new FelixSystem {
     val executionContext: ExecutionContext = webSocketJsAccess.executionContext
     val jsAccess: JSAccess = webSocketJsAccess
+    val flowContext = Context()
   }
 
   val application = factory(system)

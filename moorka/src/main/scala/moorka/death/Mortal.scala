@@ -1,5 +1,10 @@
 package moorka.death
 
+object Mortal {
+  def immortal: Mortal = new Mortal {
+    def kill(): Unit = ()
+  }
+}
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */

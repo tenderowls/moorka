@@ -2,9 +2,10 @@ package felix.dsl
 
 import felix.core.{EventProcessor, FelixSystem}
 import felix.vdom.directives._
-import felix.vdom.{NodeLike, Directive, Element, Entry}
+import felix.vdom.{Directive, Element, Entry}
 import moorka.death.Reaper
-import moorka.rx.{Source, Var, Channel, Rx}
+import moorka.flow.Flow
+import moorka.flow.mutable.Var
 
 import scala.collection.mutable
 import scala.language.implicitConversions
@@ -29,8 +30,9 @@ final class EntriesGenerator(val self: Symbol) extends AnyVal {
   import EntriesGenerator._
 
   /**
-   * Creates tag from Symbol 
-   * @param xs list of entries of the tag
+   * Creates tag from Symbol
+    *
+    * @param xs list of entries of the tag
    */
   def apply(xs: Entry*)(implicit system: FelixSystem): Element = {
     val element = new Element(htmlName(self), system)
@@ -38,8 +40,9 @@ final class EntriesGenerator(val self: Symbol) extends AnyVal {
   }
 
   /**
-   * Set property named as Symbol to tag  
-   * @param value property value
+   * Set property named as Symbol to tag
+    *
+    * @param value property value
    */
   def :=(value: Any): Directive = {
     new PropertyDirective.Simple(self.name, value)
@@ -47,10 +50,11 @@ final class EntriesGenerator(val self: Symbol) extends AnyVal {
 
   /**
    * Reactive set property named as Symbol to tag
-   * @param value reactive property value
+    *
+    * @param value reactive property value
    */
-  def :=(value: Rx[Any]): Directive = {
-    new PropertyDirective.Reactive(self.name, value)
+  def :=(value: Flow[Any])(implicit system: FelixSystem): Directive = {
+    new PropertyDirective.Reactive(self.name, value, system)
   }
 
   /**
@@ -60,13 +64,13 @@ final class EntriesGenerator(val self: Symbol) extends AnyVal {
     new PropertyDirective.TwoWayBinding(
       name = self.name,
       input = value,
-      output = value,
+      output = value.update(_: T),
       changeEvents = twoWayBindingDefaultEvents,
       system = system
     )
   }
 
-  def bindOn[T](input: Rx[T], output: Source[T])(implicit system: FelixSystem): Directive = {
+  def bindOn[T, U](input: Flow[T], output: T ⇒ U)(implicit system: FelixSystem): Directive = {
     new PropertyDirective.TwoWayBinding(
       name = self.name,
       input = input,
@@ -76,15 +80,10 @@ final class EntriesGenerator(val self: Symbol) extends AnyVal {
     )
   }
 
-  def bindOn[T, U](input: Rx[T], f: T ⇒ U)(implicit system: FelixSystem): Directive = {
-    val output = Channel[T]()
-    output.foreach(f)
-    bindOn(input, output)
-  }
-
   /**
    * Set attribute named as Symbol to tag
-   * @param value property value
+    *
+    * @param value property value
    */
   def /=(value: String): Directive = {
     new AttributeDirective.Simple(htmlName(self), value)
@@ -92,18 +91,20 @@ final class EntriesGenerator(val self: Symbol) extends AnyVal {
 
   /**
    * Set attribute named as Symbol to tag
-   * @param value property value
+    *
+    * @param value property value
    */
-  def /=(value: Rx[String])(implicit reaper: Reaper = Reaper.nice): Directive = {
-    new AttributeDirective.Reactive(htmlName(self), value.map(Some(_)))
+  def /=(value: Flow[String])(implicit system: FelixSystem): Directive = {
+    new AttributeDirective.Reactive(htmlName(self), value.map(Some(_)), system)
   }
 
   /**
    * Set attribute named as Symbol to tag
-   * @param value property value
+    *
+    * @param value property value
    */
-  def /==(value: Rx[Option[String]]): Directive = {
-    new AttributeDirective.Reactive(htmlName(self), value)
+  def /==(value: Flow[Option[String]])(implicit system: FelixSystem): Directive = {
+    new AttributeDirective.Reactive(htmlName(self), value, system)
   }
 
   /**
@@ -129,10 +130,5 @@ final class EntriesGenerator(val self: Symbol) extends AnyVal {
 
   def capture[U](f: ⇒ U)(implicit system: FelixSystem): Directive = {
     new EventDirective(self.name, (_,_,_) ⇒ f, true, system)
-  }
-  
-  def pipeTo(channel: Channel[Unit])
-            (implicit system: FelixSystem): Directive = {
-    new PipeToDirective(self.name, channel, system)
   }
 }

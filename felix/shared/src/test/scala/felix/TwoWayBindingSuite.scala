@@ -1,5 +1,6 @@
 package felix
 
+import moorka.flow.Context
 import utest._
 import vaska.JSAccess
 
@@ -14,6 +15,7 @@ object TwoWayBindingSuite extends TestSuite {
     val ec = utest.ExecutionContext.RunNow
     val system = new FelixSystem {
       val executionContext: ExecutionContext = ec
+      val flowContext = Context()
       val jsAccess: JSAccess = new JSAccess {
         def send(args: Seq[Any]): Unit = ???
         implicit val executionContext: ExecutionContext = ec

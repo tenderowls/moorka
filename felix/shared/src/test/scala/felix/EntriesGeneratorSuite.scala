@@ -1,6 +1,7 @@
 package felix
 
-import moorka.rx.{Val, Var}
+import moorka.flow.Context
+import moorka.flow.mutable.Var
 import utest.{TestSuite, TestableString, assert}
 import vaska.JSAccess
 
@@ -23,6 +24,7 @@ object EntriesGeneratorSuite extends TestSuite {
     val ec = utest.ExecutionContext.RunNow
     val system = new FelixSystem {
       val executionContext: ExecutionContext = ec
+      val flowContext = Context()
       val jsAccess: JSAccess = new JSAccess {
         implicit val executionContext: ExecutionContext = ec
 
@@ -32,6 +34,8 @@ object EntriesGeneratorSuite extends TestSuite {
     clean()
     system
   }
+
+  implicit val context = felixSystem.flowContext
 
   val tests = TestSuite {
     "check system initialization" - {
@@ -68,36 +72,40 @@ object EntriesGeneratorSuite extends TestSuite {
              scLink.endsWith(span2) ⇒
       }
     }
-    "check Rx attributes" - {
+    "check Flow attributes" - {
       val rxName = Var("name1")
       val rxClass = Var(Option.empty[String])
       val element = 'div(
         'name /= rxName,
         'class /== rxClass
       )
+      context.validate()
       clean()
-      rxName.pull(Val("name2"))
-      rxClass.pull(Val(Some("hello")))
-      rxClass.pull(Val(None))
+      rxName.update("name2")
+      rxClass.update(Some("hello"))
+      rxClass.update(None)
+      context.validate()
       utest.assert(buffer.length == 3)
       utest.assertMatch(buffer.head) {
-        case Seq(_, "call", link: String, "setAttribute", "name", "name2")
-          if link.endsWith(element.ref.id) ⇒ ()
-      }
-      utest.assertMatch(buffer(1)) {
         case Seq(_, "call", link: String, "setAttribute", "class", "hello")
           if link.endsWith(element.ref.id) ⇒ ()
       }
-      utest.assertMatch(buffer(2)) {
+      utest.assertMatch(buffer(1)) {
         case Seq(_, "call", link: String, "removeAttribute", "class")
           if link.endsWith(element.ref.id) ⇒ ()
       }
+      utest.assertMatch(buffer(2)) {
+        case Seq(_, "call", link: String, "setAttribute", "name", "name2")
+          if link.endsWith(element.ref.id) ⇒ ()
+      }
     }
-    "check Rx properties" - {
+    "check Flow properties" - {
       val rxName = Var("name1")
       val element = 'div('name := rxName)
+      context.validate()
       clean()
-      rxName.pull(Val("name2"))
+      rxName.update("name2")
+      context.validate()
       utest.assert(buffer.length == 1)
       utest.assertMatch(buffer.head) {
         case Seq(_, "set", link: String, "name", "name2")

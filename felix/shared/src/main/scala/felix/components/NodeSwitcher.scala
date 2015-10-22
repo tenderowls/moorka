@@ -3,8 +3,8 @@ package felix.components
 import felix.FelixSystem
 import felix.core.EventTarget
 import felix.vdom.{ElementRef, NodeLike, RefHolder}
-import moorka.death.Reaper
-import moorka.{Mortal, Rx}
+import moorka.death.{Mortal, Reaper}
+import moorka.flow.Flow
 
 object NodeSwitcher {
 
@@ -20,7 +20,7 @@ object NodeSwitcher {
 
   type Switch = (Policy, Option[NodeLike])
 
-  def apply(rx: Rx[Switch])(implicit system: FelixSystem): NodeSwitcher = {
+  def apply(rx: Flow[Switch])(implicit system: FelixSystem): NodeSwitcher = {
     new NodeSwitcher(rx)
   }
 }
@@ -30,13 +30,14 @@ import felix.components.NodeSwitcher._
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class NodeSwitcher(rx: Rx[Switch])(implicit system: FelixSystem) extends NodeLike with Mortal {
+class NodeSwitcher(rx: Flow[Switch])(implicit system: FelixSystem) extends NodeLike with Mortal {
 
   var parent = Option.empty[RefHolder with EventTarget]
 
   var currentNode = Option.empty[NodeLike]
 
   implicit val reaper = Reaper()
+  implicit val context = system.flowContext
 
   private[this] def swap(oldNodeOpt: Option[NodeLike],
                          newNodeOpt: Option[NodeLike]): Unit = {

@@ -1,5 +1,6 @@
 package felix
 
+import moorka.flow.Context
 import vaska.{JSAccess, JSObj}
 
 import scala.concurrent.Future
@@ -18,6 +19,7 @@ trait FelixApplication extends Component {
   @JSExport
   def main(jsa: JSAccess): Unit = {
     systemFromJS = new FelixSystem {
+      val flowContext = Context()
       val jsAccess = jsa
       val executionContext = scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
     }

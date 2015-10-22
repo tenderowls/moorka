@@ -1,11 +1,13 @@
 package felix.dsl
 
+import felix.collection.BufferView
+import felix.core.FelixSystem
 import felix.vdom.{Directive, Element}
-import moorka._
+import moorka.death.{Reaper, Mortal}
 import vaska.JSObj
 
 object Repeat {
-  def apply(buffer: BufferView[Element]): Repeat = {
+  def apply(buffer: BufferView[Element])(implicit system: FelixSystem): Repeat = {
     new Repeat(buffer)
   }
 }
@@ -13,9 +15,10 @@ object Repeat {
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-class Repeat(val buffer: BufferView[Element]) extends Directive {
+class Repeat(val buffer: BufferView[Element])(implicit system: FelixSystem) extends Directive {
 
-  var subscriptions = List.empty[Rx[Any]]
+  implicit val reaper = Reaper()
+  implicit val context = system.flowContext
 
   def affect(el: Element): Unit = {
 
@@ -26,12 +29,12 @@ class Repeat(val buffer: BufferView[Element]) extends Directive {
       }
     )
 
-    subscriptions ::= buffer.added foreach { x ⇒
+    buffer.added foreach { x ⇒
       x.parent = Some(el)
       el.ref.call[JSObj]("appendChild", x.ref)
     }
 
-    subscriptions ::= buffer.inserted foreach { x ⇒
+    buffer.inserted foreach { x ⇒
       x.e.parent = Some(el)
       x.idx + 1 match {
         case idx if idx < buffer.length =>
@@ -41,12 +44,12 @@ class Repeat(val buffer: BufferView[Element]) extends Directive {
       }
     }
 
-    subscriptions ::= buffer.removed foreach { x ⇒
+    buffer.removed foreach { x ⇒
       x.e.parent = None
       el.ref.call[JSObj]("removeChild", x.e.ref)
     }
 
-    subscriptions ::= buffer.updated foreach { x ⇒
+    buffer.updated foreach { x ⇒
       x.prevE.parent = None
       x.e.parent = Some(el)
       el.ref.call[JSObj]("removeChild", x.prevE.ref)
@@ -55,8 +58,6 @@ class Repeat(val buffer: BufferView[Element]) extends Directive {
   }
 
   def kill(): Unit = {
-    subscriptions foreach {
-      _.kill()
-    }
+    reaper.sweep()
   }
 }

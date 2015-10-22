@@ -3,16 +3,19 @@ package felix.vdom.directives
 import felix.core.FelixSystem
 import felix.vdom.{Directive, Element}
 import moorka._
+import moorka.death.Reaper
+import moorka.flow.Flow
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 final class UseClassDirective(className: String,
-                              trigger: Rx[Boolean],
+                              trigger: Flow[Boolean],
                               system: FelixSystem)
   extends Directive {
 
-  val reaper = Reaper()
+  implicit val reaper = Reaper()
+  implicit val context = system.flowContext
 
   def affect(element: Element): Unit = {
     reaper mark {

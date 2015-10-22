@@ -1,8 +1,11 @@
 package felix.dsl
 
+import felix.collection.BufferView
 import felix.core.FelixSystem
-import felix.vdom.{NodeLike, Directive, Element}
-import moorka._
+import felix.vdom.{Directive, Element, NodeLike}
+import moorka.death.Reaper
+import moorka.flow.{Sink, Flow}
+import moorka.flow.mutable.Var
 import vaska.JSObj
 
 import scala.collection.mutable
@@ -12,18 +15,19 @@ import scala.collection.mutable
  */
 object DataRepeat {
 
-  def apply[A](dataProvider: BufferView[A], componentFactory: Rx[A] => NodeLike)
+  def apply[A](dataProvider: BufferView[A], componentFactory: Flow[A] => NodeLike)
               (implicit system: FelixSystem) = {
     new DataRepeat[A](dataProvider, componentFactory)
   }
 }
 
 class DataRepeat[A](dataProvider: BufferView[A],
-                    factory: Rx[A] => NodeLike)
+                    factory: Flow[A] => NodeLike)
                    (implicit system: FelixSystem)
   extends Directive {
 
-  var subscriptions = List.empty[Rx[Any]]
+  implicit val context = system.flowContext
+  implicit val reaper = Reaper()
 
   def affect(element: Element): Unit = {
     val ref = element.ref
@@ -48,13 +52,13 @@ class DataRepeat[A](dataProvider: BufferView[A],
       }
     )
 
-    subscriptions ::= dataProvider.added foreach { x =>
+    dataProvider.added foreach { x =>
       val c = createAndAppendComponent(x)
       c.setParent(Some(element))
       ref.call[Unit]("appendChild", c.ref)
     }
 
-    subscriptions ::= dataProvider.removed foreach { x =>
+    dataProvider.removed foreach { x =>
       states.remove(x.idx)
       val c = components.remove(x.idx)
       ref.call[Unit]("removeChild", c.ref)
@@ -62,7 +66,7 @@ class DataRepeat[A](dataProvider: BufferView[A],
       c.kill()
     }
 
-    subscriptions ::= dataProvider.inserted foreach { x =>
+    dataProvider.inserted foreach { x =>
       val state = Var(x.e)
       val c = factory(state)
       states.insert(x.idx, state)
@@ -77,15 +81,13 @@ class DataRepeat[A](dataProvider: BufferView[A],
       }
     }
 
-    subscriptions ::= dataProvider.updated foreach { x =>
+    dataProvider.updated foreach { x =>
       val state = states(x.idx)
-      state.modOnce(_ ⇒ Val(x.e))
+      state() = x.e
     }
   }
 
   def kill(): Unit = {
-    subscriptions foreach {
-      _.kill()
-    }
+    reaper.sweep()
   }
 }

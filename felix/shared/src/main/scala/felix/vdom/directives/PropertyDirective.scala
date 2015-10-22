@@ -2,8 +2,11 @@ package felix.vdom.directives
 
 import felix.core.{EventProcessor, FelixSystem}
 import felix.vdom.{Directive, Element}
-import moorka._
-import moorka.rx.{StatefulSource, Source}
+import moorka.death.Reaper
+import moorka.flow.Flow
+import moorka.flow.converters.future
+import moorka.flow.immutable.Val
+import moorka.flow.mutable.{Channel, Fsm}
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -17,15 +20,17 @@ object PropertyDirective {
     def kill(): Unit = ()
   }
 
-  final class Reactive(name: String, value: Rx[Any]) extends Directive {
+  final class Reactive(name: String, value: Flow[Any], system: FelixSystem) extends Directive {
 
-    var mortal = Option.empty[Mortal]
+    implicit val reaper = Reaper()
+    implicit val context = system.flowContext
+
 
     def affect(element: Element): Unit = {
-      mortal = Some(value.foreach(element.ref.set(name, _)))
+      value.foreach(element.ref.set(name, _))
     }
 
-    def kill(): Unit = mortal.foreach(_.kill())
+    def kill(): Unit = reaper.sweep()
   }
 
   sealed trait TwoWayBindingState[+A]
@@ -42,44 +47,45 @@ object PropertyDirective {
   }
 
   final class TwoWayBinding[T](name: String,
-                               input: Rx[T],
-                               output: Source[T],
+                               input: Flow[T],
+                               output: T ⇒ _,
                                changeEvents: Seq[String],
                                system: FelixSystem) extends Directive {
 
     implicit val reaper = Reaper()
+    implicit val context = system.flowContext
 
     def affect(element: Element): Unit = {
       import TwoWayBindingState._
       implicit val ec = system.executionContext
-      if (input.isInstanceOf[StatefulSource[T]]) {
-        input.once(element.ref.set(name, _))
-      }
-      val changesFromDom = Channel[T]()
-      val changesFromVar = input.stateless
+//      if (input.isInstanceOf[StatefulSource[T]]) {
+//        input.once(element.ref.set(name, _))
+//      }
+      val changesFromDom = Channel[T]
       val listener: EventProcessor.EventListener = { (_, _, _) ⇒
         element.ref.get[T](name) foreach { data ⇒
-          changesFromDom.pull(Val(data))
+          changesFromDom.push(data)
         }
       }
       changeEvents foreach { eventType ⇒
         system.eventProcessor.registerEventType(eventType, autoPreventDefault = false)
         system.eventProcessor.addListener(element, eventType, listener)
       }
-      FSM(TwoWayBindingState.empty[T]) {
+      Fsm(TwoWayBindingState.empty[T]) {
         case Idle ⇒
-          changesFromDom or changesFromVar map {
+          changesFromDom or input map {
             case Left(x) ⇒ Update(x)
             case Right(x) ⇒ Writing(x)
           }
         case Writing(x) ⇒
-          element.ref.set(name, x).toRx or changesFromVar map {
+          element.ref.set(name, x).toFlow or input map {
             case Left(_) ⇒ Idle
             case Right(updatedX) ⇒ Writing(updatedX)
           }
+        case Update(x) ⇒ Val(Idle)
+      } andThen {
         case Update(x) ⇒
-          output.pull(Val(x))
-          Val(Idle)
+          output(x)
       }
     }
 

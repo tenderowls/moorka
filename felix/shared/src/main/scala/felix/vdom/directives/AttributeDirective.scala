@@ -1,7 +1,9 @@
 package felix.vdom.directives
 
+import felix.core.FelixSystem
 import felix.vdom.{Directive, Element}
-import moorka._
+import moorka.death.Reaper
+import moorka.flow.Flow
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
@@ -21,20 +23,19 @@ object AttributeDirective {
     def kill(): Unit = ()
   }
 
-  final class Reactive(name: String, value: Rx[Option[String]]) extends Directive {
+  final class Reactive(name: String, value: Flow[Option[String]], system: FelixSystem) extends Directive {
 
-    var mortal = Option.empty[Mortal]
+    implicit val reaper = Reaper()
+    implicit val context = system.flowContext
 
     def affect(element: Element): Unit = {
-      mortal = Some {
-        value foreach {
-          case Some(x) ⇒ element.ref.call[Unit](SetAttribute, name, x)
-          case None ⇒ element.ref.call[Unit](RemoveAttribute, name)
-        }
+      value foreach {
+        case Some(x) ⇒ element.ref.call[Unit](SetAttribute, name, x)
+        case None ⇒ element.ref.call[Unit](RemoveAttribute, name)
       }
     }
 
-    def kill(): Unit = mortal.foreach(_.kill())
+    def kill(): Unit = reaper.sweep()
   }
 
 }

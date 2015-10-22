@@ -51,7 +51,6 @@ object EventProcessorSuite extends TestSuite {
     case Seq(id: Int, "call", "@link:el1.2.1", "getAttribute", "data-felix-id") ⇒
       ResolePromise(id, isSuccess = true, "el1.2.1")
     case seq ⇒
-      println(s"? $seq")
       DoNothing
   }
   implicit val epi = ep

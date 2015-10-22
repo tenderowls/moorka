@@ -1,5 +1,6 @@
 package felix.core
 
+import moorka.flow.Context
 import vaska.JSAccess
 
 import scala.concurrent.ExecutionContext
@@ -24,9 +25,11 @@ trait FelixSystem {
 
   import FelixSystem._
 
-  val executionContext: ExecutionContext
+  def flowContext: Context
 
-  val jsAccess: JSAccess
+  def executionContext: ExecutionContext
+
+  def jsAccess: JSAccess
 
   lazy val global = jsAccess.obj(GlobalObjectName)
 
