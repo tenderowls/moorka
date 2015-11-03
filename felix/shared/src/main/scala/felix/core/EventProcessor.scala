@@ -11,13 +11,13 @@ object EventProcessor {
   private[core] object PropagationStopped extends Throwable
 
   /**
-   * objectId@eventType 
+   * objectId@eventType
    */
   private type ListenerKey = String
 
   /**
-   * Fist arg is current target, second arg is target.  
-   * If return value is EventAction, event processor will execute it. 
+   * Fist arg is current target, second arg is target.
+   * If return value is EventAction, event processor will execute it.
    */
   type EventListener = (EventTarget, EventTarget, JSObj) ⇒ Any
 
@@ -27,7 +27,7 @@ object EventProcessor {
 }
 
 /**
- * Event propagation mechanism for felix virtual DOM. 
+ * Event propagation mechanism for felix virtual DOM.
  */
 final class EventProcessor(jsAccess: JSAccess,
                            document: JSObj,
@@ -117,7 +117,7 @@ final class EventProcessor(jsAccess: JSAccess,
    * Register event type. Use this for all native event types.
    * If you want to enable [[EventProcessor]] for custom events that
    * not dispatches from document [[globalEventListener]]
-   * @param autoPreventDefault Immediately call preventDefault() 
+   * @param autoPreventDefault Immediately call preventDefault()
    * @param eventType name of native event. click, mousedown, etc.
    */
   def registerEventType(eventType: String, autoPreventDefault: Boolean): Unit = {
@@ -140,7 +140,7 @@ final class EventProcessor(jsAccess: JSAccess,
   val globalEventListener = jsAccess.registerCallback { nativeEvent: JSObj ⇒
     nativeEvent.get[String]("type") foreach { tpe ⇒
       nativeEvent.get[JSObj]("target") foreach { target ⇒
-        target.get[String]("id") foreach { id ⇒
+        target.call[String]("getAttribute", "data-felix-id") foreach { id ⇒
           index.get(id) foreach { target ⇒
             propagate(tpe, target, nativeEvent)
           }

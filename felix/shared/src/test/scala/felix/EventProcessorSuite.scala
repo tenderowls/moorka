@@ -22,9 +22,9 @@ object EventProcessorSuite extends TestSuite {
     ep.registerElement(this)
   }
 
-  
+
   def createProcessor(f: Seq[Any] ⇒ Action): (JSAccess, EventProcessor) = {
-    
+
     val jsAccess = new JSAccess {
       implicit val executionContext: ExecutionContext = utest.ExecutionContext.RunNow
       def send(args: Seq[Any]): Unit = {
@@ -48,7 +48,7 @@ object EventProcessorSuite extends TestSuite {
       ResolePromise(id, isSuccess = true, "event")
     case Seq(id: Int, "get", "@link:event", "target") ⇒
       ResolePromise(id, isSuccess = true, "@obj:el1.2.1")
-    case Seq(id: Int, "get", "@link:el1.2.1", "id") ⇒
+    case Seq(id: Int, "call", "@link:el1.2.1", "getAttribute", "data-felix-id") ⇒
       ResolePromise(id, isSuccess = true, "el1.2.1")
     case seq ⇒
       println(s"? $seq")

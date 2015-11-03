@@ -9,8 +9,8 @@
     'use strict';
     return {
       createElementAndSetId: function(tag, id) {
-        var element = document.createElement(tag)
-        element.id = id
+        var element = document.createElement(tag);
+        element.setAttribute("data-felix-id", id);
         return element;
       },
       autoPreventDefault: function (eventType, f) {
