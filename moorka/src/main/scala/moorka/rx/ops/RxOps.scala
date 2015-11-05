@@ -24,6 +24,14 @@ final class RxOps[A](val self: Rx[A]) extends AnyVal {
   def until(f: A ⇒ Boolean)
            (implicit reaper: Reaper = Reaper.nice): Rx[Unit] = {
     self >>= { x ⇒
+      if (f(x)) Killer
+      else Dummy
+    }
+  }
+
+  def takeWhile(f: A ⇒ Boolean)
+           (implicit reaper: Reaper = Reaper.nice): Rx[Unit] = {
+    self >>= { x ⇒
       if (!f(x)) Killer
       else Dummy
     }

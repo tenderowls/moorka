@@ -13,7 +13,7 @@ import scala.language.implicitConversions
 object RxSuite extends TestSuite {
 
   implicit def toRx[T](x: T): Rx[T] = Val(x)
-  
+
   val tests = TestSuite {
 
     "check kill behavior" - {
@@ -150,11 +150,29 @@ object RxSuite extends TestSuite {
         assert(calls == 1)
       }
 
-      "until() should kill after f returns false" - {
+      "until() should kill after f returns true" - {
         var calls = 0
         val ch = Channel[Int]()
         System.gc()
         ch until { x ⇒
+          calls += 1
+          x >= 2
+        }
+        System.gc()
+        System.gc()
+        ch.pull(1)
+        System.gc()
+        ch.pull(2)
+        System.gc()
+        ch.pull(3)
+        assert(calls == 2)
+      }
+
+      "takeWhile() should kill after f returns false" - {
+        var calls = 0
+        val ch = Channel[Int]()
+        System.gc()
+        ch takeWhile  { x ⇒
           calls += 1
           x < 2
         }
