@@ -101,7 +101,7 @@
           return arg
         }
         if (typeof arg === 'object') {
-          var id = tmpLinksIndex.get(arg) || linksIndex.get(arg);
+          var id = linksIndex.get(arg) || tmpLinksIndex.get(arg);
           if (id === undefined) {
             id = createTmpLink(arg);
           }

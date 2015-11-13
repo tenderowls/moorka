@@ -147,6 +147,23 @@ object JSAccessIntegrationTest extends TestSuite {
       }
     }
 
+    "Check getAndSaveAs" - {
+      val scope = js.Dynamic.literal(
+        myObj = js.Dynamic.literal(x = 0, y = 1)
+      )
+      val env = createEnv(scope)
+      for {
+        myObj ← env._2.getAndSaveAs("myObj", "TheMyObj")
+        x ← myObj.get[Int]("x")
+        y ← myObj.get[Int]("y")
+      } yield {
+        assert(env._1.checkLinkSaved("TheMyObj").asInstanceOf[Boolean])
+        assert(myObj.id == "TheMyObj")
+        assert(x == 0)
+        assert(y == 1)
+      }
+    }
+
     "Check free" - {
       val scope = js.Dynamic.literal(
         fun = { (x: Int) ⇒ js.Array[Int](x, x + 1) }
