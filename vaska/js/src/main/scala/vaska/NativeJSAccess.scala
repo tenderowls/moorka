@@ -1,5 +1,6 @@
 package vaska
 
+import scala.collection.mutable
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
 
@@ -18,6 +19,8 @@ final class NativeJSAccess(scope: js.Dynamic) extends JSAccess {
   implicit val executionContext = {
     scala.scalajs.concurrent.JSExecutionContext.runNow
   }
+
+  protected val batchedRequests = mutable.Queue[Request]()
 
   // Receive messages from page and resolve promises
   scope.onmessage = { event: js.Dynamic ⇒
@@ -38,6 +41,34 @@ final class NativeJSAccess(scope: js.Dynamic) extends JSAccess {
   override def platformDependentPack(value: Any): Any = value match {
     case xs: Seq[Any] ⇒ js.Array(xs:_*)
     case x ⇒ super.platformDependentPack(x)
+  }
+
+  override protected def sendRequest(request: Request): Unit = {
+    batchedRequests.enqueue(request)
+    if (batchedRequests.size == 1) {
+      // accumulate requests until new event loop cycle is started
+      scala.scalajs.js.timers.setTimeout(0) {
+        val requests = batchedRequests.dequeueAll(_ ⇒ true).toSeq
+        if (requests.size == 1) {
+          val req = requests.head
+          sendRequest(req.args) { e ⇒
+            req.resultPromise.failure(e)
+          }
+        } else {
+          sendRequestsBatch(requests)
+        }
+      }
+    }
+  }
+
+  protected def sendRequestsBatch(requests: Seq[Request]): Unit = {
+    val args = "batch" +: requests.map(_.args)
+
+    sendRequest(args) { e ⇒
+      requests.foreach { request ⇒
+        request.resultPromise.failure(e)
+      }
+    }
   }
 
   def send(args: Seq[Any]): Unit = {

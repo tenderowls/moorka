@@ -235,11 +235,21 @@
 
       this.receive = function (data) {
         if (workerProtocolDebugEnabled) console.log('->', data);
+
+        // requests batch processing
+        if (data[0] === "batch") {
+          var requests = data.slice(1);
+          requests.forEach(function (request) {
+            self.receive(request);
+          });
+          return;
+        }
+
         var reqId = data[0],
             method = data[1],
             rawArgs = data.slice(2),
-            args = unpackArgs(rawArgs.concat()),
-            tmp = null;
+            args = unpackArgs(rawArgs.concat());
+
         switch (method) {
           // Misc
           case 'init':

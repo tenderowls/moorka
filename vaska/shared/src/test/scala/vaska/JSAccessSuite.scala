@@ -1,5 +1,6 @@
+package vaska
+
 import utest._
-import vaska.{Hook, JSArray, JSObj, JSAccess}
 
 import scala.util.{Failure, Success}
 
@@ -13,7 +14,7 @@ object JSAccessSuite extends TestSuite {
     implicit val executionContext = utest.ExecutionContext.RunNow
 
     var outgoing = List.empty[Seq[Any]]
-    
+
     def receive(msg: Any*) = {
       val reqId = msg(0).asInstanceOf[Int]
       if (reqId == -1) {
@@ -32,9 +33,9 @@ object JSAccessSuite extends TestSuite {
       outgoing ::= args
     }
   }
-  
+
   val tests = TestSuite {
-    
+
     "Check packing" - {
       val acc = new TestJSAccess()
       "JSArray" - {
@@ -71,7 +72,7 @@ object JSAccessSuite extends TestSuite {
         assert(res == Seq("@hook_failure"))
       }
     }
-    
+
     "Check unpacking" - {
       val acc = new TestJSAccess()
       "JSObj  " - {
@@ -99,16 +100,16 @@ object JSAccessSuite extends TestSuite {
         assert(res == null)
       }
     }
-    
+
     "Check request" - {
 
       import utest.ExecutionContext.RunNow
-      
+
       "Success" - {
         val acc = new TestJSAccess()
-        val res = acc.request[Float]("get", acc.obj("myObj"), "width")
+        val req = acc.request[Float]("get", acc.obj("myObj"), "width")
         var calls = 0
-        res.onComplete {
+        req.onComplete {
           case Success(x) ⇒
             assert(x == 100f)
             calls += 1
@@ -121,9 +122,9 @@ object JSAccessSuite extends TestSuite {
 
       "Failure" - {
         val acc = new TestJSAccess()
-        val res = acc.request[Float]("get", acc.obj("myObj"), "width")
+        val req = acc.request[Float]("get", acc.obj("myObj"), "width")
         var calls = 0
-        res.onFailure {
+        req.onFailure {
           case err ⇒
             assert(err.getMessage == "error")
             calls += 1
