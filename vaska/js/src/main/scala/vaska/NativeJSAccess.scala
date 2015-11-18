@@ -20,7 +20,7 @@ final class NativeJSAccess(scope: js.Dynamic) extends JSAccess {
     scala.scalajs.concurrent.JSExecutionContext.runNow
   }
 
-  protected val batchedRequests = mutable.Queue[Request]()
+  protected val batchedRequestsQueue = js.Array[Request]()
 
   // Receive messages from page and resolve promises
   scope.onmessage = { event: js.Dynamic ⇒
@@ -44,11 +44,12 @@ final class NativeJSAccess(scope: js.Dynamic) extends JSAccess {
   }
 
   override protected def sendRequest(request: Request): Unit = {
-    batchedRequests.enqueue(request)
-    if (batchedRequests.size == 1) {
+    batchedRequestsQueue.push(request)
+
+    if (batchedRequestsQueue.length == 1) {
       // accumulate requests until new event loop cycle is started
       scala.scalajs.js.timers.setTimeout(0) {
-        val requests = batchedRequests.dequeueAll(_ ⇒ true).toSeq
+        val requests = batchedRequestsQueue.splice(0, batchedRequestsQueue.length).toSeq
         if (requests.size == 1) {
           val req = requests.head
           sendRequest(req.args) { e ⇒
