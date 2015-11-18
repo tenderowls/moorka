@@ -1,12 +1,13 @@
+package vaska
+
 import utest.ExecutionContext.RunNow
 import utest._
-import vaska.{Hook, JSArray, JSObj, NativeJSAccess}
+import vaska.JSAccess.JSSideException
 
 import scala.scalajs.js
-import scala.util.{Failure, Success, Try}
 
 /**
- * NativeJSAccessSuite + vaska.js integration tests 
+ * NativeJSAccessSuite + vaska.js integration tests
  * and some javascript-specific cases.
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
@@ -41,7 +42,8 @@ object JSAccessIntegrationTest extends TestSuite {
         width ← o.get[Float]("width")
         height ← o.get[Float]("height")
       } yield {
-        assert(width + height == 300f)
+        assert(width == 100)
+        assert(height == 200f)
       }
     }
 
@@ -60,11 +62,14 @@ object JSAccessIntegrationTest extends TestSuite {
       var calls = 0
       val scope = js.Dynamic.literal(name = "")
       val o = createRootObject(scope)
-      o.set("name", "Vaska") foreach { _ ⇒
+
+      val result = o.set("name", "Vaska").map { _ ⇒
         calls += 1
         assert(scope.name.asInstanceOf[String] == "Vaska")
       }
-      assert(calls == 1)
+      result.map { _ ⇒
+        assert(calls == 1)
+      }
     }
 
     "Check call" - {
@@ -77,12 +82,15 @@ object JSAccessIntegrationTest extends TestSuite {
         "Done"
       })
       val o = createRootObject(scope)
-      o.call[String]("fun", 1, "Cow") foreach { res ⇒
+
+      val result = o.call[String]("fun", 1, "Cow") map { res ⇒
         calls += 1
         assert(res == "Done")
       }
-      assert(calls == 1)
-      assert(fnCalls == 1)
+      result.map { _ ⇒
+        assert(calls == 1)
+        assert(fnCalls == 1)
+      }
     }
 
     "Check hooks" - {
@@ -98,19 +106,26 @@ object JSAccessIntegrationTest extends TestSuite {
         }
       )
       val o = createRootObject(scope)
-      def completeHandler(x: Try[String]) = x match {
-        case Success(res) ⇒
+      def completeHandler(x: String) = x match {
+        case "Done" ⇒
           successCalls += 1
-          assert(res == "Done")
-        case Failure(e) ⇒
+        case ":(" ⇒
           failureCalls += 1
-          assert(e.getMessage == ":(")
+        case _ ⇒
+          throw new RuntimeException("Unknown result")
       }
-      o.call[String]("fun", Hook.Success, Hook.Failure, 1).onComplete(completeHandler)
-      o.call[String]("fun", Hook.Success, Hook.Failure, 2).onComplete(completeHandler)
-      assert(failureCalls == 1)
-      assert(successCalls == 1)
-      assert(fnCalls == 2)
+      val call1 = o.call[String]("fun", Hook.Success, Hook.Failure, 1)
+      val call2 = o.call[String]("fun", Hook.Success, Hook.Failure, 2).recover {
+        case e: JSSideException ⇒ e.getMessage
+      }
+      (call1 zip call2).map {
+        case (res1, res2) ⇒
+          (completeHandler(res1), completeHandler(res2))
+      }.map { _ ⇒
+        assert(failureCalls == 1)
+        assert(successCalls == 1)
+        assert(fnCalls == 2)
+      }
     }
 
     "Check save" - {
@@ -203,7 +218,7 @@ object JSAccessIntegrationTest extends TestSuite {
         assert(i == 5)
       }
     }
-    
+
     // todo check send array
     // todo check object in hook
     // todo check object in callback

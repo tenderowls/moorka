@@ -30,7 +30,7 @@ class WebSocketJSAccess(webSocket: WebSocket) extends JSAccess {
   }
 
   /**
-   * Abstract method sends message to remote page 
+   * Abstract method sends message to remote page
    */
   def send(args: Seq[Any]): Unit = {
     val message = seqToJSON(args)

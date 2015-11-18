@@ -18,7 +18,7 @@ object JSAccess {
 }
 
 /**
- * Provide access to remote page with JavaScript engine 
+ * Provide access to remote page with JavaScript engine
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
 trait JSAccess {
@@ -28,8 +28,10 @@ trait JSAccess {
 
   implicit val executionContext: ExecutionContext
 
+  case class Request(id: Int, args: Seq[Any], resultPromise: Promise[Any])
+
   /**
-   * Increment it after request 
+   * Increment it after request
    */
   protected var lastReqId = 0
 
@@ -37,14 +39,14 @@ trait JSAccess {
 
   /**
    * List of promises of requests. Resolves by
-   * income messages 
+   * income messages
    */
   protected var promises = Map.empty[Int, Promise[Any]]
 
   protected var callbacks = Map.empty[String, Any ⇒ Unit]
 
   /**
-   * Abstract method sends message to remote page 
+   * Abstract method sends message to remote page
    */
   def send(args: Seq[Any]): Unit
 
@@ -62,16 +64,26 @@ trait JSAccess {
     val pair = (requestId, promise)
     lastReqId += 1
     promises += pair
-    try {
-      // Pack result and send
-      send(packArgs(Seq(requestId) ++ args))
-    }
-    catch {
-      case exception: Throwable ⇒
-        promise.failure(exception)
-    }
+
+    sendRequest(Request(requestId, Seq(requestId) ++ args, promise))
+
     // Unpack result
     promise.future map unpackArg[A]
+  }
+
+  protected def sendRequest(request: Request): Unit = {
+    sendRequest(request.args) { e ⇒
+      request.resultPromise.failure(e)
+    }
+  }
+
+  protected def sendRequest(args: Seq[Any])(exceptionHandler: (Throwable) ⇒ Unit): Unit = {
+    try {
+      send(packArgs(args))
+    } catch {
+      case exception: Throwable ⇒
+        exceptionHandler(exception)
+    }
   }
 
   def array(linkId: String): JSArray = {

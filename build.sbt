@@ -21,11 +21,9 @@ val commonSettings = Seq(
 )
 
 val utestSetting = Seq(
-  testFrameworks += new TestFramework("utest.runner.Framework")
+  testFrameworks += new TestFramework("utest.runner.Framework"),
+  libraryDependencies += "com.lihaoyi" %%% "utest" % "0.3.1" % "test"
 )
-
-val utestSettingsJS = utestSetting :+ (libraryDependencies += "com.lihaoyi" %%% "utest" % "0.3.1" % "test")
-val utestSettingsJVM = utestSetting :+ (libraryDependencies += "com.lihaoyi" %% "utest" % "0.3.1" % "test")
 
 val publishSettings = moorkaVersion.endsWith("SNAPSHOT") match {
   case true => Seq(
@@ -47,8 +45,8 @@ val publishSettings = moorkaVersion.endsWith("SNAPSHOT") match {
 
 lazy val moorka = crossProject
   .crossType(CrossType.Pure)
-  .jsSettings(utestSettingsJS:_*)
-  .jvmSettings(utestSettingsJVM:_*)
+  .jsSettings(utestSetting:_*)
+  .jvmSettings(utestSetting:_*)
   .settings(publishSettings:_*)
   .settings(commonSettings:_*)
   .settings(
@@ -64,7 +62,7 @@ lazy val vaska = crossProject
   .settings(
     unmanagedResourceDirectories in Compile += file("vaska") / "shared" / "src" / "main" / "resources"
   )
-  .jsSettings(utestSettingsJS:_*)
+  .jsSettings(utestSetting:_*)
   .jsSettings(
     libraryDependencies ++= Seq(
       "org.webjars" % "es6-shim" % "0.20.2" % "test"
@@ -76,7 +74,7 @@ lazy val vaska = crossProject
     ),
     jsDependencies += ProvidedJS / "vaska.js"
   )
-  .jvmSettings(utestSettingsJVM:_*)
+  .jvmSettings(utestSetting:_*)
   .settings(publishSettings:_*)
   .settings(commonSettings:_*)
   .settings(normalizedName := "vaska")
@@ -92,12 +90,12 @@ lazy val felix = crossProject
     normalizedName := "felix",
     unmanagedResourceDirectories in Compile += file("felix") / "shared" / "src" / "main" / "resources"
   )
-  .jsSettings(utestSettingsJS:_*)
+  .jsSettings(utestSetting:_*)
   .jsConfigure(_.dependsOn(vaskaJS  % "compile->compile;test->test", moorkaJS))
   .jsSettings(
     jsDependencies += ProvidedJS / "felix.js"
   )
-  .jvmSettings(utestSettingsJVM:_*)
+  .jvmSettings(utestSetting:_*)
   .jvmSettings(
     libraryDependencies += "org.java-websocket" % "Java-WebSocket" % "1.3.0"
   )

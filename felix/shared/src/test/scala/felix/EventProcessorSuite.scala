@@ -22,9 +22,9 @@ object EventProcessorSuite extends TestSuite {
     ep.registerElement(this)
   }
 
-  
+
   def createProcessor(f: Seq[Any] ⇒ Action): (JSAccess, EventProcessor) = {
-    
+
     val jsAccess = new JSAccess {
       implicit val executionContext: ExecutionContext = utest.ExecutionContext.RunNow
       def send(args: Seq[Any]): Unit = {
