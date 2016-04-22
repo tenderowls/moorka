@@ -22,7 +22,7 @@ final private[moorka] class FSM[T](var x: T, ignoreStateEquality: Boolean, f: T 
   private[moorka] var dependencies = List.empty[Mortal]
 
   override def run(x: T): Unit = {
-    withContext(dependencies) {
+    withContext {
       f(x) match {
         case Val(some) ⇒ update(some, silent = false)
         case Silent(some) ⇒ update(some, silent = true)
@@ -53,7 +53,7 @@ final private[moorka] class FSM[T](var x: T, ignoreStateEquality: Boolean, f: T 
 
   override def kill(): Unit = {
     super.kill()
-    killDependencies(dependencies)
+    currentBindingContext.foreach(_.kill())
   }
 
   attachBinding(this)

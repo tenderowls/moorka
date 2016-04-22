@@ -27,6 +27,36 @@ object RxSuite extends TestSuite {
         emitter.pull(1)
         assert(calls == 1)
       }
+
+      "https://github.com/tenderowls/moorka/issues/86" - {
+        var i = 0
+        var j = 0
+        val source1 = Channel[String]()
+        val source2 = Channel[String]()
+
+        def foo(): Rx[String] = source1 map { s ⇒
+          i += 1
+          s + "_foo"
+        }
+        def bar(): Rx[String] = source2 map { s ⇒
+          j += 1
+          s + "_bar"
+        }
+
+        FSM("") {
+          case s =>
+            // Objects created inside foo() and bar() will be live forever
+            // and runs every source change
+            foo() merge bar()
+        }
+        source1.pull(Val("Cow"))
+        source2.pull(Val("Cat"))
+        source1.pull(Val("Cow2"))
+        source2.pull(Val("Cat2"))
+        assert(i == 2)
+        assert(j == 2)
+      }
+
       "check binding initialized inside flatMap would be killed" - {
         import scala.collection.mutable
 

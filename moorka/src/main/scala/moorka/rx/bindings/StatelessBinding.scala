@@ -13,7 +13,7 @@ private[moorka] class StatelessBinding[From, To](val parent: Source[From],
   with HasBindingContext[From] {
 
   def run(x: From): Unit = {
-    withContext(upstreams) {
+    withContext {
       pull(lambda(x))
     }
   }
@@ -21,7 +21,6 @@ private[moorka] class StatelessBinding[From, To](val parent: Source[From],
   parent.attachBinding(this)
 
   override private[moorka] def killUpstreams(): Unit = {
-    killDependencies(upstreams)
   }
 
   override def kill(): Unit = {

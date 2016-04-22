@@ -1,12 +1,12 @@
 package moorka.rx
 
-import moorka.rx.bindings.{Binding, OnceBinding}
+import moorka.rx.bindings.{BindingSensitive, Binding, OnceBinding}
 import moorka.death.Reaper
 
 /**
  * @author Aleksey Fomkin <aleksey.fomkin@gmail.com>
  */
-trait Source[A] extends Rx[A] {
+trait Source[A] extends Rx[A] with BindingSensitive {
 
   private[moorka] var isAlive = true
 
